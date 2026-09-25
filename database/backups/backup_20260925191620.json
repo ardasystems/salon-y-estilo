@@ -1,0 +1,679 @@
+{
+  "exportedAt": "2026-09-25T19:16:20.439Z",
+  "version": "2.5.0",
+  "meta": {
+    "project": "Salón & Estilo",
+    "origin": "Chiclayo, Perú",
+    "database": "Supabase PostgreSQL"
+  },
+  "tables": {
+    "store_settings": [
+      {
+        "id": "current",
+        "data": {
+          "logoUrl": "https://fmjnmjkzbbqmldgnmwvz.supabase.co/storage/v1/object/public/salon-assets/logos/1790363441356-fojuuy.jpeg",
+          "tagline": "Estilismo Exclusivo de Alta Gama, Servicios de Salón & Cosmética Seleccionada",
+          "logoShape": "circle",
+          "plinOwner": "Salón & Estilo Chiclayo",
+          "plinPhone": "920 731 163",
+          "storeName": "Salón & Estilo",
+          "tiktokUrl": "https://www.tiktok.com/@miluskavidaurre",
+          "yapeOwner": "Miluska Vidaurre - Salón & Estilo",
+          "yapePhone": "920 731 163",
+          "originCity": "Chiclayo",
+          "youtubeUrl": "https://www.youtube.com/@miluskavidaurre",
+          "facebookUrl": "https://www.facebook.com/miluskavidaurresalon",
+          "plinQrImage": "",
+          "yapeQrImage": "",
+          "culqiEnabled": true,
+          "instagramUrl": "https://www.instagram.com/miluskavidaurre/",
+          "originRegion": "Chiclayo, Lambayeque - Perú",
+          "salonAddress": "Av. Rivera del Mar / Calle San Martín, Chiclayo",
+          "adminPassword": "salon&estilo2620",
+          "brandSubtitle": "Salón de Belleza Miluska Vidaurre",
+          "culqiPublicKey": "pk_test_sample_culqi_salonestilo",
+          "shippingOptions": [
+            {
+              "id": "chiclayo_express",
+              "badge": "Express VIP",
+              "price": 6,
+              "title": "Express Chiclayo & Alrededores (< 2 horas)",
+              "description": "Chiclayo Centro, Santa Victoria, La Victoria, JLO y balnearios",
+              "deliveryTime": "Menos de 2 horas"
+            },
+            {
+              "id": "salon_pickup",
+              "badge": "S/ 0.00",
+              "price": 0,
+              "title": "Retiro en Salón de Belleza (Gratis)",
+              "description": "Visítanos en nuestro salón y recoge tu pedido sin costo de envío",
+              "deliveryTime": "Inmediato en horario de atención"
+            },
+            {
+              "id": "olva_peru",
+              "badge": "A Domicilio",
+              "price": 14,
+              "title": "Olva Courier Domicilio (Nacional)",
+              "description": "Entrega a domicilio asegurada en Lima y todas las provincias del Perú",
+              "deliveryTime": "24 a 72 horas"
+            },
+            {
+              "id": "shalom_peru",
+              "badge": "Económico",
+              "price": 9,
+              "title": "Shalom Agencia (Nacional)",
+              "description": "Recojo seguro en cualquier agencia Shalom de tu ciudad",
+              "deliveryTime": "24 a 48 horas"
+            }
+          ],
+          "whatsappContact": "51920731163",
+          "productsBannerText": "📦 ENVÍOS A NIVEL NACIONAL (Olva & Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores"
+        },
+        "updated_at": "2026-09-25T19:11:01.549+00:00"
+      }
+    ],
+    "products": [
+      {
+        "id": "prod-001",
+        "name": "Sérum Iluminador Niacinamida 10% + Zinc",
+        "category": "Skincare",
+        "price": 36.9,
+        "stock": 24,
+        "data": {
+          "id": "prod-001",
+          "name": "Sérum Iluminador Niacinamida 10% + Zinc",
+          "isNew": false,
+          "price": 36.9,
+          "stock": 24,
+          "usage": "Aplicar 3 a 4 gotas sobre el rostro limpio antes de la crema hidratante, mañana y noche.",
+          "images": [
+            "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1552046122-03184de85e08?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 4.9,
+          "volume": "30 ml",
+          "benefits": [
+            "Control de brillo durante todo el día",
+            "Textura aqua-gel de rápida absorción",
+            "Ideal para clima de Chiclayo y costa norte",
+            "Sin alcohol ni fragancias sintéticas"
+          ],
+          "category": "Skincare",
+          "keywords": [
+            "niacinamida",
+            "zinc",
+            "manchas",
+            "poros",
+            "acne",
+            "oleo",
+            "grasa",
+            "brillo",
+            "iluminador",
+            "skincare",
+            "suero",
+            "antimanchas"
+          ],
+          "subtitle": "Piel radiante y poros minimizados",
+          "description": "Fórmula sedosa ultra ligera diseñada para climas cálidos como el norte peruano. Equilibra la producción de sebo, atenúa manchas post-acné y aporta un brillo saludable natural sin sensación grasa.",
+          "isBestseller": true,
+          "reviewsCount": 42,
+          "originalPrice": 45
+        },
+        "created_at": "2026-09-25T19:03:41.449919+00:00",
+        "updated_at": "2026-09-25T19:03:41.449919+00:00"
+      },
+      {
+        "id": "prod-002",
+        "name": "Lip Peptide Glaze - Aceite Labial Nutritivo",
+        "category": "Labios",
+        "price": 24.5,
+        "stock": 18,
+        "data": {
+          "id": "prod-002",
+          "name": "Lip Peptide Glaze - Aceite Labial Nutritivo",
+          "isNew": false,
+          "price": 24.5,
+          "stock": 18,
+          "usage": "Desliza sobre los labios desnudos para un toque fresco o sobre tu labial favorito para dimensión extra.",
+          "images": [
+            "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1599305090598-fe179d501227?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 5,
+          "shades": [
+            {
+              "hex": "#D98E82",
+              "name": "01 Rosé Nude"
+            },
+            {
+              "hex": "#9E3D48",
+              "name": "02 Berry Velvet"
+            },
+            {
+              "hex": "#E89B7B",
+              "name": "03 Peach Glaze"
+            }
+          ],
+          "volume": "10 ml",
+          "benefits": [
+            "Acabado glass-skin reflectante",
+            "Hidratación continua por 12 horas",
+            "Aroma suave a vainilla y frutos rojos",
+            "No se pega al cabello"
+          ],
+          "category": "Labios",
+          "keywords": [
+            "labios",
+            "lip",
+            "gloss",
+            "peptidos",
+            "volumen",
+            "hidratacion",
+            "brillo labial",
+            "aceite labial",
+            "karite",
+            "boca",
+            "reparador"
+          ],
+          "subtitle": "Efecto espejo con péptidos voluminizadores",
+          "description": "Tratamiento hidratante con acabado ultra brillante sin ser pegajoso. Formulado con péptidos y manteca de karité para unos labios visiblemente más rellenos y suaves.",
+          "isBestseller": true,
+          "reviewsCount": 68,
+          "originalPrice": 32
+        },
+        "created_at": "2026-09-25T19:03:41.691488+00:00",
+        "updated_at": "2026-09-25T19:03:41.691488+00:00"
+      },
+      {
+        "id": "prod-003",
+        "name": "Bálsamo Limpiador Calmante con Flor de Camelia",
+        "category": "Skincare",
+        "price": 42,
+        "stock": 15,
+        "data": {
+          "id": "prod-003",
+          "name": "Bálsamo Limpiador Calmante con Flor de Camelia",
+          "isNew": true,
+          "price": 42,
+          "stock": 15,
+          "usage": "Masajea una pequeña cantidad sobre piel seca y aclara con agua tibia.",
+          "images": [
+            "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 4.8,
+          "volume": "80 g",
+          "benefits": [
+            "Doble limpieza suave para todo tipo de piel",
+            "Extracto botánico de flor de camelia y centella asiática",
+            "Apto para ojos sensibles y piel reactiva"
+          ],
+          "category": "Skincare",
+          "keywords": [
+            "balsamo",
+            "desmaquillante",
+            "doble limpieza",
+            "camelia",
+            "centella",
+            "limpieza facial",
+            "sensible",
+            "cleanser",
+            "maquillaje"
+          ],
+          "subtitle": "Doble limpieza sin irritación",
+          "description": "Transforma su textura de bálsamo untuoso a leche ligera al contacto con el agua. Remueve maquillaje a prueba de agua y protector solar sin dejar residuos ni ardor en los ojos.",
+          "isBestseller": false,
+          "reviewsCount": 29,
+          "originalPrice": 52
+        },
+        "created_at": "2026-09-25T19:03:41.959394+00:00",
+        "updated_at": "2026-09-25T19:03:41.959394+00:00"
+      },
+      {
+        "id": "prod-004",
+        "name": "Tinte Velvet Multiuso Mejillas & Labios",
+        "category": "Rostro",
+        "price": 28,
+        "stock": 22,
+        "data": {
+          "id": "prod-004",
+          "name": "Tinte Velvet Multiuso Mejillas & Labios",
+          "isNew": false,
+          "price": 28,
+          "stock": 22,
+          "usage": "Aplica dos puntitos en las mejillas y difumina con toques suaves usando las yemas de tus dedos.",
+          "images": [
+            "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 4.9,
+          "shades": [
+            {
+              "hex": "#C76D6D",
+              "name": "Petal Dust"
+            },
+            {
+              "hex": "#BD5741",
+              "name": "Terracotta Chiclayo"
+            },
+            {
+              "hex": "#8A4958",
+              "name": "Mauve Sunset"
+            }
+          ],
+          "volume": "6.5 g",
+          "benefits": [
+            "Pigmentación construible modulable",
+            "Textura soufflé aterciopelada",
+            "2 en 1: sirve como rubor y tinte labial"
+          ],
+          "category": "Rostro",
+          "keywords": [
+            "rubor",
+            "blush",
+            "tinte",
+            "labial",
+            "mejillas",
+            "color",
+            "velvet",
+            "mate",
+            "maquillaje",
+            "terracota",
+            "social"
+          ],
+          "subtitle": "Rubor natural efecto segunda piel",
+          "description": "Fórmula de acabado semimate difuminable con los dedos. Aporta un rubor saludable que dura todo el día, resiste el sudor y no reseca la piel.",
+          "isBestseller": true,
+          "reviewsCount": 54,
+          "originalPrice": 35
+        },
+        "created_at": "2026-09-25T19:03:42.20775+00:00",
+        "updated_at": "2026-09-25T19:03:42.20775+00:00"
+      },
+      {
+        "id": "prod-005",
+        "name": "Protector Solar Invisible Aqua Gel SPF 50+ PA++++",
+        "category": "Protección Solar",
+        "price": 39.9,
+        "stock": 30,
+        "data": {
+          "id": "prod-005",
+          "name": "Protector Solar Invisible Aqua Gel SPF 50+ PA++++",
+          "isNew": true,
+          "price": 39.9,
+          "stock": 30,
+          "usage": "Aplica dos líneas sobre tus dedos y distribuye uniformemente 15 minutos antes de la exposición solar.",
+          "images": [
+            "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 5,
+          "volume": "50 ml",
+          "benefits": [
+            "FPS 50+ con protección UVA/UVB de amplio espectro",
+            "Resistente a la humedad y calor del norte",
+            "Terminación mate sedosa",
+            "Reef safe y sin parabenos"
+          ],
+          "category": "Protección Solar",
+          "keywords": [
+            "bloqueador",
+            "protector solar",
+            "fps",
+            "spf",
+            "sol",
+            "verano",
+            "aqua gel",
+            "toque seco",
+            "uv",
+            "playa",
+            "invisible"
+          ],
+          "subtitle": "Toque seco y cero rastro blanco",
+          "description": "El imprescindible para el sol de Chiclayo y la costa. Filtros fotosensibles modernos con sensación ultraligera como agua. No comedogénico, no pica los ojos y es perfecto antes del maquillaje.",
+          "isBestseller": true,
+          "reviewsCount": 88,
+          "originalPrice": 49
+        },
+        "created_at": "2026-09-25T19:03:42.445305+00:00",
+        "updated_at": "2026-09-25T19:03:42.445305+00:00"
+      },
+      {
+        "id": "prod-006",
+        "name": "Mini Rodillo & Guasha Cuarzo Rosa Natural",
+        "category": "Accesorios",
+        "price": 29.9,
+        "stock": 12,
+        "data": {
+          "id": "prod-006",
+          "name": "Mini Rodillo & Guasha Cuarzo Rosa Natural",
+          "isNew": false,
+          "price": 29.9,
+          "stock": 12,
+          "usage": "Guárdalo en la nevera 10 minutos antes de usar para un efecto lifting descongestionante.",
+          "images": [
+            "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1590439471364-192aa70c0b53?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 4.7,
+          "volume": "Set 2 piezas",
+          "benefits": [
+            "Sensación fría calmante inmediata",
+            "Esculpe contornos de mandíbula y pómulos",
+            "Incluye bolsita protectora de terciopelo"
+          ],
+          "category": "Accesorios",
+          "keywords": [
+            "guasha",
+            "gua sha",
+            "rodillo",
+            "roller",
+            "cuarzo",
+            "cuarzo rosa",
+            "masaje facial",
+            "antiedad",
+            "lifting",
+            "ojeras",
+            "drenaje"
+          ],
+          "subtitle": "Drenaje linfático y masaje facial relajante",
+          "description": "Piedra de cuarzo rosa 100% auténtica pulida a mano. Estimula la circulación, desinflama ojeras por la mañana y favorece la absorción profunda de tus aceites y sérums.",
+          "isBestseller": false,
+          "reviewsCount": 19,
+          "originalPrice": 39
+        },
+        "created_at": "2026-09-25T19:03:42.785333+00:00",
+        "updated_at": "2026-09-25T19:03:42.785333+00:00"
+      },
+      {
+        "id": "prod-007",
+        "name": "Máscara de Pestañas Longitud Tubing Resistente",
+        "category": "Ojos",
+        "price": 32,
+        "stock": 16,
+        "data": {
+          "id": "prod-007",
+          "name": "Máscara de Pestañas Longitud Tubing Resistente",
+          "isNew": true,
+          "price": 32,
+          "stock": 16,
+          "usage": "Aplica en zigzag desde la raíz hacia las puntas para máxima definición.",
+          "images": [
+            "https://images.unsplash.com/photo-1631214524020-7e18db9a8f92?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1508296695146-257a814070b4?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 4.8,
+          "volume": "8 ml",
+          "benefits": [
+            "Cero manchas ni grumos",
+            "Cepillo cónico de precisión para pestañas inferiores",
+            "Fórmula enriquecida con provitamina B5"
+          ],
+          "category": "Ojos",
+          "keywords": [
+            "rimel",
+            "mascara",
+            "pestanas",
+            "tubing",
+            "alargador",
+            "waterproof",
+            "ojos",
+            "mirada",
+            "volumen",
+            "pestañol"
+          ],
+          "subtitle": "Alargamiento extremo que se retira solo con agua tibia",
+          "description": "Tecnología tubular japonesa que envuelve cada pestaña en micro-polímeros individuales. No mancha, no se corre con el calor ni genera ojos de panda, y se desmaquilla suavemente sin dañar tus pestañas.",
+          "isBestseller": false,
+          "reviewsCount": 23,
+          "originalPrice": 40
+        },
+        "created_at": "2026-09-25T19:03:43.09233+00:00",
+        "updated_at": "2026-09-25T19:03:43.09233+00:00"
+      },
+      {
+        "id": "prod-008",
+        "name": "Bruma Hidratante de Rosas Silvestres & Ácido Hialurónico",
+        "category": "Skincare",
+        "price": 26.9,
+        "stock": 20,
+        "data": {
+          "id": "prod-008",
+          "name": "Bruma Hidratante de Rosas Silvestres & Ácido Hialurónico",
+          "isNew": false,
+          "price": 26.9,
+          "stock": 20,
+          "usage": "Rocía a 20 cm del rostro con los ojos cerrados antes o después del maquillaje.",
+          "images": [
+            "https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=800&q=80"
+          ],
+          "rating": 4.9,
+          "volume": "100 ml",
+          "benefits": [
+            "Atomizador de dispersión en nube ultra suave",
+            "Hidrata y calma tras la exposición al sol",
+            "Tamaño ideal para cartera o bolso de mano"
+          ],
+          "category": "Skincare",
+          "keywords": [
+            "bruma",
+            "mist",
+            "rosas",
+            "tonico",
+            "fijador",
+            "acido hialuronico",
+            "hidratante",
+            "frescura",
+            "glow",
+            "spray facial"
+          ],
+          "subtitle": "Fijador de maquillaje y frescura instantánea",
+          "description": "Rocío microfino que revitaliza la piel apagada a cualquier hora del día. Fija el maquillaje evitando que se cuartee y devuelve la jugosidad natural con un exquisito aroma botánico.",
+          "isBestseller": false,
+          "reviewsCount": 31,
+          "originalPrice": 34
+        },
+        "created_at": "2026-09-25T19:03:43.383037+00:00",
+        "updated_at": "2026-09-25T19:03:43.383037+00:00"
+      }
+    ],
+    "services": [
+      {
+        "id": "srv-001",
+        "name": "Balayage Signature & Morena Iluminada",
+        "category": "Colorimetría",
+        "price": 0,
+        "data": {
+          "id": "srv-001",
+          "name": "Balayage Signature & Morena Iluminada",
+          "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
+          "category": "Colorimetría",
+          "duration": "3 - 4 horas",
+          "includes": [
+            "Diagnóstico capilar previo",
+            "Decoloración protectora plex",
+            "Matización tonal personalizada",
+            "Brushing de ondas glam"
+          ],
+          "priceFrom": 180,
+          "description": "Técnica francesa personalizada con degradé sutil y esfumado de raíz. Logra luminosidad multidimensional que no requiere retoques mensuales frecuentes."
+        },
+        "created_at": "2026-09-25T19:03:44.157593+00:00",
+        "updated_at": "2026-09-25T19:03:44.157593+00:00"
+      },
+      {
+        "id": "srv-002",
+        "name": "Alisado Orgánico & Bótox Reconstructor",
+        "category": "Tratamientos",
+        "price": 0,
+        "data": {
+          "id": "srv-002",
+          "name": "Alisado Orgánico & Bótox Reconstructor",
+          "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+          "category": "Tratamientos",
+          "duration": "2.5 - 3 horas",
+          "includes": [
+            "Lavado purificante",
+            "Sellado térmico sellador",
+            "Mascarilla de nutrición profunda",
+            "Corte de puntas secas"
+          ],
+          "priceFrom": 140,
+          "description": "Fórmula libre de formol con aminoácidos y aceite de argán. Elimina 100% el frizz rebelde causado por la humedad costera, aportando brillo espejo."
+        },
+        "created_at": "2026-09-25T19:03:44.404235+00:00",
+        "updated_at": "2026-09-25T19:03:44.404235+00:00"
+      },
+      {
+        "id": "srv-003",
+        "name": "Maquillaje Social & Novia Glam",
+        "category": "Make Up",
+        "price": 0,
+        "data": {
+          "id": "srv-003",
+          "name": "Maquillaje Social & Novia Glam",
+          "image": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80",
+          "category": "Make Up",
+          "duration": "1.5 horas",
+          "includes": [
+            "Preparación facial con skincare de alta gama",
+            "Pestañas postizas premium",
+            "Sellado fijador 18 horas"
+          ],
+          "priceFrom": 95,
+          "description": "Técnica de piel blindada a prueba de calor y sudor. Realce de mirada con pestañas punto a punto y labios terciopelo de larga duración."
+        },
+        "created_at": "2026-09-25T19:03:44.668483+00:00",
+        "updated_at": "2026-09-25T19:03:44.668483+00:00"
+      },
+      {
+        "id": "srv-004",
+        "name": "Peinado de Fiesta & Ondas al Agua",
+        "category": "Peinados",
+        "price": 0,
+        "data": {
+          "id": "srv-004",
+          "name": "Peinado de Fiesta & Ondas al Agua",
+          "image": "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=800&q=80",
+          "category": "Peinados",
+          "duration": "1 hora",
+          "includes": [
+            "Texturizado capilar",
+            "Fijación flexible sin efecto acartonado",
+            "Colocación de accesorios o tocados"
+          ],
+          "priceFrom": 70,
+          "description": "Recogidos bohemios, semirecogidos románticos u ondas estilo Hollywood estructuradas y resistentes a la brisa de la costa."
+        },
+        "created_at": "2026-09-25T19:03:44.979373+00:00",
+        "updated_at": "2026-09-25T19:03:44.979373+00:00"
+      },
+      {
+        "id": "srv-005",
+        "name": "Manicure Rusa & Soft Gel / Acrílicas",
+        "category": "Uñas & Spa",
+        "price": 0,
+        "data": {
+          "id": "srv-005",
+          "name": "Manicure Rusa & Soft Gel / Acrílicas",
+          "image": "https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=80",
+          "category": "Uñas & Spa",
+          "duration": "1.5 - 2 horas",
+          "includes": [
+            "Esmaltado en gel premium",
+            "Exfoliación hidratante con aceites esenciales",
+            "Masaje relajante de manos"
+          ],
+          "priceFrom": 65,
+          "description": "Limpieza profunda de cutículas con torno para un acabado milimétrico y duradero de más de 25 días. Diseños nail art elegantes y minimalistas."
+        },
+        "created_at": "2026-09-25T19:03:45.402285+00:00",
+        "updated_at": "2026-09-25T19:03:45.402285+00:00"
+      },
+      {
+        "id": "srv-006",
+        "name": "Terapia Capilar Hidra-Shock con Ácido Hialurónico",
+        "category": "Tratamientos",
+        "price": 0,
+        "data": {
+          "id": "srv-006",
+          "name": "Terapia Capilar Hidra-Shock con Ácido Hialurónico",
+          "image": "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80",
+          "category": "Tratamientos",
+          "duration": "1 hora",
+          "includes": [
+            "Vapor ozonizado",
+            "Cauterización molecular",
+            "Secado y finalizado modelado"
+          ],
+          "priceFrom": 75,
+          "description": "Inyección de hidratación y colágeno para hebras resecas por el sol y la sal marina. Devuelve la elasticidad y movimiento al instante."
+        },
+        "created_at": "2026-09-25T19:03:45.61774+00:00",
+        "updated_at": "2026-09-25T19:03:45.61774+00:00"
+      }
+    ],
+    "comparison_cases": [
+      {
+        "id": "balayage",
+        "title": "Balayage Miel & Morena Iluminada",
+        "category": "",
+        "data": {
+          "id": "balayage",
+          "stat": "100% Sin maltratar la fibra",
+          "title": "Balayage Miel & Morena Iluminada",
+          "duration": "3.5 a 4.5 horas",
+          "afterDesc": "Degradé tridimensional en tono caramelo miel, brillo gloss y nutrición con Plex.",
+          "afterImage": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1000&q=80",
+          "afterLabel": "Después: Luz y movimiento",
+          "beforeDesc": "Base castaña apagada, desgaste solar disparejo y falta de luminosidad.",
+          "beforeImage": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=1000&q=80",
+          "beforeLabel": "Antes: Tono plano y sin luz",
+          "serviceCategory": "Colorimetría de Alta Gama"
+        },
+        "updated_at": "2026-09-25T19:03:46.230851+00:00"
+      },
+      {
+        "id": "alisado",
+        "title": "Alisado Orgánico Cero Formol",
+        "category": "",
+        "data": {
+          "id": "alisado",
+          "stat": "Durabilidad de 4 a 6 meses",
+          "title": "Alisado Orgánico Cero Formol",
+          "duration": "2.5 a 3.5 horas",
+          "afterDesc": "Efecto seda ultra lacio, hebras selladas y resistencia total a la humedad.",
+          "afterImage": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80",
+          "afterLabel": "Después: Lacio espejo impecable",
+          "beforeDesc": "Volumen incontrolable por la humedad, ondas quebradizas y sin caída.",
+          "beforeImage": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=1000&q=80",
+          "beforeLabel": "Antes: Frizz y ondas rebeldes",
+          "serviceCategory": "Tratamiento Disciplinante"
+        },
+        "updated_at": "2026-09-25T19:03:46.480796+00:00"
+      },
+      {
+        "id": "botox",
+        "title": "Bótox Capilar & Reestructuración",
+        "category": "",
+        "data": {
+          "id": "botox",
+          "stat": "Recuperación capilar visible",
+          "title": "Bótox Capilar & Reestructuración",
+          "duration": "1.5 a 2 horas",
+          "afterDesc": "Cutículas completamente compactadas, reflejos de luz de alto impacto y tacto aterciopelado.",
+          "afterImage": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=1000&q=80",
+          "afterLabel": "Después: Blindaje gloss y suavidad",
+          "beforeDesc": "Cabello desvitalizado por calor excesivo, textura áspera y pérdida de queratina.",
+          "beforeImage": "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?auto=format&fit=crop&w=1000&q=80",
+          "beforeLabel": "Antes: Puntas abiertas y opacidad",
+          "serviceCategory": "Terapia Intensiva"
+        },
+        "updated_at": "2026-09-25T19:03:46.919357+00:00"
+      }
+    ],
+    "orders": [],
+    "complaints": []
+  }
+}

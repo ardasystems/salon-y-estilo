@@ -76,8 +76,15 @@ Plataforma web integral de alta gama para salón de belleza, estética capilar y
    npm run build
    ```
 
+6. **Respaldar Base de Datos Localmente:**
+   ```bash
+   npm run db:backup
+   ```
+   Descarga todas las tablas vivas desde Supabase y genera archivos JSON y SQL en `database/backups/`.
+
 ---
 
 ## 📄 Documentación Adicional
+- [Guía de Respaldo y Migración a Hosting Propio](GUIA_MIGRACION_HOSTING_FUTURO.md)
 - [Plan de Negocio Digital](PLAN_DE_NEGOCIO.md)
 - [Arquitectura y Configuración Técnica](ARQUITECTURA_Y_CONFIGURACION_TECNICA.md)

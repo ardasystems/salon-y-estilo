@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:backup": "node scripts/backup-cloud-data.js",
+    "db:restore": "node scripts/restore-cloud-data.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

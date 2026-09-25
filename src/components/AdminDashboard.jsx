@@ -3,7 +3,8 @@ import { useStore } from '../context/StoreContext';
 import { 
   Package, ShoppingCart, Settings, Plus, Edit2, Trash2, 
   DollarSign, TrendingUp, Phone, BookOpen, X, Upload, Image as ImageIcon, 
-  Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode
+  Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode,
+  Download, Database, ShieldCheck
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 import { uploadToSalonAssets } from '../lib/supabase';
@@ -379,6 +380,64 @@ export const AdminDashboard = () => {
       shippingOptions: updatedShippingOptions
     };
     updateSettings(payload);
+  };
+
+  // LOCAL BACKUP & RESTORE ACTIONS
+  const handleExportBackup = () => {
+    try {
+      const backupData = {
+        exportedAt: new Date().toISOString(),
+        version: '2.5.0',
+        meta: {
+          storeName: settingsForm.storeName || settings.storeName || 'Salón & Estilo',
+          salonAddress: settingsForm.salonAddress || settings.salonAddress || 'Chiclayo, Perú',
+        },
+        settings: settingsForm || settings,
+        products,
+        services,
+        comparisonCases,
+        orders,
+        complaints
+      };
+
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `backup_salon_estilo_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Copia de seguridad descargada exitosamente");
+    } catch (err) {
+      console.error(err);
+      showToast("Error al generar copia de seguridad", "error");
+    }
+  };
+
+  const handleImportBackup = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (parsed.settings) {
+          updateSettings(parsed.settings);
+          setSettingsForm(parsed.settings);
+          showToast("Ajustes restaurados y sincronizados en la nube");
+        } else {
+          showToast("El archivo no contiene un formato de respaldo válido", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error al procesar archivo de respaldo", "error");
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -1698,6 +1757,67 @@ export const AdminDashboard = () => {
                     onChange={(e) => setSettingsForm({ ...settingsForm, culqiPublicKey: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
                   />
+                </div>
+              </div>
+
+              {/* 8. Local Backup & Future Hosting Migration */}
+              <div style={{ borderTop: '1px solid rgba(212, 175, 55, 0.3)', paddingTop: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Database size={16} style={{ color: 'var(--accent-gold)' }} />
+                  <span>8. Copia de Seguridad Local & Migración de Hosting</span>
+                </h4>
+                <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginBottom: '1rem', lineHeight: 1.5 }}>
+                  Guarda un archivo de respaldo instantáneo en tu computadora con todos los ajustes, productos, servicios, casos y órdenes. Así siempre tendrás una copia física de tu información lista para migrar a cualquier hosting de pago propio sin depender de ningún proveedor externo.
+                </p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={handleExportBackup}
+                    className="btn-luxury-outline"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.65rem 1.25rem',
+                      fontSize: '0.82rem',
+                      borderColor: 'var(--accent-gold)',
+                      color: 'var(--accent-gold-light)'
+                    }}
+                  >
+                    <Download size={15} />
+                    <span>Descargar Respaldo Completo (.JSON)</span>
+                  </button>
+
+                  <label
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.65rem 1.25rem',
+                      fontSize: '0.82rem',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#E5E5E5',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <ShieldCheck size={15} style={{ color: '#10B981' }} />
+                    <span>Restaurar desde Archivo (.JSON)</span>
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImportBackup}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                </div>
+
+                <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', background: 'rgba(212, 175, 55, 0.08)', borderRadius: 'var(--radius-xs)', borderLeft: '3px solid var(--accent-gold)' }}>
+                  <span style={{ fontSize: '0.72rem', color: '#D4AF37', display: 'block' }}>
+                    💡 <strong>Archivos en tu repositorio Git:</strong> El esquema SQL de base de datos está guardado en <code style={{ color: '#FFF' }}>database/schema.sql</code> (PostgreSQL) y <code style={{ color: '#FFF' }}>database/schema_mysql.sql</code> (MySQL / cPanel), y puedes generar respaldos automáticos desde terminal ejecutando <code style={{ color: '#FFF' }}>npm run db:backup</code>.
+                  </span>
                 </div>
               </div>
 
