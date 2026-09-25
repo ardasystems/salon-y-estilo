@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { generateReceiptPDF } from '../utils/receiptGenerator';
 import { compressImage } from '../utils/imageCompressor';
+import { uploadToSalonAssets } from '../lib/supabase';
 
 // Helper to safely load persisted checkout data
 const getSavedCheckout = () => {
@@ -137,7 +138,8 @@ export const CheckoutModal = () => {
       const timeCode = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
       const fileName = `COMPROBANTE_${cleanName}${cleanDni}_${timeCode}.jpg`;
 
-      setPaymentProof(compressed);
+      const uploadedUrl = await uploadToSalonAssets(compressed, 'vouchers');
+      setPaymentProof(uploadedUrl || compressed);
       setPaymentProofName(fileName);
       showToast("Constancia de pago cargada con éxito");
     } catch (err) {

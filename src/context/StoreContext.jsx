@@ -1,20 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { INITIAL_PRODUCTS, INITIAL_SERVICES, INITIAL_SETTINGS, INITIAL_ORDERS, INITIAL_COMPARISON_CASES } from '../data/initialData';
+import { supabase } from '../lib/supabase';
 
 const StoreContext = createContext(null);
 
 export const StoreProvider = ({ children }) => {
-  // Products (with version check to ensure fresh curated imagery & keywords)
+  // Products (with version check for fallback)
   const [products, setProducts] = useState(() => {
     try {
-      const version = localStorage.getItem('salonestilo_catalog_v');
-      if (version !== '2.3') {
-        localStorage.setItem('salonestilo_catalog_v', '2.3');
-        localStorage.setItem('salonestilo_products', JSON.stringify(INITIAL_PRODUCTS));
-        localStorage.setItem('salonestilo_services', JSON.stringify(INITIAL_SERVICES));
-        localStorage.setItem('salonestilo_comparison_cases', JSON.stringify(INITIAL_COMPARISON_CASES));
-        return INITIAL_PRODUCTS;
-      }
       const saved = localStorage.getItem('salonestilo_products');
       return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
     } catch {
@@ -25,10 +18,6 @@ export const StoreProvider = ({ children }) => {
   // Services
   const [services, setServices] = useState(() => {
     try {
-      const version = localStorage.getItem('salonestilo_catalog_v');
-      if (version !== '2.3') {
-        return INITIAL_SERVICES;
-      }
       const saved = localStorage.getItem('salonestilo_services');
       return saved ? JSON.parse(saved) : INITIAL_SERVICES;
     } catch {
@@ -39,10 +28,6 @@ export const StoreProvider = ({ children }) => {
   // Interactive Comparison Cases (Antes y Después)
   const [comparisonCases, setComparisonCases] = useState(() => {
     try {
-      const version = localStorage.getItem('salonestilo_catalog_v');
-      if (version !== '2.3') {
-        return INITIAL_COMPARISON_CASES;
-      }
       const saved = localStorage.getItem('salonestilo_comparison_cases');
       return saved ? JSON.parse(saved) : INITIAL_COMPARISON_CASES;
     } catch {
@@ -90,7 +75,7 @@ export const StoreProvider = ({ children }) => {
     }
   });
 
-  // Cart
+  // Cart (Local to user/client session)
   const [cart, setCart] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_cart');
@@ -119,7 +104,7 @@ export const StoreProvider = ({ children }) => {
   });
   const [isLibroOpen, setIsLibroOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
-  const [bookingService, setBookingService] = useState(null); // Service selected for appointment
+  const [bookingService, setBookingService] = useState(null);
   const [isAdminView, setIsAdminView] = useState(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
 
@@ -134,7 +119,15 @@ export const StoreProvider = ({ children }) => {
 
   const [notification, setNotification] = useState(null);
 
-  // Sync with LocalStorage
+  // Toast
+  const showToast = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 2200);
+  };
+
+  // Sync to LocalStorage as instant local cache
   useEffect(() => {
     localStorage.setItem('salonestilo_products', JSON.stringify(products));
   }, [products]);
@@ -163,21 +156,201 @@ export const StoreProvider = ({ children }) => {
     localStorage.setItem('salonestilo_comparison_cases', JSON.stringify(comparisonCases));
   }, [comparisonCases]);
 
+  // ==========================================
+  // SUPABASE: Fetch fresh data on application load
+  // ==========================================
+  useEffect(() => {
+    const fetchCloudData = async () => {
+      try {
+        // 1. Settings
+        const { data: settingsRow, error: sErr } = await supabase
+          .from('store_settings')
+          .select('data')
+          .eq('id', 'current')
+          .maybeSingle();
+
+        if (settingsRow && settingsRow.data && !sErr) {
+          setSettings(prev => ({
+            ...INITIAL_SETTINGS,
+            ...prev,
+            ...settingsRow.data
+          }));
+        }
+
+        // 2. Products
+        const { data: dbProducts, error: pErr } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (dbProducts && dbProducts.length > 0 && !pErr) {
+          const mapped = dbProducts.map(p => ({
+            ...p.data,
+            id: p.id,
+            name: p.name || p.data?.name,
+            category: p.category || p.data?.category,
+            price: p.price !== null ? Number(p.price) : p.data?.price,
+            stock: p.stock !== null ? Number(p.stock) : p.data?.stock,
+          }));
+          setProducts(mapped);
+        }
+
+        // 3. Services
+        const { data: dbServices, error: srvErr } = await supabase
+          .from('services')
+          .select('*')
+          .order('created_at', { ascending: true });
+
+        if (dbServices && dbServices.length > 0 && !srvErr) {
+          const mapped = dbServices.map(s => ({
+            ...s.data,
+            id: s.id,
+            name: s.name || s.data?.name,
+            category: s.category || s.data?.category,
+            price: s.price !== null ? Number(s.price) : s.data?.price,
+          }));
+          setServices(mapped);
+        }
+
+        // 4. Comparison Cases
+        const { data: dbCases, error: cErr } = await supabase
+          .from('comparison_cases')
+          .select('*');
+
+        if (dbCases && dbCases.length > 0 && !cErr) {
+          const mapped = dbCases.map(c => ({
+            ...c.data,
+            id: c.id
+          }));
+          setComparisonCases(mapped);
+        }
+
+        // 5. Orders
+        const { data: dbOrders, error: oErr } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (dbOrders && !oErr) {
+          const mapped = dbOrders.map(o => ({
+            ...o.data,
+            id: o.id,
+            total: o.total !== null ? Number(o.total) : o.data?.total,
+            paymentStatus: o.payment_status || o.data?.paymentStatus,
+            createdAt: o.created_at || o.data?.createdAt
+          }));
+          setOrders(mapped);
+        }
+
+        // 6. Complaints
+        const { data: dbComplaints, error: compErr } = await supabase
+          .from('complaints')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (dbComplaints && !compErr) {
+          const mapped = dbComplaints.map(c => ({
+            ...c.data,
+            id: c.id,
+            correlative: c.correlative || c.data?.correlative,
+            filedAt: c.created_at || c.data?.filedAt
+          }));
+          setComplaints(mapped);
+        }
+
+      } catch (err) {
+        console.warn('Initial cloud sync error (falling back to cache):', err);
+      }
+    };
+
+    fetchCloudData();
+  }, []);
+
+  // ==========================================
+  // SUPABASE: Realtime multi-device synchronization
+  // ==========================================
+  useEffect(() => {
+    const channel = supabase
+      .channel('salon_store_realtime')
+      // Settings change
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, (payload) => {
+        if (payload.new && payload.new.data) {
+          setSettings(prev => ({ ...prev, ...payload.new.data }));
+        }
+      })
+      // Products changes
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const item = { ...payload.new.data, id: payload.new.id };
+          setProducts(prev => [item, ...prev.filter(p => p.id !== item.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          const item = { ...payload.new.data, id: payload.new.id };
+          setProducts(prev => prev.map(p => p.id === item.id ? item : p));
+        } else if (payload.eventType === 'DELETE') {
+          setProducts(prev => prev.filter(p => p.id !== payload.old.id));
+        }
+      })
+      // Services changes
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const item = { ...payload.new.data, id: payload.new.id };
+          setServices(prev => [item, ...prev.filter(s => s.id !== item.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          const item = { ...payload.new.data, id: payload.new.id };
+          setServices(prev => prev.map(s => s.id === item.id ? item : s));
+        } else if (payload.eventType === 'DELETE') {
+          setServices(prev => prev.filter(s => s.id !== payload.old.id));
+        }
+      })
+      // Comparison cases changes
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comparison_cases' }, (payload) => {
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          const item = { ...payload.new.data, id: payload.new.id };
+          setComparisonCases(prev => prev.map(c => c.id === item.id ? item : c));
+        }
+      })
+      // Orders changes
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const item = { ...payload.new.data, id: payload.new.id, paymentStatus: payload.new.payment_status || payload.new.data?.paymentStatus };
+          setOrders(prev => [item, ...prev.filter(o => o.id !== item.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          const item = { ...payload.new.data, id: payload.new.id, paymentStatus: payload.new.payment_status || payload.new.data?.paymentStatus };
+          setOrders(prev => prev.map(o => o.id === item.id ? item : o));
+        } else if (payload.eventType === 'DELETE') {
+          setOrders(prev => prev.filter(o => o.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // ==========================================
   // Comparison Cases CRUD
-  const updateComparisonCase = (id, updatedData) => {
+  // ==========================================
+  const updateComparisonCase = async (id, updatedData) => {
+    const updated = { ...updatedData, id };
     setComparisonCases(prev => prev.map(c => c.id === id ? { ...c, ...updatedData } : c));
     showToast("Caso de Antes & Después actualizado");
+    try {
+      await supabase.from('comparison_cases').upsert({
+        id,
+        title: updated.title,
+        category: updated.serviceCategory,
+        data: updated,
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Error updating comparison case to cloud:", err);
+    }
   };
 
-  // Toast
-  const showToast = (message, type = 'success') => {
-    setNotification({ message, type });
-    setTimeout(() => {
-      setNotification(null);
-    }, 1800);
-  };
-
-  // Cart
+  // ==========================================
+  // Cart (Local Session)
+  // ==========================================
   const addToCart = (product, quantity = 1, shade = null) => {
     setCart(prev => {
       const existingIndex = prev.findIndex(item => item.id === product.id && item.selectedShade === shade?.name);
@@ -223,8 +396,10 @@ export const StoreProvider = ({ children }) => {
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Products CRUD
-  const addProduct = (newProduct) => {
+  // ==========================================
+  // Products CRUD (Synchronized with Supabase)
+  // ==========================================
+  const addProduct = async (newProduct) => {
     const created = {
       ...newProduct,
       id: `prod-${Date.now().toString().slice(-4)}`,
@@ -233,41 +408,107 @@ export const StoreProvider = ({ children }) => {
     };
     setProducts(prev => [created, ...prev]);
     showToast("Producto agregado al catálogo");
+    try {
+      await supabase.from('products').insert({
+        id: created.id,
+        name: created.name,
+        category: created.category,
+        price: created.price,
+        stock: created.stock || 0,
+        data: created,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Error inserting product in Supabase:", err);
+    }
   };
 
-  const updateProduct = (updatedProduct) => {
+  const updateProduct = async (updatedProduct) => {
     setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
     showToast("Producto actualizado");
+    try {
+      await supabase.from('products').upsert({
+        id: updatedProduct.id,
+        name: updatedProduct.name,
+        category: updatedProduct.category,
+        price: updatedProduct.price,
+        stock: updatedProduct.stock || 0,
+        data: updatedProduct,
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Error updating product in Supabase:", err);
+    }
   };
 
-  const deleteProduct = (id) => {
+  const deleteProduct = async (id) => {
     setProducts(prev => prev.filter(p => p.id !== id));
     showToast("Producto eliminado");
+    try {
+      await supabase.from('products').delete().eq('id', id);
+    } catch (err) {
+      console.warn("Error deleting product in Supabase:", err);
+    }
   };
 
-  // Services CRUD
-  const addService = (newService) => {
+  // ==========================================
+  // Services CRUD (Synchronized with Supabase)
+  // ==========================================
+  const addService = async (newService) => {
     const created = {
       ...newService,
       id: `srv-${Date.now().toString().slice(-4)}`
     };
     setServices(prev => [created, ...prev]);
     showToast("Servicio agregado");
+    try {
+      await supabase.from('services').insert({
+        id: created.id,
+        name: created.name,
+        category: created.category,
+        price: created.price || 0,
+        data: created,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Error adding service in Supabase:", err);
+    }
   };
 
-  const updateService = (updatedService) => {
+  const updateService = async (updatedService) => {
     setServices(prev => prev.map(s => s.id === updatedService.id ? updatedService : s));
     showToast("Servicio actualizado");
+    try {
+      await supabase.from('services').upsert({
+        id: updatedService.id,
+        name: updatedService.name,
+        category: updatedService.category,
+        price: updatedService.price || 0,
+        data: updatedService,
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Error updating service in Supabase:", err);
+    }
   };
 
-  const deleteService = (id) => {
+  const deleteService = async (id) => {
     setServices(prev => prev.filter(s => s.id !== id));
     showToast("Servicio eliminado");
+    try {
+      await supabase.from('services').delete().eq('id', id);
+    } catch (err) {
+      console.warn("Error deleting service in Supabase:", err);
+    }
   };
 
-  // Orders CRUD
-  const createOrder = (orderData) => {
-    const originSuffix = orderData.customer.city.toLowerCase().includes("pimentel") ? "PIM" : "CHIC";
+  // ==========================================
+  // Orders CRUD (Synchronized with Supabase)
+  // ==========================================
+  const createOrder = async (orderData) => {
+    const originSuffix = orderData.customer?.city?.toLowerCase().includes("pimentel") ? "PIM" : "CHIC";
     const orderId = `SE-${originSuffix}-${Math.floor(1000 + Math.random() * 9000)}`;
     const fullOrder = {
       ...orderData,
@@ -276,21 +517,54 @@ export const StoreProvider = ({ children }) => {
     };
     setOrders(prev => [fullOrder, ...prev]);
     clearCart();
+
+    try {
+      await supabase.from('orders').insert({
+        id: orderId,
+        customer: fullOrder.customer,
+        items: fullOrder.items,
+        total: fullOrder.total,
+        payment_status: fullOrder.paymentStatus || 'pendiente',
+        data: fullOrder,
+        created_at: fullOrder.createdAt
+      });
+    } catch (err) {
+      console.warn("Error creating order in Supabase:", err);
+    }
+
     return fullOrder;
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentStatus: newStatus } : o));
     showToast(`Estado de orden #${orderId} actualizado`);
+    try {
+      await supabase.from('orders').update({
+        payment_status: newStatus,
+        data: {
+          ...orders.find(o => o.id === orderId),
+          paymentStatus: newStatus
+        }
+      }).eq('id', orderId);
+    } catch (err) {
+      console.warn("Error updating order status in Supabase:", err);
+    }
   };
 
-  const resetMetrics = () => {
+  const resetMetrics = async () => {
     setOrders([]);
-    showToast("Indicadores de ventas y pedidos restablecidos a cero");
+    showToast("Indicadores de ventas y pedidos restablecidos");
+    try {
+      await supabase.from('orders').delete().neq('id', 'placeholder_keep_empty');
+    } catch (err) {
+      console.warn("Error resetting orders in Supabase:", err);
+    }
   };
 
-  // Complaints
-  const submitComplaint = (complaintData) => {
+  // ==========================================
+  // Complaints (Libro de Reclamaciones)
+  // ==========================================
+  const submitComplaint = async (complaintData) => {
     const correlative = `LRV-2026-${String(complaints.length + 1).padStart(4, '0')}`;
     const record = {
       ...complaintData,
@@ -299,16 +573,45 @@ export const StoreProvider = ({ children }) => {
       status: "Recibido"
     };
     setComplaints(prev => [record, ...prev]);
+    try {
+      await supabase.from('complaints').insert({
+        id: correlative,
+        correlative,
+        data: record,
+        created_at: record.filedAt
+      });
+    } catch (err) {
+      console.warn("Error saving complaint to Supabase:", err);
+    }
     return record;
   };
 
-  // Settings
-  const updateSettings = (newSettings) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-    showToast("Ajustes actualizados");
+  // ==========================================
+  // Settings (Synchronized with Supabase)
+  // ==========================================
+  const updateSettings = async (newSettings) => {
+    const merged = { ...settings, ...newSettings };
+    setSettings(merged);
+    showToast("Guardando ajustes en la nube...");
+
+    try {
+      const { error } = await supabase.from('store_settings').upsert({
+        id: 'current',
+        data: merged,
+        updated_at: new Date().toISOString()
+      });
+
+      if (error) {
+        throw error;
+      }
+      showToast("Ajustes sincronizados en todos los dispositivos");
+    } catch (err) {
+      console.error("Error saving settings to Supabase:", err);
+      showToast("Ajustes guardados localmente", "warning");
+    }
   };
 
-  // Filtered & Sorted Products (Matches name, subtitle, description, category AND keywords array)
+  // Filtered & Sorted Products
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
     const query = searchQuery.toLowerCase().trim();

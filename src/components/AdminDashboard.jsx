@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { 
   Package, ShoppingCart, Settings, Plus, Edit2, Trash2, 
@@ -6,6 +6,7 @@ import {
   Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
+import { uploadToSalonAssets } from '../lib/supabase';
 
 export const AdminDashboard = () => {
   const {
@@ -83,16 +84,24 @@ export const AdminDashboard = () => {
   const [settingsForm, setSettingsForm] = useState(settings);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Compression Handlers (Protects LocalStorage & Server bandwidth)
+  // Sync form when settings change from Supabase or another device
+  useEffect(() => {
+    if (settings) {
+      setSettingsForm(settings);
+    }
+  }, [settings]);
+
+  // Compression & Storage Handlers (Persists to Supabase Storage with base64 fallback)
   const handleProductImageUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
       try {
         const compressed = await compressImage(file, 900, 900, 0.8);
-        setProductForm(prev => ({ ...prev, imageUrl: compressed }));
-        showToast("Imagen de producto comprimida y cargada con éxito");
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'products');
+        setProductForm(prev => ({ ...prev, imageUrl: uploadedUrl || compressed }));
+        showToast("Imagen de producto cargada con éxito");
       } catch (err) {
-        showToast("Error al comprimir imagen", "error");
+        showToast("Error al procesar imagen de producto", "error");
       }
     }
   };
@@ -102,10 +111,11 @@ export const AdminDashboard = () => {
     if (file) {
       try {
         const compressed = await compressImage(file, 900, 900, 0.8);
-        setServiceForm(prev => ({ ...prev, image: compressed }));
-        showToast("Imagen de servicio comprimida y cargada con éxito");
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'services');
+        setServiceForm(prev => ({ ...prev, image: uploadedUrl || compressed }));
+        showToast("Imagen de servicio cargada con éxito");
       } catch (err) {
-        showToast("Error al comprimir imagen", "error");
+        showToast("Error al procesar imagen de servicio", "error");
       }
     }
   };
@@ -114,11 +124,14 @@ export const AdminDashboard = () => {
     const file = e.target.files && e.target.files[0];
     if (file) {
       try {
+        showToast("Subiendo logotipo a la nube...", "info");
         const compressed = await compressImage(file, 400, 400, 0.85);
-        setSettingsForm(prev => ({ ...prev, logoUrl: compressed }));
-        showToast("Logotipo comprimido listo para guardar");
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'logos');
+        setSettingsForm(prev => ({ ...prev, logoUrl: uploadedUrl || compressed }));
+        showToast("Logotipo listo. Haz clic en 'Guardar Cambios' para sincronizar con todos los dispositivos");
       } catch (err) {
-        showToast("Error al comprimir logotipo", "error");
+        console.error(err);
+        showToast("Error al procesar logotipo", "error");
       }
     }
   };
@@ -128,10 +141,11 @@ export const AdminDashboard = () => {
     if (file) {
       try {
         const compressed = await compressImage(file, 600, 600, 0.85);
-        setSettingsForm(prev => ({ ...prev, yapeQrImage: compressed }));
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'qr');
+        setSettingsForm(prev => ({ ...prev, yapeQrImage: uploadedUrl || compressed }));
         showToast("Código QR de Yape cargado con éxito");
       } catch (err) {
-        showToast("Error al comprimir QR de Yape", "error");
+        showToast("Error al procesar QR de Yape", "error");
       }
     }
   };
@@ -141,10 +155,11 @@ export const AdminDashboard = () => {
     if (file) {
       try {
         const compressed = await compressImage(file, 600, 600, 0.85);
-        setSettingsForm(prev => ({ ...prev, plinQrImage: compressed }));
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'qr');
+        setSettingsForm(prev => ({ ...prev, plinQrImage: uploadedUrl || compressed }));
         showToast("Código QR de Plin cargado con éxito");
       } catch (err) {
-        showToast("Error al comprimir QR de Plin", "error");
+        showToast("Error al procesar QR de Plin", "error");
       }
     }
   };
@@ -154,10 +169,11 @@ export const AdminDashboard = () => {
     if (file) {
       try {
         const compressed = await compressImage(file, 1000, 1000, 0.82);
-        setComparisonForm(prev => ({ ...prev, beforeImage: compressed }));
-        showToast("Foto 'Antes' comprimida y cargada con éxito");
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'comparisons');
+        setComparisonForm(prev => ({ ...prev, beforeImage: uploadedUrl || compressed }));
+        showToast("Foto 'Antes' cargada con éxito");
       } catch (err) {
-        showToast("Error al comprimir imagen", "error");
+        showToast("Error al procesar imagen", "error");
       }
     }
   };
@@ -167,10 +183,11 @@ export const AdminDashboard = () => {
     if (file) {
       try {
         const compressed = await compressImage(file, 1000, 1000, 0.82);
-        setComparisonForm(prev => ({ ...prev, afterImage: compressed }));
-        showToast("Foto 'Después' comprimida y cargada con éxito");
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'comparisons');
+        setComparisonForm(prev => ({ ...prev, afterImage: uploadedUrl || compressed }));
+        showToast("Foto 'Después' cargada con éxito");
       } catch (err) {
-        showToast("Error al comprimir imagen", "error");
+        showToast("Error al procesar imagen", "error");
       }
     }
   };
