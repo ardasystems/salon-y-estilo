@@ -99,3 +99,20 @@ El mayor multiplicador de rentabilidad es la venta cruzada:
 2. **Configuración de Datos Bancarios:** Cargar el QR actualizado de Yape y Plin en los Ajustes del sistema.
 3. **Lanzamiento de Campaña Digital:** Publicar en redes sociales el nuevo sitio web promoviendo el catálogo de cosméticos con opción de recojo gratuito en el salón.
 4. **Capacitación del Personal:** Instruir al equipo de recepción para validar en segundos los comprobantes adjuntados que llegan desde la web antes de despachar cada paquete.
+
+---
+
+## 8. Soberanía de Datos, Continuidad Operativa y Migración a Hosting Propio
+
+### 8.1. Estrategia de Costo Cero en Fase de Validación
+En la etapa inicial de lanzamiento y pruebas con el personal (QA), la plataforma opera con **costo mensual de infraestructura de S/ 0.00**, apalancándose en los niveles gratuitos de alta velocidad de Vercel (Edge CDN) y Supabase (PostgreSQL Cloud).
+
+### 8.2. Soberanía Absoluta y Protección de Activos Comerciales
+Para proteger a la marca contra cualquier dependencia de proveedores o pérdida de información:
+1. **Propiedad Total de la Información:** El catálogo de cosméticos, precios, base de clientes, historial de pedidos y configuraciones estéticas no están atrapados en plataformas cerradas (como Shopify o Wix).
+2. **Respaldos Físicos Locales:**
+   - La estructura completa de base de datos está guardada en el repositorio local en formatos universales: `database/schema.sql` (PostgreSQL) y `database/schema_mysql.sql` (MySQL / MariaDB / cPanel).
+   - El administrador puede descargar en cualquier momento una copia de seguridad física en JSON haciendo un solo clic desde el panel de ajustes web o ejecutando `npm run db:backup`.
+3. **Transición sin Fricciones a Hosting Comercial:**
+   - Cuando el negocio decida contratar un hosting comercial propio (cPanel, Hostinger, VPS propio, etc.), el cambio se realiza en menos de 30 minutos sin tener que rediseñar la web ni reprogramar las funciones de venta.
+   - Todo el procedimiento técnico está estandarizado en la [Guía de Respaldo y Migración a Hosting Propio](GUIA_MIGRACION_HOSTING_FUTURO.md).

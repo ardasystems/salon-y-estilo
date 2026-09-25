@@ -158,6 +158,35 @@ Para asegurar que los builds en Vercel tomen las variables de entorno:
 ---
 
 ## 7. Plan de Migración Futura a Hosting Propio
-Cuando a futuro se adquiera un hosting cPanel, VPS o servidor propio con base de datos MySQL o PostgreSQL:
-1. **Estructura Compatible:** Las tablas de Supabase utilizan campos estándar SQL relacionales (`id`, `name`, `category`, `price`, `data`). Exportar los datos requiere únicamente un comando `pg_dump` o exportación JSON desde Supabase Studio.
-2. **Capa de Abstracción:** Todo el acceso a datos se encuentra encapsulado en `src/context/StoreContext.jsx` y `src/lib/supabase.js`. Para migrar a una API propia en PHP, Node.js (Express/Fastify) o Python (FastAPI), solo será necesario cambiar las llamadas en `StoreContext.jsx` por `fetch('/api/...')` hacia el nuevo servidor.
+Para garantizar que el negocio no tenga dependencia cautiva (*vendor lock-in*) con Supabase ni Vercel:
+1. **Esquemas SQL Nativos Guardados en el Repositorio:**
+   * `database/schema.sql`: Definición DDL completa para PostgreSQL 15 / Supabase.
+   * `database/schema_mysql.sql`: Definición DDL completa para MySQL 5.7/8.0 y MariaDB (compatible directamente con phpMyAdmin y cualquier hosting cPanel como Hostinger, Banahosting o SiteGround).
+2. **Capa de Abstracción en Código:** Todo el acceso a datos se encuentra centralizado en `src/context/StoreContext.jsx` y `src/lib/supabase.js`. Para migrar a una API propia en PHP, Node.js (Express/Fastify) o Python (FastAPI), solo será necesario cambiar las llamadas en `StoreContext.jsx` hacia los nuevos endpoints del servidor.
+3. **Guía Oficial de Migración:** Los pasos detallados de importación, configuración de base de datos y subida a cPanel están documentados en [GUIA_MIGRACION_HOSTING_FUTURO.md](GUIA_MIGRACION_HOSTING_FUTURO.md).
+
+---
+
+## 8. Herramientas de Respaldo Local (Backups Automáticos y Manuales)
+
+### 8.1. Respaldo Automático por CLI (Línea de Comandos)
+Se han integrado comandos de Node.js en `package.json` para descargar y restaurar copias de seguridad de la base de datos completa:
+* **Exportar Copia de Seguridad:**
+  ```bash
+  npm run db:backup
+  ```
+  Conecta con Supabase y genera automáticamente:
+  * `database/backups/latest_backup.json` (Datos en formato JSON estructurado)
+  * `database/backups/latest_backup.sql` (Sentencias SQL INSERT listas para ejecutar)
+  * `database/backups/backup_[TIMESTAMP].json` (Histórico de respaldo con fecha y hora)
+
+* **Restaurar Copia de Seguridad:**
+  ```bash
+  npm run db:restore
+  ```
+  Restaura los datos del respaldo local hacia la base de datos activa.
+
+### 8.2. Respaldo en 1 Clic desde el Panel de Administración Web
+En el panel de control administrativo (`AdminDashboard.jsx`), pestaña **Ajustes**, sección **"8. Copia de Seguridad Local & Migración de Hosting"**:
+* **Botón "Descargar Respaldo Completo (.JSON)":** Permite al administrador descargar una copia de seguridad física a su computadora con toda la configuración, catálogo de productos, servicios, precios, fotos y pedidos.
+* **Botón "Restaurar desde Archivo (.JSON)":** Permite importar una copia previa en caso de contingencia o cambio de servidor.
