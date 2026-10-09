@@ -291,7 +291,7 @@ export async function createPreferenceHandler({
 
   // Solo agregar notification_url si es un dominio público HTTPS (Trampa 6)
   if (!isLocalhost) {
-    preferenceData.notification_url = `${cleanSiteUrl}/api/payments/mercadopago/webhook`;
+    preferenceData.notification_url = `${safeBaseUrl}/api/payments/mercadopago/webhook`;
   }
 
   const response = await preference.create({ body: preferenceData });

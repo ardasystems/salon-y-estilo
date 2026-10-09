@@ -962,18 +962,6 @@ export const CheckoutModal = () => {
                   </div>
                 </div>
 
-                <div style={{
-                  padding: '0.75rem 0.9rem',
-                  background: 'rgba(212, 175, 55, 0.08)',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  fontSize: '0.74rem',
-                  color: '#D4D4D4',
-                  lineHeight: 1.45,
-                  marginBottom: '1rem'
-                }}>
-                  ✨ <strong>Acreditación Automática:</strong> Al hacer clic en <em>Continuar al Pago Seguro</em>, se abrirá la pasarela segura donde eliges cómo pagar (Yape, Tarjeta o Efectivo). No necesitas subir comprobantes ni esperar verificaciones manuales.
-                </div>
 
                 {/* Error Banner */}
                 {paymentError && (
