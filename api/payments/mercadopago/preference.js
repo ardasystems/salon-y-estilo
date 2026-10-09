@@ -30,8 +30,9 @@ export default async function handler(req, res) {
     }
 
     // Determine siteUrl from request headers or env
-    const proto = req.headers["x-forwarded-proto"] || "https";
-    const host = req.headers["x-forwarded-host"] || req.headers.host;
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+    const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+    const proto = req.headers["x-forwarded-proto"] || (isLocal ? "http" : "https");
     const computedSiteUrl = host ? `${proto}://${host}` : null;
 
     const result = await createPreferenceHandler({

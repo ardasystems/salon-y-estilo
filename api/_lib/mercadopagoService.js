@@ -94,24 +94,26 @@ export async function markPaymentApprovedIdempotent({
       if (!txErr) {
         existingTx = data;
         if (!existingTx) {
-          await supabase.from("payment_transactions").insert({
+          const { error: insErr } = await supabase.from("payment_transactions").insert({
             id: String(paymentId),
             order_id: orderId || null,
             user_id: payerEmail || null,
             provider: "mercadopago",
-            plan_id: "salon_order",
             amount: Number(amount) || 0,
             currency: currency || "PEN",
             status: status,
             status_detail: statusDetail,
             external_reference: typeof externalReference === "object" ? JSON.stringify(externalReference) : String(externalReference),
-            created_at: new Date().toISOString(),
-            activated_at: new Date().toISOString()
+            payer_email: payerEmail || null,
+            created_at: new Date().toISOString()
           });
+          if (insErr) {
+            console.error("Error al registrar transacción en payment_transactions:", insErr.message);
+          }
         }
       }
     } catch (txEx) {
-      console.warn("payment_transactions no disponible o en proceso de creación:", txEx.message);
+      console.warn("payment_transactions no disponible o error:", txEx.message);
     }
 
     // 2. Si hay un orderId asociado, actualizar la orden a 'pagado' en public.orders
@@ -203,9 +205,10 @@ export async function createPreferenceHandler({
     });
   }
 
-  // Base URL segura para retorno
-  const cleanSiteUrl = (siteUrl || process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://salon-y-estilo.vercel.app").replace(/\/$/, "");
-  const isLocalhost = cleanSiteUrl.includes("localhost") || cleanSiteUrl.includes("127.0.0.1");
+  // Base URL segura para retorno (Mercado Pago requiere HTTPS en back_urls con auto_return)
+  const publicFallback = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://salonyestilo.com").replace(/\/$/, "");
+  const isLocalhost = !siteUrl || siteUrl.includes("localhost") || siteUrl.includes("127.0.0.1");
+  const safeBaseUrl = isLocalhost ? publicFallback : siteUrl.replace(/\/$/, "");
 
   // Metadata y external_reference
   const externalRefObj = {
@@ -226,37 +229,48 @@ export async function createPreferenceHandler({
     preferencePaymentMethods.default_payment_method_id = 'yape';
   }
 
-  // Regla de Oro de Sandbox (Trampa 2 de la guía):
-  // En pruebas NO enviar payer.email para evitar el Error 145 / PA_UNAUTHORIZED_RESULT_FROM_POLICIES
-  // En producción solo enviarlo si no coincide con la cuenta recaudadora (Trampa 3)
-  const isSandbox = (process.env.MERCADOPAGO_ENVIRONMENT || 'sandbox') === 'sandbox' || (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-');
+  // Regla de Oro de Sandbox (Trampa 2 de la GUIA_INTEGRACION_MERCADOPAGO_AI.md):
+  // En modo de prueba o desarrollo, OMITE COMPLETAMENTE el campo payer (no enviar payer.email).
+  // Esto evita el choque de entidades ("Una de las partes con la que intentas hacer el pago es de prueba")
+  // y permite abrir directamente en ventana de incógnito sin pedir login, ingresando la tarjeta oficial de prueba 4242 4242 4242 4242.
+  const envMode = (process.env.MERCADOPAGO_ENVIRONMENT || process.env.PAYMENT_MODE || 'sandbox').toLowerCase();
+  const isTestToken = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-');
+  const isDevOrTest = isLocalhost || envMode !== 'production' || isTestToken || process.env.NODE_ENV !== 'production';
+
   const collectorEmail = (process.env.COLLECTOR_EMAIL || 'arda.systems.iot@gmail.com').toLowerCase();
   const customerEmail = (customer?.email || '').trim().toLowerCase();
   const isCollector = customerEmail === collectorEmail;
 
+  const metadataObj = {
+    order_id: orderId,
+    customer_phone: customer.phone,
+    total_amount: totalAmount,
+    chosen_payment_option: paymentOption
+  };
+
+  // Solo incluir customer_email en metadata si no es entorno de pruebas/desarrollo
+  if (!isDevOrTest && customer.email) {
+    metadataObj.customer_email = customer.email;
+  }
+
   const preferenceData = {
     items: preferenceItems,
     back_urls: {
-      success: `${cleanSiteUrl}/?payment=success&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`,
-      pending: `${cleanSiteUrl}/?payment=pending&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`,
-      failure: `${cleanSiteUrl}/?payment=failure&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`
+      success: `${safeBaseUrl}/?payment=success&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`,
+      pending: `${safeBaseUrl}/?payment=pending&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`,
+      failure: `${safeBaseUrl}/?payment=failure&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`
     },
     auto_return: "approved",
     binary_mode: false,
     statement_descriptor: "SALONESTILO", // Máx 11 caracteres en el resumen bancario
     external_reference: JSON.stringify(externalRefObj),
-    metadata: {
-      order_id: orderId,
-      customer_email: customer.email,
-      customer_phone: customer.phone,
-      total_amount: totalAmount,
-      chosen_payment_option: paymentOption
-    },
+    metadata: metadataObj,
     payment_methods: preferencePaymentMethods
   };
 
-  // Solo enviar payer en producción si no es el recolector (Trampa 2 y 3)
-  if (!isSandbox && customer.email && !isCollector) {
+  // En modo prueba / desarrollo: OMITIR COMPLETAMENTE el objeto payer (no enviar payer ni payer.email).
+  // En producción estricta: solo enviar payer si no coincide con la cuenta recaudadora (Trampas 2 y 3).
+  if (!isDevOrTest && customer.email && !isCollector) {
     preferenceData.payer = {
       name: firstName,
       surname: lastName,
@@ -292,7 +306,7 @@ export async function createPreferenceHandler({
     initPoint: response.init_point,
     sandboxInitPoint: response.sandbox_init_point,
     redirectUrl: safeRedirectUrl,
-    environment: isSandbox ? 'sandbox' : 'production'
+    environment: isDevOrTest ? 'sandbox' : 'production'
   };
 }
 

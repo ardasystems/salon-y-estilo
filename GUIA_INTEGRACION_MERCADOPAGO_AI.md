@@ -89,15 +89,39 @@ Estos son los 10 errores que cometen casi todas las IAs y desarrolladores al int
   const redirectUrl = response.init_point || response.sandbox_init_point;
   ```
 
-### 2. El Error 145 de Sandbox: "Una de las partes es de prueba" (`PA_UNAUTHORIZED_RESULT_FROM_POLICIES`)
-* **Síntoma:** Error 400/401 al crear la preferencia o al abrir el checkout en pruebas.
-* **Causa Raíz:** Enviar un `payer.email` real (registrado en Mercado Libre/Mercado Pago producción) cuando el Access Token es de prueba (`TEST-`), o viceversa. Mercado Pago detecta discrepancia de entornos.
-* **Solución Comprobada:** En Sandbox, **omite el objeto `payer`** en la preferencia o usa un email generado como *Test User* en el dashboard de desarrolladores. Solo envía `payer.email` en producción:
-  ```typescript
-  if (!isSandbox && userEmail && !isCollectorEmail) {
-    preferencePayload.payer = { email: userEmail };
+### 2. El Error: "Una de las partes con la que intentas hacer el pago es de prueba"
+* **Pantalla del Error:** Una pantalla blanca con un avatar gris con una "X" que dice: *"Algo salió mal... Una de las partes con la que intentas hacer el pago es de prueba"*.
+* **La Falsa Creencia de muchas IAs:**
+  Muchas IAs afirman erróneamente: *"El token está mal porque empieza con `APP_USR-` en vez de `TEST-`. Mercado Pago exige obligatoriamente un token `TEST-` para pruebas"*.
+  **ESTO ES FALSO.** En Mercado Pago (especialmente en Perú `mercadopago.com.pe` y cuentas unificadas con Mercado Libre), las credenciales de prueba también pueden tener prefijo `APP_USR-` (ejemplo real de este proyecto en `.env.local`: `MERCADOPAGO_TEST_ACCESS_TOKEN=APP_USR-1919472277444175-...`).
+* **La Verdadera Causa Raíz:**
+  El error **NADA TIENE QUE VER CON EL PREFIJO DEL TOKEN**. 
+  Ocurre porque el backend está enviando el correo real del cliente (`payer: { email: "correo_real@gmail.com" }`) dentro de la preferencia:
+  ```javascript
+  // ❌ ESTO PROVOCA EL ERROR:
+  body: {
+    items: [...],
+    payer: { email: "miluskavidaurre@gmail.com" } // Correo real o no registrado como Test User
   }
   ```
+  Al abrir el enlace en el navegador (incluso en Incógnito), Mercado Pago compara los dos extremos de la transacción:
+  1. **Parte 1 (Vendedor / Aplicación):** Es una aplicación en modo Sandbox / Pruebas.
+  2. **Parte 2 (Comprador `payer.email`):** Es un correo de producción real de Google/Mercado Libre.
+  -> **Mercado Pago detecta choque de entornos (un extremo es de prueba y el otro es real)** y bloquea la pantalla con: *"Una de las partes con la que intentas hacer el pago es de prueba"*.
+* **La Solución Inmediata en el Código:**
+  En fase de desarrollo o pruebas, **OMITE COMPLETAMENTE EL OBJETO `payer` O EL CAMPO `payer.email`** de la creación de la preferencia:
+  ```javascript
+  // ✅ SOLUCIÓN EN EL BACKEND (mercadopagoService.js):
+  const preferencePayload = {
+    items: [...],
+    back_urls: { ... },
+    auto_return: "approved",
+    statement_descriptor: "MITIENDA"
+    // ⚠️ NO INCLUIR payer: { email: ... } durante pruebas
+  };
+  ```
+  Al no enviar `payer.email`, Mercado Pago no intenta asociar la compra a ningún usuario real: la ventana de Incógnito se abrirá **de inmediato y sin errores**, permitiendo seleccionar tarjeta de crédito y pagar con la tarjeta de prueba oficial `4242 4242 4242 4242`.
+  *(En producción, solo se envía `payer.email` cuando la cuenta de Mercado Pago ya ha sido activada/homologada y el correo no sea el del propio vendedor).*
 
 ### 3. El Error de Autofinanciamiento / Collector = Payer
 * **Síntoma:** El pago se rechaza de inmediato con el mensaje `cc_rejected_call_for_authorize` o rechazo genérico sin explicación.
