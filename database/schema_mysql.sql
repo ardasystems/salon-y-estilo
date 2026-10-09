@@ -79,4 +79,25 @@ CREATE TABLE IF NOT EXISTS `complaints` (
   UNIQUE KEY `idx_correlative` (`correlative`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 7. TABLA: TRANSACCIONES Y CONCILIACIÓN DE MERCADO PAGO
+CREATE TABLE IF NOT EXISTS `payment_transactions` (
+  `id` VARCHAR(100) NOT NULL,
+  `order_id` VARCHAR(50) DEFAULT NULL,
+  `user_id` VARCHAR(255) DEFAULT NULL,
+  `provider` VARCHAR(50) NOT NULL DEFAULT 'mercadopago',
+  `plan_id` VARCHAR(100) DEFAULT 'salon_order',
+  `amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  `currency` VARCHAR(10) NOT NULL DEFAULT 'PEN',
+  `status` VARCHAR(50) NOT NULL,
+  `status_detail` VARCHAR(100) DEFAULT NULL,
+  `external_reference` TEXT DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `activated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_payment_provider_id` (`provider`, `id`),
+  INDEX `idx_mp_order` (`order_id`),
+  INDEX `idx_mp_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
+

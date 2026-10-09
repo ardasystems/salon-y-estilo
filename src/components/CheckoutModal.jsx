@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti';
 import { 
   X, CheckCircle, ArrowRight, ShieldCheck, Copy, 
   QrCode, ExternalLink, Printer, Check, Zap, Truck, Store, Download, MapPin,
-  Camera, UploadCloud, FileText, MessageCircle, AlertCircle
+  Camera, UploadCloud, FileText, MessageCircle, AlertCircle, CreditCard
 } from 'lucide-react';
 import { generateReceiptPDF } from '../utils/receiptGenerator';
 import { compressImage } from '../utils/imageCompressor';
@@ -57,16 +57,10 @@ export const CheckoutModal = () => {
     return settings.shippingOptions[0];
   });
 
-  const [paymentMethod, setPaymentMethod] = useState(() => savedCheckout?.paymentMethod || 'yape_direct');
-  const [culqiSubMethod, setCulqiSubMethod] = useState('card');
-  const [cardData, setCardData] = useState({
-    number: '',
-    holder: '',
-    exp: '',
-    cvv: ''
-  });
-  const [yapeOtp, setYapeOtp] = useState('');
-  const [isProcessingCulqi, setIsProcessingCulqi] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(() => savedCheckout?.paymentMethod || 'mercadopago');
+  const [isProcessingMP, setIsProcessingMP] = useState(false);
+  const [mpError, setMpError] = useState(null);
+  const [isVerifyingReturn, setIsVerifyingReturn] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
 
   // Voucher / Payment Proof Upload State
@@ -92,6 +86,79 @@ export const CheckoutModal = () => {
       }));
     }
   }, [isCheckoutOpen, step, completedOrder, customer, selectedShipping, paymentMethod, paymentProof, paymentProofName, receiptDownloaded]);
+
+  // Handle Return from Mercado Pago (Synchronous Redirect UX)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const paymentStatus = params.get('payment');
+      const provider = params.get('provider');
+      const paymentId = params.get('payment_id') || params.get('data.id') || params.get('id');
+      const orderId = params.get('order_id') || params.get('external_reference');
+
+      if (provider === 'mercadopago' && paymentStatus) {
+        setIsCheckoutOpen(true);
+
+        if (paymentStatus === 'success') {
+          setStep('success');
+          triggerConfetti();
+
+          const saved = getSavedCheckout();
+          let targetOrder = saved?.completedOrder || (orderId ? {
+            id: orderId,
+            customer: saved?.customer || customer,
+            items: cart,
+            subtotal: cartSubtotal,
+            shippingMethod: selectedShipping,
+            total: orderTotal,
+            paymentMethod: 'mercadopago',
+            createdAt: new Date().toISOString()
+          } : null);
+
+          if (targetOrder) {
+            targetOrder.paymentStatus = 'pagado';
+            targetOrder.mercadopagoPaymentId = paymentId;
+            setCompletedOrder({ ...targetOrder });
+          }
+
+          // Consultar endpoint de verificación inmediata
+          if (paymentId) {
+            setIsVerifyingReturn(true);
+            fetch('/api/payments/mercadopago/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ paymentId, orderId: orderId || targetOrder?.id })
+            })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  showToast("¡Pago acreditado con éxito por Mercado Pago!");
+                  if (targetOrder) {
+                    targetOrder.paymentStatus = 'pagado';
+                    targetOrder.mercadopagoPaymentId = paymentId;
+                    setCompletedOrder({ ...targetOrder });
+                  }
+                }
+              })
+              .catch(err => console.error("Error verificando retorno MP:", err))
+              .finally(() => setIsVerifyingReturn(false));
+          }
+
+          // Limpiar parámetros de la URL para evitar reprocesamientos si se recarga la página
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (paymentStatus === 'failure') {
+          showToast("El pago no pudo procesarse en Mercado Pago", "error");
+          setMpError("El pago fue cancelado o rechazado por tu banco. Puedes intentar con otra tarjeta o elegir Yape/Plin.");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (paymentStatus === 'pending') {
+          showToast("Tu pago en Mercado Pago está en proceso de validación bancaria", "info");
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    } catch (e) {
+      console.error("Error procesando retorno de pasarela:", e);
+    }
+  }, []);
 
   if (!isCheckoutOpen) return null;
 
@@ -272,56 +339,97 @@ export const CheckoutModal = () => {
     showToast("¡Pedido registrado! Descarga tu recibo o envíalo a WhatsApp.");
   };
 
-  const handleCulqiSubmit = () => {
-    if (!customer.name || !customer.dni || !customer.phone) {
-      alert("Por favor completa tus datos personales.");
+  // Mercado Pago Checkout Pro Submit Handler
+  const handleMercadoPagoSubmit = async () => {
+    if (!customer.name || !customer.phone) {
+      alert("Por favor completa tu nombre y número de celular para registrar tu compra.");
       return;
     }
 
-    if (culqiSubMethod === 'card' && (!cardData.number || !cardData.cvv || !cardData.exp)) {
-      alert("Por favor completa los datos de tu tarjeta.");
+    if (!customer.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
+      alert("Por favor ingresa un correo electrónico válido para recibir tu recibo oficial de Mercado Pago.");
       return;
     }
 
-    if (culqiSubMethod === 'yape_otp' && yapeOtp.length < 6) {
-      alert("Ingresa el código OTP de 6 dígitos de Yape.");
+    if (!isPickup && (!customer.address || !customer.city)) {
+      alert("Por favor ingresa tu ciudad y dirección de entrega.");
       return;
     }
 
-    setIsProcessingCulqi(true);
+    if (cart.length === 0) {
+      alert("Tu carrito de compras está vacío.");
+      return;
+    }
 
-    setTimeout(() => {
-      setIsProcessingCulqi(false);
+    setIsProcessingMP(true);
+    setMpError(null);
+
+    try {
+      // 1. Registrar la orden preliminar en el estado y Supabase
       const orderData = {
         customer,
         items: cart,
         subtotal: cartSubtotal,
         shippingMethod: selectedShipping,
         total: orderTotal,
-        paymentMethod: culqiSubMethod === 'card' ? 'culqi_card' : 'culqi_yape',
-        paymentStatus: 'pagado',
-        culqiTransactionId: `CULQI-TXN-${Date.now().toString().slice(-6)}`,
-        paymentProof: paymentProof || null,
-        paymentProofName: paymentProofName || null
+        paymentMethod: 'mercadopago',
+        paymentStatus: 'pendiente_pago',
+        paymentProof: null,
+        paymentProofName: null
       };
 
-      const newOrder = createOrder(orderData);
+      const newOrder = await createOrder(orderData);
       setCompletedOrder(newOrder);
-      setStep('success');
-      triggerConfetti();
 
+      // Guardar respaldo local antes de salir a Mercado Pago
       localStorage.setItem('salonestilo_active_checkout', JSON.stringify({
         isOpen: true,
         step: 'success',
         completedOrder: newOrder,
         customer,
         selectedShipping,
-        paymentMethod: 'culqi',
-        paymentProof: paymentProof || null,
-        paymentProofName: paymentProofName || null,
-        receiptDownloaded
+        paymentMethod: 'mercadopago',
+        paymentProof: null,
+        paymentProofName: null,
+        receiptDownloaded: false
       }));
-    }, 1800);
+
+      // 2. Solicitar creación de preferencia al backend oficial
+      const response = await fetch('/api/payments/mercadopago/preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: newOrder.id,
+          items: cart,
+          shippingMethod: selectedShipping,
+          customer,
+          orderTotal
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "No se pudo conectar con Mercado Pago. Verifica tus credenciales.");
+      }
+
+      // 3. Determinar URL de redirección (Sandbox o Producción)
+      const redirectUrl = data.redirectUrl || data.sandboxInitPoint || data.initPoint;
+
+
+      if (!redirectUrl) {
+        throw new Error("No se recibió la URL de pago de Mercado Pago");
+      }
+
+      // 4. Redirección suave al Checkout Pro oficial
+      window.location.href = redirectUrl;
+    } catch (err) {
+      console.error("Error iniciando Checkout Pro:", err);
+      const msg = err.message || "Error al conectar con la pasarela Mercado Pago.";
+      setMpError(msg);
+      showToast(msg, "error");
+      setIsProcessingMP(false);
+    }
   };
 
   const handleRequestClose = () => {
@@ -531,6 +639,19 @@ export const CheckoutModal = () => {
                       </div>
                     </div>
 
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Correo Electrónico * (Para recibo de Mercado Pago y confirmación)
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="tu-correo@ejemplo.com"
+                        value={customer.email || ''}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem' }}
+                      />
+                    </div>
+
                     {/*
                       ===========================================================
                       OPCIÓN DE COMPROBANTE DE PAGO (BOLETA / FACTURA ELECTRÓNICA)
@@ -724,18 +845,18 @@ export const CheckoutModal = () => {
                   </button>
 
                   <button
-                    onClick={() => setPaymentMethod('culqi')}
+                    onClick={() => setPaymentMethod('mercadopago')}
                     style={{
                       padding: '0.55rem',
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.78rem',
-                      fontWeight: 700,
-                      background: paymentMethod === 'culqi' ? 'var(--accent-gold)' : 'transparent',
-                      color: paymentMethod === 'culqi' ? '#0D0A09' : 'var(--text-muted)',
-                      boxShadow: paymentMethod === 'culqi' ? '0 0 15px rgba(212, 175, 55, 0.4)' : 'none'
+                      fontWeight: 800,
+                      background: paymentMethod === 'mercadopago' ? 'linear-gradient(135deg, #009EE3 0%, #0077B6 100%)' : 'transparent',
+                      color: paymentMethod === 'mercadopago' ? '#FFFFFF' : 'var(--text-muted)',
+                      boxShadow: paymentMethod === 'mercadopago' ? '0 0 15px rgba(0, 158, 227, 0.45)' : 'none'
                     }}
                   >
-                    TARJETA
+                    MERCADO PAGO
                   </button>
                 </div>
 
@@ -916,117 +1037,56 @@ export const CheckoutModal = () => {
                   </div>
                 )}
 
-                {/* CULQI */}
-                {paymentMethod === 'culqi' && (
+                {/* MERCADO PAGO CHECKOUT PRO */}
+                {paymentMethod === 'mercadopago' && (
                   <div style={{
-                    background: '#191412',
+                    background: '#14181B',
                     padding: '1.25rem',
                     borderRadius: 'var(--radius-md)',
-                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    border: '1px solid rgba(0, 158, 227, 0.4)',
                     marginBottom: '1.25rem'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-gold-light)' }}>
-                        Pasarela Culqi Perú
-                      </span>
-                      <span style={{ fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#009EE3', fontWeight: 800, fontSize: '0.88rem' }}>
+                        <CreditCard size={18} />
+                        <span>Pasarela Oficial Mercado Pago</span>
+                      </div>
+                      <span style={{ fontSize: '0.68rem', background: 'rgba(0, 158, 227, 0.18)', color: '#009EE3', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700, border: '1px solid rgba(0, 158, 227, 0.3)' }}>
                         256-bit SSL
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                      <button
-                        onClick={() => setCulqiSubMethod('card')}
-                        style={{
-                          flex: 1,
-                          padding: '0.5rem',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.76rem',
-                          fontWeight: 600,
-                          border: culqiSubMethod === 'card' ? '1px solid var(--accent-gold)' : '1px solid rgba(255,255,255,0.1)',
-                          background: culqiSubMethod === 'card' ? 'rgba(212, 175, 55, 0.15)' : '#0D0A09',
-                          color: culqiSubMethod === 'card' ? '#FFFFFF' : 'var(--text-muted)'
-                        }}
-                      >
-                        💳 Tarjetas Perú
-                      </button>
-                      <button
-                        onClick={() => setCulqiSubMethod('yape_otp')}
-                        style={{
-                          flex: 1,
-                          padding: '0.5rem',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.76rem',
-                          fontWeight: 600,
-                          border: culqiSubMethod === 'yape_otp' ? '1px solid var(--yape-purple)' : '1px solid rgba(255,255,255,0.1)',
-                          background: culqiSubMethod === 'yape_otp' ? 'rgba(139, 44, 158, 0.2)' : '#0D0A09',
-                          color: culqiSubMethod === 'yape_otp' ? '#E9A6F5' : 'var(--text-muted)'
-                        }}
-                      >
-                        📱 Yape con Código
-                      </button>
+                    <p style={{ fontSize: '0.78rem', color: '#E2E8F0', lineHeight: 1.5, marginBottom: '0.85rem' }}>
+                      Paga de forma 100% segura mediante <strong>Mercado Pago Checkout Pro</strong> con confirmación automática inmediata:
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.45rem', marginBottom: '0.85rem' }}>
+                      <div style={{ background: '#0D1013', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>Tarjetas Nacionales</div>
+                        <div style={{ fontSize: '0.74rem', color: '#FFF', fontWeight: 700, marginTop: '0.1rem' }}>Visa, Mastercard, AMEX</div>
+                      </div>
+                      <div style={{ background: '#0D1013', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>Cuotas Locales</div>
+                        <div style={{ fontSize: '0.74rem', color: '#FFF', fontWeight: 700, marginTop: '0.1rem' }}>Hasta 12 Cuotas</div>
+                      </div>
+                      <div style={{ background: '#0D1013', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>Billetera Digital</div>
+                        <div style={{ fontSize: '0.74rem', color: '#FFF', fontWeight: 700, marginTop: '0.1rem' }}>Yape & Saldo MP</div>
+                      </div>
+                      <div style={{ background: '#0D1013', padding: '0.5rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ fontSize: '0.66rem', color: 'var(--text-muted)' }}>Efectivo / Agentes</div>
+                        <div style={{ fontSize: '0.74rem', color: '#FFF', fontWeight: 700, marginTop: '0.1rem' }}>PagoEfectivo / Bancos</div>
+                      </div>
                     </div>
 
-                    {culqiSubMethod === 'card' ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                        <div>
-                          <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Número de Tarjeta</label>
-                          <input
-                            type="text"
-                            maxLength={19}
-                            placeholder="4557 •••• •••• 8912"
-                            value={cardData.number}
-                            onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
-                            style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                          />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                          <div>
-                            <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Vencimiento (MM/AA)</label>
-                            <input
-                              type="text"
-                              maxLength={5}
-                              placeholder="12/28"
-                              value={cardData.exp}
-                              onChange={(e) => setCardData({ ...cardData, exp: e.target.value })}
-                              style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                            />
-                          </div>
-                          <div>
-                            <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>CVV</label>
-                            <input
-                              type="password"
-                              maxLength={4}
-                              placeholder="•••"
-                              value={cardData.cvv}
-                              onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
-                              style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                          En tu app Yape pulsa <em>"Código de aprobación"</em> y escribe el número de 6 dígitos:
-                        </p>
-                        <input
-                          type="text"
-                          maxLength={6}
-                          placeholder="849201"
-                          value={yapeOtp}
-                          onChange={(e) => setYapeOtp(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '0.65rem',
-                            textAlign: 'center',
-                            letterSpacing: '0.25em',
-                            fontSize: '1.1rem',
-                            fontWeight: 700,
-                            borderRadius: 'var(--radius-sm)',
-                            border: '2px solid var(--yape-purple)'
-                          }}
-                        />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', color: '#94A3B8' }}>
+                      <ShieldCheck size={16} style={{ color: '#34D399', flexShrink: 0 }} />
+                      <span>Protección total al comprador. Ningún dato bancario roza nuestra base de datos.</span>
+                    </div>
+
+                    {mpError && (
+                      <div style={{ marginTop: '0.75rem', padding: '0.65rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem', color: '#FCA5A5' }}>
+                        ⚠️ {mpError}
                       </div>
                     )}
                   </div>
@@ -1177,14 +1237,40 @@ export const CheckoutModal = () => {
                 </div>
 
                 {/* Final Button */}
-                {paymentMethod === 'culqi' ? (
+                {paymentMethod === 'mercadopago' ? (
                   <button
-                    onClick={handleCulqiSubmit}
-                    disabled={isProcessingCulqi}
-                    className="btn-luxury-gold"
-                    style={{ width: '100%', padding: '1rem', fontSize: '0.88rem' }}
+                    type="button"
+                    onClick={handleMercadoPagoSubmit}
+                    disabled={isProcessingMP || cart.length === 0}
+                    style={{
+                      width: '100%',
+                      padding: '1.05rem',
+                      background: 'linear-gradient(135deg, #009EE3 0%, #0081B4 100%)',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '0.94rem',
+                      borderRadius: 'var(--radius-full)',
+                      border: '1px solid rgba(0, 158, 227, 0.5)',
+                      boxShadow: '0 6px 25px rgba(0, 158, 227, 0.4)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.65rem',
+                      cursor: isProcessingMP ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.25s ease'
+                    }}
                   >
-                    {isProcessingCulqi ? 'Conectando con Culqi...' : `Pagar S/ ${orderTotal.toFixed(2)} con Culqi`}
+                    {isProcessingMP ? (
+                      <>
+                        <span style={{ width: '18px', height: '18px', border: '2px solid #FFF', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
+                        <span>Conectando con Mercado Pago...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard size={18} />
+                        <span>Pagar S/ {orderTotal.toFixed(2)} con Mercado Pago</span>
+                      </>
+                    )}
                   </button>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -1307,6 +1393,32 @@ export const CheckoutModal = () => {
                     : `${completedOrder.customer.city || ''} (${completedOrder.customer.address || ''})`}
                 </strong>
               </div>
+
+              {/* Pago Acreditado vía Mercado Pago */}
+              {completedOrder.mercadopagoPaymentId && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  marginTop: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  background: 'rgba(0, 158, 227, 0.1)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid rgba(0, 158, 227, 0.4)'
+                }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#009EE3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', flexShrink: 0 }}>
+                    <CheckCircle size={20} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.76rem', color: '#009EE3', fontWeight: 800 }}>
+                      ✓ Pago Acreditado vía Mercado Pago
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#ECE8E1' }}>
+                      ID Transacción Oficial: <strong>#{completedOrder.mercadopagoPaymentId}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Constancia Adjunta en la Orden */}
               {completedOrder.paymentProof && (

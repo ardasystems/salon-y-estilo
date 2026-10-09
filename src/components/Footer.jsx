@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
 import { BookOpen, MapPin, Phone, Sparkles, Lock, ExternalLink } from 'lucide-react';
-import { YapeBadge, PlinBadge, CulqiBadge, CardsBadge } from './PaymentIcons';
+import { YapeBadge, PlinBadge, MercadoPagoBadge, CardsBadge } from './PaymentIcons';
 
 export const Footer = () => {
   const { setIsLibroOpen, settings, setIsAdminAuthOpen } = useStore();
@@ -209,7 +209,7 @@ export const Footer = () => {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
               <YapeBadge size="sm" />
               <PlinBadge size="sm" />
-              <CulqiBadge size="sm" />
+              <MercadoPagoBadge size="sm" />
               <CardsBadge size="sm" />
             </div>
           </div>

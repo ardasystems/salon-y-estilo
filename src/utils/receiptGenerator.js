@@ -201,13 +201,20 @@ export function generateReceiptPDF(order, settings = {}) {
   const paymentMethodLabel = {
     yape_direct: 'Billetera Digital Yape',
     plin_direct: 'Billetera Digital Plin',
+    mercadopago: 'Mercado Pago Oficial (Tarjetas / Cuotas)',
+    mercadopago_card: 'Mercado Pago (Tarjeta Débito/Crédito)',
     culqi_card: 'Tarjeta de Débito / Crédito',
     culqi_yape: 'Yape Oficial'
-  }[order.paymentMethod] || 'Pago Acordado / Yape / Plin';
+  }[order.paymentMethod] || 'Mercado Pago / Billetera Digital';
 
   doc.text(`Método de Pago: ${paymentMethodLabel}`, 14, y + 10);
   doc.text(`Estado del Pago: ${order.paymentStatus ? order.paymentStatus.toUpperCase() : 'PENDIENTE DE VERIFICACIÓN'}`, 14, y + 16);
-  if (order.paymentProofName) {
+  if (order.mercadopagoPaymentId) {
+    doc.setTextColor(0, 158, 227);
+    doc.text(`ID Transacción MP: #${order.mercadopagoPaymentId}`, 14, y + 21);
+    doc.setTextColor(90, 90, 95);
+    doc.text('Transacción procesada y asegurada con Mercado Pago.', 14, y + 26);
+  } else if (order.paymentProofName) {
     doc.setTextColor(179, 142, 60);
     doc.text(`Constancia Adjunta: ${order.paymentProofName}`, 14, y + 21);
     doc.setTextColor(90, 90, 95);
@@ -215,6 +222,7 @@ export function generateReceiptPDF(order, settings = {}) {
   } else {
     doc.text('Comprobante emitido para control y confirmación de despacho.', 14, y + 22);
   }
+
 
   // Footer Note
   y += 44;

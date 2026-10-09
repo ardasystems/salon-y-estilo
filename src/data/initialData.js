@@ -349,8 +349,12 @@ export const INITIAL_SETTINGS = {
   tiktokUrl: "https://www.tiktok.com/@miluskavidaurre",
   instagramUrl: "https://www.instagram.com/miluskavidaurre/",
   youtubeUrl: "https://www.youtube.com/@miluskavidaurre",
-  culqiEnabled: true,
-  culqiPublicKey: "pk_test_sample_culqi_salonestilo",
+  mercadopagoEnabled: true,
+  mercadopagoPublicKey: "",
+  mercadopagoEnvironment: "sandbox", // 'sandbox' | 'production'
+  culqiEnabled: false,
+  culqiPublicKey: "",
+
   productsBannerText: "📦 ENVÍOS A NIVEL NACIONAL (Olva & Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163",
   shippingOptions: [
     {

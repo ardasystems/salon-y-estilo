@@ -152,3 +152,36 @@ DROP POLICY IF EXISTS "Public Update salon-assets" ON storage.objects;
 CREATE POLICY "Public Update salon-assets" ON storage.objects FOR UPDATE USING (bucket_id = 'salon-assets');
 DROP POLICY IF EXISTS "Public Delete salon-assets" ON storage.objects;
 CREATE POLICY "Public Delete salon-assets" ON storage.objects FOR DELETE USING (bucket_id = 'salon-assets');
+
+-- 8. TABLA: TRANSACCIONES Y CONCILIACIÓN DE MERCADO PAGO (payment_transactions)
+-- Previene duplicidades mediante clave única compuesta (provider, id)
+CREATE TABLE IF NOT EXISTS public.payment_transactions (
+    id TEXT PRIMARY KEY,                       -- Mercado Pago Payment ID (ej: '1234567890')
+    order_id TEXT,                             -- ID de la orden en Salón & Estilo (ej: 'SE-CHIC-4821')
+    user_id TEXT,                              -- Email o ID del cliente
+    provider TEXT NOT NULL DEFAULT 'mercadopago',
+    plan_id TEXT DEFAULT 'salon_order',        -- Tipo de compra
+    amount NUMERIC(10, 2) NOT NULL,            -- Monto cobrado en Soles (PEN)
+    currency TEXT NOT NULL DEFAULT 'PEN',      -- Moneda local
+    status TEXT NOT NULL,                      -- 'approved', 'rejected', etc.
+    status_detail TEXT,                        -- Detalle oficial de MP (ej: 'accredited')
+    external_reference TEXT,                   -- Metadata enviada en la preferencia
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    activated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT uq_payment_provider_id UNIQUE (provider, id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_order ON public.payment_transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_status ON public.payment_transactions(status);
+
+-- Políticas RLS para payment_transactions
+ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read payment_transactions" ON public.payment_transactions;
+CREATE POLICY "Public read payment_transactions" ON public.payment_transactions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public insert payment_transactions" ON public.payment_transactions;
+CREATE POLICY "Public insert payment_transactions" ON public.payment_transactions FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public update payment_transactions" ON public.payment_transactions;
+CREATE POLICY "Public update payment_transactions" ON public.payment_transactions FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Public delete payment_transactions" ON public.payment_transactions;
+CREATE POLICY "Public delete payment_transactions" ON public.payment_transactions FOR DELETE USING (true);
+

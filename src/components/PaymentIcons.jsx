@@ -58,6 +58,32 @@ export const PlinBadge = ({ size = 'normal' }) => (
   </div>
 );
 
+export const MercadoPagoBadge = ({ size = 'normal' }) => (
+  <div style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.45rem',
+    background: 'linear-gradient(135deg, #009EE3 0%, #0077B6 100%)',
+    border: '1px solid rgba(0, 158, 227, 0.55)',
+    color: '#FFFFFF',
+    padding: size === 'sm' ? '0.22rem 0.6rem' : '0.35rem 0.85rem',
+    borderRadius: 'var(--radius-sm)',
+    fontSize: size === 'sm' ? '0.74rem' : '0.82rem',
+    fontWeight: 900,
+    boxShadow: '0 2px 10px rgba(0, 158, 227, 0.4)',
+    letterSpacing: '-0.01em',
+    userSelect: 'none'
+  }}>
+    {/* Mercado Pago Iconic Handshake / Card SVG */}
+    <svg width={size === 'sm' ? "15" : "17"} height={size === 'sm' ? "15" : "17"} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V8h18v10zm-10-7h8v2h-8z"/>
+    </svg>
+    <span style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900, letterSpacing: '0.02em' }}>
+      mercado<span style={{ color: '#FFE600' }}>pago</span>
+    </span>
+  </div>
+);
+
 export const CulqiBadge = ({ size = 'normal' }) => (
   <div style={{
     display: 'inline-flex',
@@ -105,3 +131,4 @@ export const CardsBadge = ({ size = 'normal' }) => (
     </span>
   </div>
 );
+

@@ -247,7 +247,7 @@ export const CartDrawer = () => {
               <span>•</span>
               <span style={{ fontWeight: 800, color: 'var(--plin-cyan)' }}>PLIN</span>
               <span>•</span>
-              <span style={{ fontWeight: 700, color: 'var(--accent-gold)' }}>Culqi Tarjetas</span>
+              <span style={{ fontWeight: 800, color: '#009EE3' }}>Mercado Pago</span>
             </div>
           </div>
         )}

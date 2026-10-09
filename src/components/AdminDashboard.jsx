@@ -4,7 +4,7 @@ import {
   Package, ShoppingCart, Settings, Plus, Edit2, Trash2, 
   DollarSign, TrendingUp, Phone, BookOpen, X, Upload, Image as ImageIcon, 
   Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode,
-  Download, Database, ShieldCheck
+  Download, Database, ShieldCheck, CreditCard, CheckCircle
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 import { uploadToSalonAssets } from '../lib/supabase';
@@ -962,7 +962,7 @@ export const AdminDashboard = () => {
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Órdenes de Compra</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Revisa los pedidos de Chiclayo y provincias con su comprobante de Yape/Plin o pasarela Culqi.
+                Revisa los pedidos de Chiclayo y provincias con su comprobante de Yape/Plin o confirmación automática de Mercado Pago.
               </p>
             </div>
 
@@ -1068,7 +1068,20 @@ export const AdminDashboard = () => {
 
                     <div>
                       <div style={{ fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.35rem' }}>Constancia de Pago:</div>
-                      {order.paymentProof ? (
+                      {order.mercadopagoPaymentId ? (
+                        <div style={{ background: '#0D0A09', padding: '0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 158, 227, 0.4)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#009EE3', fontWeight: 800, fontSize: '0.8rem' }}>
+                            <CheckCircle size={15} />
+                            <span>Mercado Pago Oficial</span>
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#FFFFFF', marginTop: '0.3rem' }}>
+                            Pago ID: <strong>#{order.mercadopagoPaymentId}</strong>
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                            Estado: <strong style={{ color: '#34D399' }}>{order.paymentStatus ? order.paymentStatus.toUpperCase() : 'APROBADO'}</strong>
+                          </div>
+                        </div>
+                      ) : order.paymentProof ? (
                         <div style={{ background: '#0D0A09', padding: '0.6rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(52, 211, 153, 0.3)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                             <img
@@ -1099,7 +1112,7 @@ export const AdminDashboard = () => {
                         </div>
                       ) : (
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', background: '#0D0A09', padding: '0.5rem', borderRadius: 'var(--radius-sm)' }}>
-                          Sin comprobante web adjunto (validar por WhatsApp o pasarela Culqi)
+                          Sin comprobante web adjunto (validar por WhatsApp o pasarela Mercado Pago)
                         </div>
                       )}
                     </div>
@@ -1732,31 +1745,65 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* 7. Culqi Gateway */}
+              {/* 7. Mercado Pago Checkout Pro Gateway */}
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', marginBottom: '0.65rem' }}>
-                  7. Pasarela de Tarjetas Culqi
-                </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CreditCard size={17} style={{ color: '#009EE3' }} />
+                    <span>7. Pasarela Oficial Mercado Pago (Checkout Pro)</span>
+                  </h4>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(0, 158, 227, 0.18)', color: '#009EE3', border: '1px solid rgba(0, 158, 227, 0.4)', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                    {settingsForm.mercadopagoEnvironment === 'production' ? 'Producción Oficial' : 'Modo Sandbox'}
+                  </span>
+                </div>
+
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.9rem', lineHeight: 1.5 }}>
+                  Acepta todas las tarjetas peruanas (Visa, Mastercard, AMEX, Diners), cuotas locales y saldo de cuenta con total seguridad antifraude.
+                </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                   <input
                     type="checkbox"
-                    id="culqiToggle"
-                    checked={settingsForm.culqiEnabled}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, culqiEnabled: e.target.checked })}
+                    id="mpToggle"
+                    checked={settingsForm.mercadopagoEnabled !== false}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, mercadopagoEnabled: e.target.checked })}
                   />
-                  <label htmlFor="culqiToggle" style={{ fontSize: '0.85rem', color: '#FFF' }}>
-                    Activar pagos con Tarjetas (Visa / Mastercard) vía Culqi
+                  <label htmlFor="mpToggle" style={{ fontSize: '0.85rem', color: '#FFF', fontWeight: 600 }}>
+                    Activar Checkout Pro de Mercado Pago en la tienda
                   </label>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Llave Pública de Culqi</label>
-                  <input
-                    type="text"
-                    value={settingsForm.culqiPublicKey || ''}
-                    onChange={(e) => setSettingsForm({ ...settingsForm, culqiPublicKey: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '0.85rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                      Entorno de Operación
+                    </label>
+                    <select
+                      value={settingsForm.mercadopagoEnvironment || 'sandbox'}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, mercadopagoEnvironment: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', background: '#0D0A09', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)' }}
+                    >
+                      <option value="sandbox">Sandbox (Pruebas con tarjetas de prueba)</option>
+                      <option value="production">Producción (Cobros oficiales en Soles S/)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                      Clave Pública (Public Key)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="TEST-... o APP_USR-..."
+                      value={settingsForm.mercadopagoPublicKey || ''}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, mercadopagoPublicKey: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', background: '#0D0A09', color: '#FFF', border: '1px solid rgba(255,255,255,0.15)' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.74rem', background: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.25)', borderRadius: 'var(--radius-sm)', padding: '0.75rem', color: '#E5C07B', lineHeight: 1.5 }}>
+                  ℹ️ <strong>Seguridad Bancaria:</strong> Tu <code>MERCADOPAGO_ACCESS_TOKEN</code> privado y <code>MERCADOPAGO_WEBHOOK_SECRET</code> nunca se exponen al navegador; se configuran en el servidor / variables de entorno de Vercel.
                 </div>
               </div>
 
