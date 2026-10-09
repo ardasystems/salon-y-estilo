@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 import { ProductCard } from './ProductCard';
 import { Search, Truck, ChevronLeft, ChevronRight, ArrowUpDown, X } from 'lucide-react';
-import { YapeBadge, PlinBadge, CulqiBadge, CardsBadge } from './PaymentIcons';
+import { YapeBadge, PlinBadge, MercadoPagoBadge, PagoEfectivoBadge, CardsBadge } from './PaymentIcons';
 
 export const ProductsSection = () => {
   const {
@@ -64,12 +64,12 @@ export const ProductsSection = () => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-            <span style={{ color: '#888888', fontSize: '0.72rem', marginRight: '0.1rem' }}>Pagos directos:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+            <span style={{ color: '#888888', fontSize: '0.72rem', marginRight: '0.1rem' }}>Pagos Seguros:</span>
+            <MercadoPagoBadge size="sm" />
             <YapeBadge size="sm" />
-            <PlinBadge size="sm" />
-            <CulqiBadge size="sm" />
             <CardsBadge size="sm" />
+            <PagoEfectivoBadge size="sm" />
           </div>
         </div>
 

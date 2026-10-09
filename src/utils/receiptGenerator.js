@@ -199,12 +199,11 @@ export function generateReceiptPDF(order, settings = {}) {
   doc.setFontSize(8.5);
   doc.setTextColor(90, 90, 95);
   const paymentMethodLabel = {
-    yape_direct: 'Billetera Digital Yape',
-    plin_direct: 'Billetera Digital Plin',
-    mercadopago: 'Mercado Pago Oficial (Tarjetas / Cuotas)',
+    yape_direct: 'Billetera Digital Yape (Directo)',
+    plin_direct: 'Billetera Digital Plin (Directo)',
+    mercadopago: 'Mercado Pago Oficial (Yape, Tarjetas o PagoEfectivo)',
     mercadopago_card: 'Mercado Pago (Tarjeta Débito/Crédito)',
-    culqi_card: 'Tarjeta de Débito / Crédito',
-    culqi_yape: 'Yape Oficial'
+    mercadopago_yape: 'Mercado Pago (Yape Oficial)'
   }[order.paymentMethod] || 'Mercado Pago / Billetera Digital';
 
   doc.text(`Método de Pago: ${paymentMethodLabel}`, 14, y + 10);

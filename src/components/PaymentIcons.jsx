@@ -84,30 +84,41 @@ export const MercadoPagoBadge = ({ size = 'normal' }) => (
   </div>
 );
 
-export const CulqiBadge = ({ size = 'normal' }) => (
+export const PagoEfectivoBadge = ({ size = 'normal' }) => (
   <div style={{
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.45rem',
-    background: '#1F1B18',
-    border: '1px solid rgba(229, 192, 123, 0.4)',
-    color: 'var(--accent-gold-light)',
-    padding: size === 'sm' ? '0.22rem 0.55rem' : '0.35rem 0.8rem',
+    gap: '0.4rem',
+    background: '#1D212A',
+    border: '1px solid rgba(255, 204, 0, 0.45)',
+    color: '#FFFFFF',
+    padding: size === 'sm' ? '0.22rem 0.55rem' : '0.35rem 0.85rem',
     borderRadius: 'var(--radius-sm)',
-    fontSize: size === 'sm' ? '0.72rem' : '0.78rem',
-    fontWeight: 800,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
+    fontSize: size === 'sm' ? '0.74rem' : '0.82rem',
+    fontWeight: 900,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+    letterSpacing: '-0.01em',
+    userSelect: 'none'
   }}>
     <span style={{
-      width: '12px',
-      height: '12px',
-      borderRadius: '50%',
-      background: '#FF5A36',
-      display: 'inline-block'
-    }}></span>
-    <span>CULQI</span>
+      background: '#FFCC00',
+      color: '#1A1A1A',
+      fontWeight: 900,
+      padding: '0.08rem 0.35rem',
+      borderRadius: '3px',
+      fontSize: size === 'sm' ? '0.62rem' : '0.7rem',
+      letterSpacing: '0.04em'
+    }}>
+      CIP
+    </span>
+    <span style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 800 }}>
+      pago<span style={{ color: '#FFCC00' }}>efectivo</span>
+    </span>
   </div>
 );
+
+// Compatibility alias for any legacy usage
+export const CulqiBadge = PagoEfectivoBadge;
 
 export const CardsBadge = ({ size = 'normal' }) => (
   <div style={{

@@ -238,16 +238,19 @@ export const CartDrawer = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.85rem',
+              gap: '0.65rem',
               marginTop: '1rem',
-              fontSize: '0.75rem',
-              color: '#B3B3B3'
+              fontSize: '0.73rem',
+              color: '#B3B3B3',
+              flexWrap: 'wrap'
             }}>
-              <span style={{ fontWeight: 800, color: 'var(--yape-purple)' }}>YAPE</span>
-              <span>•</span>
-              <span style={{ fontWeight: 800, color: 'var(--plin-cyan)' }}>PLIN</span>
-              <span>•</span>
               <span style={{ fontWeight: 800, color: '#009EE3' }}>Mercado Pago</span>
+              <span>•</span>
+              <span style={{ fontWeight: 800, color: 'var(--yape-purple)' }}>Yape</span>
+              <span>•</span>
+              <span style={{ fontWeight: 700, color: '#FFFFFF' }}>Tarjetas Débito/Crédito</span>
+              <span>•</span>
+              <span style={{ fontWeight: 700, color: '#FFCC00' }}>PagoEfectivo</span>
             </div>
           </div>
         )}

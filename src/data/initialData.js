@@ -352,8 +352,6 @@ export const INITIAL_SETTINGS = {
   mercadopagoEnabled: true,
   mercadopagoPublicKey: "",
   mercadopagoEnvironment: "sandbox", // 'sandbox' | 'production'
-  culqiEnabled: false,
-  culqiPublicKey: "",
 
   productsBannerText: "📦 ENVÍOS A NIVEL NACIONAL (Olva & Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163",
   shippingOptions: [
@@ -413,7 +411,7 @@ export const INITIAL_ORDERS = [
     subtotal: 85.90,
     shippingMethod: { id: "chiclayo_express", title: "Motorizado Express Chiclayo (< 2 horas)", price: 6.00 },
     total: 91.90,
-    paymentMethod: "yape_direct", // 'yape_direct' | 'plin_direct' | 'culqi_card' | 'culqi_yape'
+    paymentMethod: "yape_direct", // 'yape_direct' | 'plin_direct' | 'mercadopago'
     paymentStatus: "pagado", // 'pendiente' | 'pagado' | 'en_camino' | 'entregado' | 'cancelado'
     paymentProof: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80"
   },
@@ -436,7 +434,7 @@ export const INITIAL_ORDERS = [
     subtotal: 39.90,
     shippingMethod: { id: "shalom_peru", title: "Shalom Agencia (Resto de Perú)", price: 9.00 },
     total: 48.90,
-    paymentMethod: "culqi_card",
+    paymentMethod: "mercadopago",
     paymentStatus: "en_camino",
     paymentProof: null
   }
