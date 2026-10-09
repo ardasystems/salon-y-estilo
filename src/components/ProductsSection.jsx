@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 import { ProductCard } from './ProductCard';
 import { Search, Truck, ChevronLeft, ChevronRight, ArrowUpDown, X } from 'lucide-react';
+import { YapeBadge, CardsBadge, PagoEfectivoBadge } from './PaymentIcons';
 
 export const ProductsSection = () => {
   const {
@@ -65,7 +66,6 @@ export const ProductsSection = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
             <span style={{ color: '#888888', fontSize: '0.72rem', marginRight: '0.1rem' }}>Pagos Seguros:</span>
-            <MercadoPagoBadge size="sm" />
             <YapeBadge size="sm" />
             <CardsBadge size="sm" />
             <PagoEfectivoBadge size="sm" />

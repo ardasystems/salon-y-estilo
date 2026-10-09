@@ -205,6 +205,7 @@ export async function createPreferenceHandler({
 
   // Base URL segura para retorno
   const cleanSiteUrl = (siteUrl || process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://salon-y-estilo.vercel.app").replace(/\/$/, "");
+  const isLocalhost = cleanSiteUrl.includes("localhost") || cleanSiteUrl.includes("127.0.0.1");
 
   // Metadata y external_reference
   const externalRefObj = {
@@ -223,36 +224,25 @@ export async function createPreferenceHandler({
 
   if (paymentOption === 'yape') {
     preferencePaymentMethods.default_payment_method_id = 'yape';
-  } else if (paymentOption === 'cash') {
-    preferencePaymentMethods.default_payment_method_id = 'pagoefectivo_atm';
   }
+
+  // Regla de Oro de Sandbox (Trampa 2 de la guía):
+  // En pruebas NO enviar payer.email para evitar el Error 145 / PA_UNAUTHORIZED_RESULT_FROM_POLICIES
+  // En producción solo enviarlo si no coincide con la cuenta recaudadora (Trampa 3)
+  const isSandbox = (process.env.MERCADOPAGO_ENVIRONMENT || 'sandbox') === 'sandbox' || (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-');
+  const collectorEmail = (process.env.COLLECTOR_EMAIL || 'arda.systems.iot@gmail.com').toLowerCase();
+  const customerEmail = (customer?.email || '').trim().toLowerCase();
+  const isCollector = customerEmail === collectorEmail;
 
   const preferenceData = {
     items: preferenceItems,
-    payer: {
-      name: firstName,
-      surname: lastName,
-      email: customer.email || "cliente@salonestilo.pe",
-      phone: customer.phone ? {
-        number: String(customer.phone).replace(/\D/g, "").slice(-9)
-      } : undefined,
-      identification: customer.dni ? {
-        type: "DNI",
-        number: String(customer.dni).trim()
-      } : undefined,
-      address: customer.address ? {
-        street_name: customer.address,
-        zip_code: "14001"
-      } : undefined
-    },
     back_urls: {
       success: `${cleanSiteUrl}/?payment=success&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`,
       pending: `${cleanSiteUrl}/?payment=pending&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`,
       failure: `${cleanSiteUrl}/?payment=failure&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`
     },
     auto_return: "approved",
-    binary_mode: (paymentOption === 'cash' || paymentOption === 'bank_transfer') ? false : true,
-    notification_url: `${cleanSiteUrl}/api/payments/mercadopago/webhook`,
+    binary_mode: false,
     statement_descriptor: "SALONESTILO", // Máx 11 caracteres en el resumen bancario
     external_reference: JSON.stringify(externalRefObj),
     metadata: {
@@ -265,20 +255,44 @@ export async function createPreferenceHandler({
     payment_methods: preferencePaymentMethods
   };
 
+  // Solo enviar payer en producción si no es el recolector (Trampa 2 y 3)
+  if (!isSandbox && customer.email && !isCollector) {
+    preferenceData.payer = {
+      name: firstName,
+      surname: lastName,
+      email: customer.email,
+      phone: customer.phone ? {
+        number: String(customer.phone).replace(/\D/g, "").slice(-9)
+      } : undefined,
+      identification: customer.dni ? {
+        type: "DNI",
+        number: String(customer.dni).trim()
+      } : undefined,
+      address: customer.address ? {
+        street_name: customer.address,
+        zip_code: "14001"
+      } : undefined
+    };
+  }
+
+  // Solo agregar notification_url si es un dominio público HTTPS (Trampa 6)
+  if (!isLocalhost) {
+    preferenceData.notification_url = `${cleanSiteUrl}/api/payments/mercadopago/webhook`;
+  }
+
   const response = await preference.create({ body: preferenceData });
 
-  const envMode = process.env.MERCADOPAGO_ENVIRONMENT || 'sandbox';
-  const effectiveRedirectUrl = envMode === 'sandbox'
-    ? (response.sandbox_init_point || response.init_point)
-    : (response.init_point || response.sandbox_init_point);
+  // Regla de Oro de Redirects (Trampa 1 de la guía):
+  // Usar SIEMPRE response.init_point para evitar el bucle fatal de cookies de sandbox.mercadopago.com.pe
+  const safeRedirectUrl = response.init_point || response.sandbox_init_point;
 
   return {
     success: true,
     preferenceId: response.id,
     initPoint: response.init_point,
     sandboxInitPoint: response.sandbox_init_point,
-    redirectUrl: effectiveRedirectUrl,
-    environment: envMode
+    redirectUrl: safeRedirectUrl,
+    environment: isSandbox ? 'sandbox' : 'production'
   };
 }
 

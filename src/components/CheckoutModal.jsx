@@ -49,15 +49,15 @@ export const CheckoutModal = () => {
   });
 
   const [selectedShipping, setSelectedShipping] = useState(() => {
-    if (savedCheckout?.selectedShipping) {
-      return savedCheckout.selectedShipping;
-    }
-    return settings.shippingOptions[0];
+    // Por defecto 'Retiro en Salón de Belleza (Gratis)' como primera opción
+    const pickupOption = settings.shippingOptions?.find(o => o.id === 'salon_pickup' || /retiro/i.test(o.title));
+    return pickupOption || settings.shippingOptions?.[0];
   });
 
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState(() => savedCheckout?.selectedPaymentOption || 'yape');
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState('all');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
   const [isVerifyingReturn, setIsVerifyingReturn] = useState(false);
   const [receiptDownloaded, setReceiptDownloaded] = useState(() => savedCheckout?.receiptDownloaded || false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -168,6 +168,9 @@ export const CheckoutModal = () => {
 
   const handleInputChange = (field, value) => {
     setCustomer(prev => ({ ...prev, [field]: value }));
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: null }));
+    }
   };
 
   const triggerConfetti = () => {
@@ -182,45 +185,14 @@ export const CheckoutModal = () => {
     }
   };
 
-  // Helper for Payment Button Text & Colors according to selected option
+  // Helper for Unified Payment Button
   const getButtonConfig = () => {
-    switch (selectedPaymentOption) {
-      case 'yape':
-        return {
-          label: `Pagar S/ ${orderTotal.toFixed(2)} con Yape`,
-          gradient: 'linear-gradient(135deg, #872391 0%, #681771 100%)',
-          shadow: '0 6px 25px rgba(135, 35, 145, 0.45)',
-          border: 'rgba(168, 85, 247, 0.6)'
-        };
-      case 'card':
-        return {
-          label: `Pagar S/ ${orderTotal.toFixed(2)} con Tarjeta`,
-          gradient: 'linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%)',
-          shadow: '0 6px 25px rgba(30, 64, 175, 0.45)',
-          border: 'rgba(96, 165, 250, 0.6)'
-        };
-      case 'cash':
-        return {
-          label: `Pagar S/ ${orderTotal.toFixed(2)} en Agente / Bodega`,
-          gradient: 'linear-gradient(135deg, #D97706 0%, #92400E 100%)',
-          shadow: '0 6px 25px rgba(217, 119, 6, 0.45)',
-          border: 'rgba(245, 158, 11, 0.6)'
-        };
-      case 'bank_transfer':
-        return {
-          label: `Pagar S/ ${orderTotal.toFixed(2)} con Banca por Internet`,
-          gradient: 'linear-gradient(135deg, #059669 0%, #064E3B 100%)',
-          shadow: '0 6px 25px rgba(5, 150, 105, 0.45)',
-          border: 'rgba(52, 211, 153, 0.6)'
-        };
-      default:
-        return {
-          label: `Pagar S/ ${orderTotal.toFixed(2)}`,
-          gradient: 'linear-gradient(135deg, #009EE3 0%, #0077B6 100%)',
-          shadow: '0 6px 25px rgba(0, 158, 227, 0.4)',
-          border: 'rgba(0, 158, 227, 0.6)'
-        };
-    }
+    return {
+      label: `Continuar al Pago Seguro • S/ ${orderTotal.toFixed(2)}`,
+      gradient: 'linear-gradient(135deg, #D4AF37 0%, #AA820A 100%)',
+      shadow: '0 6px 25px rgba(212, 175, 55, 0.4)',
+      border: 'rgba(212, 175, 55, 0.8)'
+    };
   };
 
   // Download PDF Receipt
@@ -299,28 +271,40 @@ export const CheckoutModal = () => {
 
   // Automated Payment Submit Handler
   const handlePaymentSubmit = async () => {
-    if (!customer.name || !customer.phone) {
-      alert("Por favor completa tu nombre y número de celular para registrar tu compra.");
-      return;
+    const errors = {};
+    if (!customer.name || customer.name.trim().length < 2) {
+      errors.name = "Por favor ingresa tus nombres y apellidos";
     }
-
+    if (!customer.phone || customer.phone.replace(/\D/g, '').length < 8) {
+      errors.phone = "Por favor ingresa tu número de celular (9 dígitos)";
+    }
     if (!customer.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
-      alert("Por favor ingresa un correo electrónico válido para recibir tu comprobante oficial.");
-      return;
+      errors.email = "Por favor ingresa un correo electrónico válido";
+    }
+    if (!isPickup) {
+      if (!customer.city || customer.city.trim().length < 2) {
+        errors.city = "Por favor ingresa tu ciudad de destino";
+      }
+      if (!customer.address || customer.address.trim().length < 3) {
+        errors.address = "Por favor ingresa tu dirección exacta o agencia";
+      }
     }
 
-    if (!isPickup && (!customer.address || !customer.city)) {
-      alert("Por favor ingresa tu ciudad y dirección de entrega.");
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      showToast("Por favor completa los campos obligatorios en rojo", "error");
+      setPaymentError("Por favor completa los datos obligatorios marcados en rojo para continuar.");
       return;
     }
 
     if (cart.length === 0) {
-      alert("Tu carrito de compras está vacío.");
+      showToast("Tu carrito de compras está vacío", "error");
       return;
     }
 
     setIsProcessingPayment(true);
     setPaymentError(null);
+    setValidationErrors({});
 
     try {
       // 1. Registrar la orden preliminar en el estado y Supabase
@@ -369,11 +353,11 @@ export const CheckoutModal = () => {
         throw new Error(data.error || "No se pudo conectar con la pasarela de pagos. Por favor intenta nuevamente.");
       }
 
-      // 3. Determinar URL de redirección (Sandbox o Producción)
-      const redirectUrl = data.redirectUrl || data.sandboxInitPoint || data.initPoint;
+      // 3. Determinar URL de redirección segura (Regla de Oro: usar initPoint sin bucles de cookies)
+      const redirectUrl = data.initPoint || data.redirectUrl;
 
       if (!redirectUrl) {
-        throw new Error("No se recibió la URL de pago");
+        throw new Error("No se recibió la URL de pago de Mercado Pago");
       }
 
       // 4. Redirección automática inmediata
@@ -543,14 +527,15 @@ export const CheckoutModal = () => {
             }}>
               {/* Left Column: Customer & Shipping */}
               <div>
-                {/* 1. Datos Personales */}
+                {/* 1. Datos Personales y Entrega */}
                 <div style={{ marginBottom: '1.8rem' }}>
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>1</span>
-                    <span>Tus Datos de Contacto</span>
+                    <span>Tus Datos de Contacto y Entrega</span>
                   </h4>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {/* Nombres */}
                     <div>
                       <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
                         Nombres y Apellidos *
@@ -560,10 +545,24 @@ export const CheckoutModal = () => {
                         placeholder="Ej. Carolina Reátegui"
                         value={customer.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem' }}
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.9rem',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.88rem',
+                          border: validationErrors.name ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                          background: validationErrors.name ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                          color: '#FFFFFF'
+                        }}
                       />
+                      {validationErrors.name && (
+                        <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
+                          ⚠️ {validationErrors.name}
+                        </span>
+                      )}
                     </div>
 
+                    {/* DNI & Celular */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                       <div>
                         <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
@@ -575,7 +574,15 @@ export const CheckoutModal = () => {
                           placeholder="8 dígitos"
                           value={customer.dni}
                           onChange={(e) => handleInputChange('dni', e.target.value)}
-                          style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem' }}
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 0.9rem',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.88rem',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            background: '#161210',
+                            color: '#FFFFFF'
+                          }}
                         />
                       </div>
                       <div>
@@ -587,11 +594,25 @@ export const CheckoutModal = () => {
                           placeholder="9XXXXXXXX"
                           value={customer.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
-                          style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem' }}
+                          style={{
+                            width: '100%',
+                            padding: '0.65rem 0.9rem',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.88rem',
+                            border: validationErrors.phone ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                            background: validationErrors.phone ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                            color: '#FFFFFF'
+                          }}
                         />
+                        {validationErrors.phone && (
+                          <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
+                            ⚠️ {validationErrors.phone}
+                          </span>
+                        )}
                       </div>
                     </div>
 
+                    {/* Correo */}
                     <div>
                       <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
                         Correo Electrónico * (Para tu recibo digital y confirmación)
@@ -601,24 +622,132 @@ export const CheckoutModal = () => {
                         placeholder="tu-correo@ejemplo.com"
                         value={customer.email || ''}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.9rem', borderRadius: 'var(--radius-sm)', fontSize: '0.88rem' }}
+                        style={{
+                          width: '100%',
+                          padding: '0.65rem 0.9rem',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.88rem',
+                          border: validationErrors.email ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                          background: validationErrors.email ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                          color: '#FFFFFF'
+                        }}
                       />
+                      {validationErrors.email && (
+                        <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
+                          ⚠️ {validationErrors.email}
+                        </span>
+                      )}
                     </div>
 
-                    {/*
-                      ===========================================================
-                      OPCIÓN DE COMPROBANTE DE PAGO (BOLETA / FACTURA ELECTRÓNICA)
-                      Dejado comentado según requerimiento del cliente:
-                      "Aún tengo que revisar temas de boletas y facturas, creo que no dar esa opción por ahora, dejarlo comentado"
-                      ===========================================================
-                      <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Tipo de Comprobante</label>
-                        <select style={{ width: '100%', padding: '0.65rem' }}>
-                          <option value="boleta">Boleta de Venta</option>
-                          <option value="factura">Factura (Requiere RUC y Razón Social)</option>
-                        </select>
+                    {/* Campos de Dirección Integrados en Sección 1 */}
+                    {!isPickup ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                          <div>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                              Ciudad de destino *
+                            </label>
+                            <input
+                              type="text"
+                              value={customer.city}
+                              onChange={(e) => handleInputChange('city', e.target.value)}
+                              placeholder="Chiclayo / Lima / Trujillo..."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.9rem',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '0.88rem',
+                                border: validationErrors.city ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                                background: validationErrors.city ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                                color: '#FFFFFF'
+                              }}
+                            />
+                            {validationErrors.city && (
+                              <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
+                                ⚠️ {validationErrors.city}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                              Distrito / Zona
+                            </label>
+                            <input
+                              type="text"
+                              value={customer.district}
+                              onChange={(e) => handleInputChange('district', e.target.value)}
+                              placeholder="Santa Victoria / La Victoria..."
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.9rem',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '0.88rem',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                background: '#161210',
+                                color: '#FFFFFF'
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                            Dirección exacta o Agencia Shalom *
+                          </label>
+                          <input
+                            type="text"
+                            value={customer.address}
+                            onChange={(e) => handleInputChange('address', e.target.value)}
+                            placeholder="Calle, número, departamento o agencia Shalom"
+                            style={{
+                              width: '100%',
+                              padding: '0.65rem 0.9rem',
+                              borderRadius: 'var(--radius-sm)',
+                              fontSize: '0.88rem',
+                              border: validationErrors.address ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                              background: validationErrors.address ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                              color: '#FFFFFF'
+                            }}
+                          />
+                          {validationErrors.address && (
+                            <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
+                              ⚠️ {validationErrors.address}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    */}
+                    ) : (
+                      <div style={{
+                        marginTop: '0.35rem',
+                        background: 'rgba(212, 175, 55, 0.08)',
+                        border: '1px dashed rgba(212, 175, 55, 0.4)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '0.85rem 1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem'
+                      }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: 'rgba(212, 175, 55, 0.15)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--accent-gold)',
+                          flexShrink: 0
+                        }}>
+                          <Store size={17} />
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#ECE8E1', lineHeight: 1.45 }}>
+                          <strong style={{ color: 'var(--accent-gold-light)', display: 'block' }}>
+                            Retiro en Salón de Belleza (Gratis)
+                          </strong>
+                          {settings.salonAddress || 'Chiclayo, Lambayeque - Perú'}. No requieres ingresar dirección; tu pedido se preparará inmediatamente para recojo en tienda.
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -629,7 +758,7 @@ export const CheckoutModal = () => {
                     <span>Modalidad de Despacho (Chiclayo & Perú)</span>
                   </h4>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     {settings.shippingOptions.map((opt) => (
                       <div
                         key={opt.id}
@@ -671,74 +800,6 @@ export const CheckoutModal = () => {
                       </div>
                     ))}
                   </div>
-
-                  {/* Dirección solo si NO es recojo en salón */}
-                  {!isPickup ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                        <div>
-                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Ciudad de destino *</label>
-                          <input
-                            type="text"
-                            value={customer.city}
-                            onChange={(e) => handleInputChange('city', e.target.value)}
-                            placeholder="Chiclayo / Lima / Trujillo..."
-                            style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Distrito / Zona</label>
-                          <input
-                            type="text"
-                            value={customer.district}
-                            onChange={(e) => handleInputChange('district', e.target.value)}
-                            placeholder="Santa Victoria / La Victoria..."
-                            style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Dirección exacta o Agencia Shalom *</label>
-                        <input
-                          type="text"
-                          value={customer.address}
-                          onChange={(e) => handleInputChange('address', e.target.value)}
-                          placeholder="Calle, número, departamento o agencia"
-                          style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{
-                      background: 'rgba(229, 192, 123, 0.08)',
-                      border: '1px dashed rgba(229, 192, 123, 0.45)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.85rem'
-                    }}>
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        background: 'rgba(229, 192, 123, 0.15)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-gold)',
-                        flexShrink: 0
-                      }}>
-                        <Store size={18} />
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#ECE8E1', lineHeight: 1.45 }}>
-                        <strong style={{ color: 'var(--accent-gold-light)', display: 'block', marginBottom: '0.2rem' }}>
-                          Punto de Recojo en Salón de Belleza
-                        </strong>
-                        {settings.salonAddress || 'Chiclayo, Lambayeque - Perú'}. No requieres ingresar dirección; tu pedido se preparará para recojo inmediato sin costo de despacho.
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -753,256 +814,99 @@ export const CheckoutModal = () => {
               }}>
                 <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--accent-gold-light)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>3</span>
-                  <span>Elige tu Forma de Pago</span>
+                  <span>Forma de Pago Segura</span>
                 </h4>
-                <p style={{ fontSize: '0.74rem', color: '#9CA3AF', marginBottom: '0.9rem', lineHeight: 1.4 }}>
-                  Todos los pagos son 100% automatizados y seguros. Haz clic en la opción deseada para continuar:
+                <p style={{ fontSize: '0.74rem', color: '#9CA3AF', marginBottom: '0.85rem', lineHeight: 1.4 }}>
+                  Aceptamos todos los medios de pago con acreditación instantánea y 0% comisión adicional:
                 </p>
 
-                {/* 4 Interactive Clickable Payment Options */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.25rem' }}>
-                  {/* OPTION 1: YAPE */}
-                  <div
-                    onClick={() => setSelectedPaymentOption('yape')}
-                    style={{
-                      padding: '0.85rem 1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: selectedPaymentOption === 'yape' ? 'rgba(135, 35, 145, 0.16)' : '#161210',
-                      border: selectedPaymentOption === 'yape' ? '1.5px solid #A855F7' : '1px solid rgba(255, 255, 255, 0.1)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedPaymentOption === 'yape' ? '0 0 16px rgba(168, 85, 247, 0.25)' : 'none'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                          width: '34px',
-                          height: '34px',
-                          borderRadius: '8px',
-                          background: 'linear-gradient(135deg, #872391 0%, #4E1359 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#FFF',
-                          fontWeight: 900,
-                          fontSize: '0.85rem',
-                          boxShadow: '0 2px 8px rgba(135, 35, 145, 0.4)'
-                        }}>
-                          Y!
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
-                            Yape
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
-                            Aprobación con app Yape o código QR directo
-                          </div>
-                        </div>
+                {/* Showcase of Available Payment Methods */}
+                <div style={{
+                  background: '#161210',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid rgba(212, 175, 55, 0.25)',
+                  padding: '1rem 1.1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  marginBottom: '1rem'
+                }}>
+                  {/* Yape */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #872391 0%, #4E1359 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 900, fontSize: '0.8rem' }}>
+                        Y!
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.65rem', background: 'rgba(168, 85, 247, 0.2)', color: '#D8B4FE', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                          Instantáneo
-                        </span>
-                        <div style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          border: selectedPaymentOption === 'yape' ? '5px solid #A855F7' : '2px solid #555',
-                          background: selectedPaymentOption === 'yape' ? '#FFF' : 'transparent',
-                          transition: 'all 0.2s ease'
-                        }} />
+                      <div>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Yape</div>
+                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>QR en pantalla o código directo desde tu app</div>
                       </div>
                     </div>
-
-                    {selectedPaymentOption === 'yape' && (
-                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(168, 85, 247, 0.25)', fontSize: '0.74rem', color: '#E9D5FF', lineHeight: 1.45 }}>
-                        ✨ Paga al instante desde tu app Yape escaneando el código QR o ingresando tu código de aprobación. Tu compra se acredita automáticamente en segundos, sin subir vouchers.
-                      </div>
-                    )}
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(168, 85, 247, 0.2)', color: '#D8B4FE', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      Instantáneo
+                    </span>
                   </div>
 
-                  {/* OPTION 2: TARJETAS DÉBITO Y CRÉDITO */}
-                  <div
-                    onClick={() => setSelectedPaymentOption('card')}
-                    style={{
-                      padding: '0.85rem 1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: selectedPaymentOption === 'card' ? 'rgba(59, 130, 246, 0.14)' : '#161210',
-                      border: selectedPaymentOption === 'card' ? '1.5px solid #60A5FA' : '1px solid rgba(255, 255, 255, 0.1)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedPaymentOption === 'card' ? '0 0 16px rgba(59, 130, 246, 0.25)' : 'none'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                          width: '34px',
-                          height: '34px',
-                          borderRadius: '8px',
-                          background: '#1E293B',
-                          border: '1px solid rgba(255,255,255,0.2)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#60A5FA'
-                        }}>
-                          <CreditCard size={18} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
-                            Tarjetas de Débito y Crédito
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
-                            Visa, Mastercard, American Express, Diners Club
-                          </div>
-                        </div>
+                  {/* Tarjetas */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#1E293B', border: '1px solid rgba(255, 255, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60A5FA' }}>
+                        <CreditCard size={17} />
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.2)', color: '#93C5FD', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                          Hasta 12 Cuotas
-                        </span>
-                        <div style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          border: selectedPaymentOption === 'card' ? '5px solid #60A5FA' : '2px solid #555',
-                          background: selectedPaymentOption === 'card' ? '#FFF' : 'transparent',
-                          transition: 'all 0.2s ease'
-                        }} />
+                      <div>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Tarjetas de Débito y Crédito</div>
+                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>Visa, Mastercard, AMEX, Diners (hasta 12 cuotas)</div>
                       </div>
                     </div>
-
-                    {selectedPaymentOption === 'card' && (
-                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(59, 130, 246, 0.25)', fontSize: '0.74rem', color: '#BFDBFE', lineHeight: 1.45 }}>
-                        🔒 Procesamiento seguro con cifrado bancario SSL 256-bit y protocolo 3D Secure. Acepta cualquier banco (BCP, BBVA, Interbank, Scotiabank, BanBif y tarjetas internacionales).
-                      </div>
-                    )}
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.2)', color: '#93C5FD', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      Sin Recargo
+                    </span>
                   </div>
 
-                  {/* OPTION 3: EFECTIVO EN AGENTES Y BODEGAS (PAGOEFECTIVO) */}
-                  <div
-                    onClick={() => setSelectedPaymentOption('cash')}
-                    style={{
-                      padding: '0.85rem 1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: selectedPaymentOption === 'cash' ? 'rgba(245, 158, 11, 0.14)' : '#161210',
-                      border: selectedPaymentOption === 'cash' ? '1.5px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.1)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedPaymentOption === 'cash' ? '0 0 16px rgba(245, 158, 11, 0.25)' : 'none'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                          width: '34px',
-                          height: '34px',
-                          borderRadius: '8px',
-                          background: '#FFCC00',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#1A1A1A',
-                          fontWeight: 900,
-                          fontSize: '0.72rem'
-                        }}>
-                          CIP
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
-                            Efectivo en Agentes y Bodegas
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
-                            PagoEfectivo: BCP, BBVA, Interbank, Tambo, KasNet
-                          </div>
-                        </div>
+                  {/* Agentes & Bodegas */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#FFCC00', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1A1A1A', fontWeight: 900, fontSize: '0.7rem' }}>
+                        CIP
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.2)', color: '#FCD34D', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                          Sin Tarjeta
-                        </span>
-                        <div style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          border: selectedPaymentOption === 'cash' ? '5px solid #F59E0B' : '2px solid #555',
-                          background: selectedPaymentOption === 'cash' ? '#FFF' : 'transparent',
-                          transition: 'all 0.2s ease'
-                        }} />
+                      <div>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Efectivo en Agentes y Bodegas</div>
+                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>PagoEfectivo: BCP, BBVA, Interbank, Tambo, KasNet</div>
                       </div>
                     </div>
-
-                    {selectedPaymentOption === 'cash' && (
-                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(245, 158, 11, 0.25)', fontSize: '0.74rem', color: '#FDE68A', lineHeight: 1.45 }}>
-                        🏪 Recibirás un código CIP oficial de PagoEfectivo con instrucciones para pagar en efectivo en cualquier agente bancario, botica o bodega de tu preferencia.
-                      </div>
-                    )}
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.2)', color: '#FCD34D', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      En Efectivo
+                    </span>
                   </div>
 
-                  {/* OPTION 4: BANCA POR INTERNET */}
-                  <div
-                    onClick={() => setSelectedPaymentOption('bank_transfer')}
-                    style={{
-                      padding: '0.85rem 1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: selectedPaymentOption === 'bank_transfer' ? 'rgba(16, 185, 129, 0.14)' : '#161210',
-                      border: selectedPaymentOption === 'bank_transfer' ? '1.5px solid #10B981' : '1px solid rgba(255, 255, 255, 0.1)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedPaymentOption === 'bank_transfer' ? '0 0 16px rgba(16, 185, 129, 0.25)' : 'none'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{
-                          width: '34px',
-                          height: '34px',
-                          borderRadius: '8px',
-                          background: '#064E3B',
-                          border: '1px solid rgba(16, 185, 129, 0.4)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#10B981'
-                        }}>
-                          <Zap size={17} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
-                            Banca por Internet / Móvil
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
-                            Transferencia bancaria con código CIP
-                          </div>
-                        </div>
+                  {/* Transferencia CIP */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#064E3B', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981' }}>
+                        <Zap size={16} />
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.2)', color: '#6EE7B7', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                          Online Directo
-                        </span>
-                        <div style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          border: selectedPaymentOption === 'bank_transfer' ? '5px solid #10B981' : '2px solid #555',
-                          background: selectedPaymentOption === 'bank_transfer' ? '#FFF' : 'transparent',
-                          transition: 'all 0.2s ease'
-                        }} />
+                      <div>
+                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Banca por Internet / Móvil</div>
+                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>Transferencia bancaria con código CIP oficial</div>
                       </div>
                     </div>
-
-                    {selectedPaymentOption === 'bank_transfer' && (
-                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(16, 185, 129, 0.25)', fontSize: '0.74rem', color: '#A7F3D0', lineHeight: 1.45 }}>
-                        📱 Paga de forma directa ingresando a la app móvil o banca web de tu banco en la opción "Pago de Servicios" indicando tu código CIP.
-                      </div>
-                    )}
+                    <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.2)', color: '#6EE7B7', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                      Banca Web
+                    </span>
                   </div>
+                </div>
+
+                <div style={{
+                  padding: '0.75rem 0.9rem',
+                  background: 'rgba(212, 175, 55, 0.08)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid rgba(212, 175, 55, 0.2)',
+                  fontSize: '0.74rem',
+                  color: '#D4D4D4',
+                  lineHeight: 1.45,
+                  marginBottom: '1rem'
+                }}>
+                  ✨ <strong>Acreditación Automática:</strong> Al hacer clic en <em>Continuar al Pago Seguro</em>, se abrirá la pasarela segura donde eliges cómo pagar (Yape, Tarjeta o Efectivo). No necesitas subir comprobantes ni esperar verificaciones manuales.
                 </div>
 
                 {/* Error Banner */}

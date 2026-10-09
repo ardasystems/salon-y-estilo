@@ -1,27 +1,29 @@
 # 💳 GUIA MAESTRA: INTEGRACIÓN PROFESIONAL DE MERCADO PAGO EN APLICACIONES WEB
-> **Guía de ingeniería y playbook de implementación directa para desarrolladores y agentes de IA.**
-> Diseñada para ser entregada a cualquier IA o equipo técnico con el objetivo de construir una integración de Mercado Pago robusta, segura, homologada y lista para producción desde el primer intento.
+> **Playbook de ingeniería, resolución de errores reales y guía directiva para desarrolladores y agentes de IA.**
+> Documento consolidado con base en la experiencia directa de integración en producción. Contiene todas las soluciones a problemas de conectividad, bucles de cookies, errores de Sandbox, versiones del SDK y compatibilidad con Supabase.
 
 ---
 
 ## 📑 ÍNDICE
 1. [Filosofía y Modelo Mental: ¿Qué Checkout Elegir?](#1-filosofía-y-modelo-mental-qué-checkout-elegir)
 2. [Arquitectura y Ciclo de Vida del Pago (Flujo End-to-End)](#2-arquitectura-y-ciclo-de-vida-del-pago-flujo-end-to-end)
-3. [Las 7 Trampas Mortales de Mercado Pago (Experiencia de Trinchera)](#3-las-7-trampas-mortales-de-mercado-pago-experiencia-de-trinchera)
-4. [Gestión de Credenciales y Variables de Entorno](#4-gestión-de-credenciales-y-variables-de-entorno)
-5. [Backend: Creación de la Preferencia (`Preference`)](#5-backend-creación-de-la-preferencia-preference)
-6. [Backend: Webhook Seguro con Verificación Criptográfica (`x-signature`)](#6-backend-webhook-seguro-con-verificación-criptográfica-x-signature)
-7. [Backend: Verificación Inmediata en el Retorno del Cliente (`Verify Route`)](#7-backend-verificación-inmediata-en-el-retorno-del-cliente-verify-route)
-8. [Frontend: Integración del Botón y Experiencia de Usuario](#8-frontend-integración-del-botón-y-experiencia-de-usuario)
-9. [Idempotencia y Base de Datos: Esquema de Persistencia](#9-idempotencia-y-base-de-datos-esquema-de-persistencia)
-10. [Protocolo de Pruebas en Sandbox y Homologación Oficial](#10-protocolo-de-pruebas-en-sandbox-y-homologación-oficial)
-11. [Prompt Directivo para Transferir a Otra IA](#11-prompt-directivo-para-transferir-a-otra-ia)
+3. [Las 10 Trampas y Errores Críticos Resueltos en Trinchera](#3-las-10-trampas-y-errores-críticos-resueltos-en-trinchera)
+4. [Script de Diagnóstico Inmediato de Conexión (`test_mercadopago.js`)](#4-script-de-diagnóstico-inmediato-de-conexión-test_mercadopagojs)
+5. [Gestión Dual de Credenciales y Variables de Entorno](#5-gestión-dual-de-credenciales-y-variables-de-entorno)
+6. [Cómo Crear la Tabla en Supabase sin Bloqueos de PostgREST](#6-cómo-crear-la-tabla-en-supabase-sin-bloqueos-de-postgrest)
+7. [Backend: Creación Blindada de la Preferencia (`Preference`)](#7-backend-creación-blindada-de-la-preferencia-preference)
+8. [Backend: Webhook Seguro con Firma `x-signature` y Consulta Fidedigna](#8-backend-webhook-seguro-con-firma-x-signature-y-consulta-fidedigna)
+9. [Backend: Verificación Inmediata en el Retorno del Cliente (`/verify`)](#9-backend-verificación-inmediata-en-el-retorno-del-cliente-verify)
+10. [Frontend: Integración del Botón de Checkout con Redirección Segura](#10-frontend-integración-del-botón-de-checkout-con-redirección-segura)
+11. [Idempotencia y Base de Datos: Esquema de Persistencia](#11-idempotencia-y-base-de-datos-esquema-de-persistencia)
+12. [Protocolo de Pruebas en Sandbox y Homologación Oficial](#12-protocolo-de-pruebas-en-sandbox-y-homologación-oficial)
+13. [Super-Prompt Directivo para Transferir a Otra IA](#13-super-prompt-directivo-para-transferir-a-otra-ia)
 
 ---
 
 ## 1. FILOSOFÍA Y MODELO MENTAL: ¿QUÉ CHECKOUT ELEGIR?
 
-Mercado Pago ofrece dos grandes modalidades de integración:
+Mercado Pago ofrece dos modalidades de integración:
 
 | Criterio | **Checkout Pro (Recomendado 95% de los casos)** | **Checkout API / Bricks (Personalizado)** |
 | :--- | :--- | :--- |
@@ -74,79 +76,288 @@ sequenceDiagram
 
 ---
 
-## 3. LAS 7 TRAMPAS MORTALES DE MERCADO PAGO (EXPERIENCIA DE TRINCHERA)
+## 3. LAS 10 TRAMPAS Y ERRORES CRÍTICOS RESUELTOS EN TRINCHERA
 
-Si una IA o desarrollador no conoce estas 7 trampas, **su integración fallará en producción o en pruebas**:
+Estos son los 10 errores que cometen casi todas las IAs y desarrolladores al intentar conectar con Mercado Pago:
 
-### Trampa 1: El Error de Autofinanciamiento (`cc_rejected_call_for_authorize`)
-* **Problema:** Si el desarrollador o administrador realiza una prueba intentando pagar con una tarjeta o cuenta asociada al mismo correo, mismo RUT/DNI o mismo titular de la cuenta recaudadora de Mercado Pago, la pasarela **rechaza el pago de inmediato**.
-* **Solución:** NUNCA uses la tarjeta del dueño de la cuenta de MP para probar. En producción usa una tarjeta de un tercero con un monto mínimo real. En sandbox, usa usuarios de prueba (*Test Users*).
-
-### Trampa 2: La Falsa Confianza en el Payload del Webhook
-* **Problema:** Creer que el Webhook de Mercado Pago viene con `{ status: "approved", amount: 100 }`.
-* **Realidad:** El Webhook de Mercado Pago solo envía un aviso escueto:
-  ```json
-  { "action": "payment.updated", "type": "payment", "data": { "id": "1234567890" } }
+### 1. El Bucle Infinito de Cookies en Sandbox (`ERR_TOO_MANY_REDIRECTS`)
+* **Síntoma:** Al redirigir al usuario al link de pago en modo pruebas, la pantalla de Mercado Pago parpadea y el navegador muestra `ERR_TOO_MANY_REDIRECTS`.
+* **Causa Raíz:** La API devuelve dos URLs: `response.init_point` y `response.sandbox_init_point`. Si usas `sandbox_init_point`, el subdominio `sandbox.mercadopago.com...` tiene conflictos con las cookies de sesión del navegador.
+* **Solución Comprobada en Producción:** **Usa SIEMPRE `response.init_point`**. Si tu Access Token comienza con `TEST-`, Mercado Pago detecta automáticamente que estás en modo pruebas y renderiza el Sandbox perfectamente en el dominio principal sin bucles de cookies.
+  ```typescript
+  // CORRECTO:
+  const redirectUrl = response.init_point || response.sandbox_init_point;
   ```
-  **Un atacante puede enviar un POST falso a tu webhook inventando que un pago fue aprobado.**
-* **Solución:** Tu backend **JAMÁS** debe confiar en el cuerpo del webhook. Tu backend debe tomar el `data.id`, validar la firma criptográfica `x-signature` y luego llamar con su propio `ACCESS_TOKEN` a `Payment.get({ id })` para obtener la verdad absoluta directamente desde los servidores de Mercado Pago.
 
-### Trampa 3: La Carrera de Activación Duplicada (Webhook vs. Redirect)
-* **Problema:** Mercado Pago redirige al cliente a `back_urls.success` casi al mismo tiempo que dispara el Webhook HTTP. Si ambos ejecutan la lógica de otorgar la membresía o crear el pedido a la vez, se generan compras duplicadas o errores de clave única en la base de datos.
-* **Solución:** Patrón de **Idempotencia**. Registrar el `payment_id` en una tabla de pagos con restricción `UNIQUE`. El primero que llega (sea el webhook o el verify del cliente) adquiere el bloqueo y activa; el segundo detecta que ya está activo y simplemente responde `success: true, duplicated: true`.
+### 2. El Error 145 de Sandbox: "Una de las partes es de prueba" (`PA_UNAUTHORIZED_RESULT_FROM_POLICIES`)
+* **Síntoma:** Error 400/401 al crear la preferencia o al abrir el checkout en pruebas.
+* **Causa Raíz:** Enviar un `payer.email` real (registrado en Mercado Libre/Mercado Pago producción) cuando el Access Token es de prueba (`TEST-`), o viceversa. Mercado Pago detecta discrepancia de entornos.
+* **Solución Comprobada:** En Sandbox, **omite el objeto `payer`** en la preferencia o usa un email generado como *Test User* en el dashboard de desarrolladores. Solo envía `payer.email` en producción:
+  ```typescript
+  if (!isSandbox && userEmail && !isCollectorEmail) {
+    preferencePayload.payer = { email: userEmail };
+  }
+  ```
 
-### Trampa 4: La Penalización por Falta de Datos del Pagador (Motor Antifraude)
-* **Problema:** Si creas la preferencia enviando únicamente el precio y el título, el motor antifraude de Mercado Pago (CyberSource + Machine Learning) clasifica la transacción con riesgo alto y **rechaza hasta el 40% de pagos legítimos** con el mensaje `cc_rejected_high_risk`.
-* **Solución:** Enviar siempre en el objeto `payer`: `name`, `surname`, `email`, `identification` (si aplica) y `description` detallada en los `items`. Esto maximiza el score de confianza crediticia.
+### 3. El Error de Autofinanciamiento / Collector = Payer
+* **Síntoma:** El pago se rechaza de inmediato con el mensaje `cc_rejected_call_for_authorize` o rechazo genérico sin explicación.
+* **Causa Raíz:** El comprador está intentando pagar con la misma cuenta o email del dueño de la aplicación de Mercado Pago (`arda.systems.iot@gmail.com`). Mercado Pago prohíbe el auto-pago por normativas antilavado.
+* **Solución:** Comprobar siempre que el email del pagador no sea el email cobrador:
+  ```typescript
+  const isCollectorEmail = userEmail?.toLowerCase() === process.env.COLLECTOR_EMAIL?.toLowerCase();
+  ```
 
-### Trampa 5: Diferencia de Moneda y Cuentas Nacionales
-* **Problema:** Una cuenta de Mercado Pago creada en Perú opera en **PEN** (Soles); en México en **MXN**; en Colombia en **COP**; en Argentina en **ARS**. Mercado Pago **no permite** que una cuenta estándar peruana cobre directamente en USD o MXN.
-* **Solución:** Si tus precios base están en USD, debes implementar una función de conversión dinámica de tasa de cambio a la moneda local de la cuenta receptora antes de enviar la preferencia a Mercado Pago.
+### 4. Confusión de Versiones del SDK (`mercadopago` v1 vs v2 / v3)
+* **Síntoma:** `TypeError: mercadopago.configure is not a function` o `preference.create is not a function`.
+* **Causa Raíz:** La IA está usando la sintaxis obsoleta del SDK v1 (`mercadopago.configurations.setAccessToken`).
+* **Solución:** En el SDK moderno (`npm install mercadopago@^2` o `^3`):
+  ```typescript
+  import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
+  const client = new MercadoPagoConfig({ accessToken, options: { timeout: 10000 } });
+  const preference = new Preference(client);
+  const response = await preference.create({ body: preferencePayload });
+  ```
 
-### Trampa 6: El Timeout de los Webhooks y el Bucle Infinito
-* **Problema:** Si tu endpoint de Webhook tarda más de 5 segundos en procesar o arroja un código HTTP 500 por un fallo en tu base de datos, Mercado Pago asumirá que el webhook falló y lo reintentará cada ciertos minutos durante hasta **48 horas**.
-* **Solución:** Responder con `status 200` o `status 201` de inmediato una vez recibido y procesado el evento, y encapsular la lógica en bloques `try/catch` defensivos.
+### 5. Rechazo por Moneda Incorrecta (`invalid_currency_id`)
+* **Síntoma:** Error 400 `bad_request` al llamar a `preference.create`.
+* **Causa Raíz:** Una cuenta de Mercado Pago creada en Perú **solo puede cobrar en PEN**; una de México **solo en MXN**; una de Colombia **solo en COP**; una de Argentina **solo en ARS**. Intentar enviar `currency_id: "USD"` en una cuenta nacional provoca rechazo inmediato.
+* **Solución:** Convertir el monto a la moneda local de la cuenta antes de enviar la preferencia:
+  ```typescript
+  // Para cuenta de Perú:
+  currency_id: "PEN",
+  unit_price: amountInPen,
+  ```
 
-### Trampa 7: Monto Mínimo de Transacción
-* **Problema:** Enviar montos inferiores a la tarifa plana fija de Mercado Pago (ej. menos de S/ 3.00 PEN o menos de $15 MXN).
-* **Solución:** Validar que el `unit_price` sea siempre superior al mínimo establecido por la regulación del país.
+### 6. La Trampa del `notification_url` con `localhost`
+* **Síntoma:** Los pagos se aprueban pero el webhook nunca llega y el usuario nunca se activa.
+* **Causa Raíz:** Configurar `notification_url: "http://localhost:3000/api/payments/mercadopago/webhook"`. Los servidores de Mercado Pago no pueden enviar peticiones a tu máquina local.
+* **Solución:** En desarrollo local, omitir `notification_url` (para que el retorno del cliente `/verify` active la cuenta) o usar un túnel público HTTPS (como Cloudflare Tunnel o Ngrok).
+
+### 7. Confusión entre `PUBLIC_KEY` y `ACCESS_TOKEN`
+* **Síntoma:** Error `invalid_token` o `unauthorized` (HTTP 401).
+* **Causa Raíz:** Poner la `PUBLIC_KEY` en el constructor del backend `MercadoPagoConfig`.
+* **Solución:**
+  - El backend **SOLO usa el `ACCESS_TOKEN`** (empieza con `APP_USR-...` o `TEST-...`).
+  - La `PUBLIC_KEY` solo se usa en el frontend si renderizas componentes JS oficiales de Mercado Pago.
+
+### 8. Falsa Confianza en el Payload del Webhook (Riesgo Crítico de Seguridad)
+* **Síntoma:** Vulnerabilidad ante atacantes que simulan pagos aprobados.
+* **Causa Raíz:** El Webhook de Mercado Pago solo envía:
+  `{ "action": "payment.updated", "type": "payment", "data": { "id": "12345" } }`
+  No contiene el estado del pago ni el monto.
+* **Solución:** El backend debe tomar el `data.id` y llamar con su `ACCESS_TOKEN` a `Payment.get({ id })` para obtener la verdad directamente desde Mercado Pago.
+
+### 9. La Carrera de Doble Activación (Webhook vs. Redirect)
+* **Síntoma:** Usuarios que reciben suscripciones duplicadas o errores de base de datos por colisión de eventos.
+* **Solución:** Bloqueo de **Idempotencia**. Registrar el `payment_id` en una tabla de pagos con restricción `UNIQUE (provider, id)`. Si el webhook o el verify intentan insertar el mismo ID por segunda vez, la base de datos ignora la operación (`ON CONFLICT DO NOTHING`).
+
+### 10. Bloqueo de Supabase al Intentar Crear Tablas desde `@supabase/supabase-js`
+* **Síntoma:** La IA dice *"no puedo crear la tabla en Supabase"*.
+* **Causa Raíz:** La IA intenta usar la API PostgREST (`@supabase/supabase-js`), que solo permite DML (`select`, `insert`) y bloquea DDL (`CREATE TABLE`).
+* **Solución:** Conectarse directamente como PostgreSQL usando el driver `pg` con la cadena `DATABASE_URL` o ejecutar el script en el SQL Editor de Supabase (explicado en la Sección 6).
 
 ---
 
-## 4. GESTIÓN DE CREDENCIALES Y VARIABLES DE ENTORNO
+## 4. SCRIPT DE DIAGNÓSTICO INMEDIATO DE CONEXIÓN (`test_mercadopago.js`)
 
-En el archivo `.env.local` (o variables del servidor en Vercel/AWS):
+Crea este archivo en la raíz de tu proyecto para probar en 2 segundos si tus credenciales y conexión con Mercado Pago son 100% operativas:
 
+```javascript
+// test_mercadopago.js
+// Ejecutar con: node test_mercadopago.js
+require("dotenv").config({ path: ".env.local" });
+const { MercadoPagoConfig, Preference } = require("mercadopago");
+
+async function testConnection() {
+  console.log("🔍 Iniciando prueba de conexión con Mercado Pago...\n");
+
+  const accessToken =
+    process.env.MERCADOPAGO_ACCESS_TOKEN ||
+    process.env.MERCADOPAGO_PROD_ACCESS_TOKEN ||
+    process.env.MERCADOPAGO_TEST_ACCESS_TOKEN;
+
+  if (!accessToken) {
+    console.error("❌ ERROR: No se encontró la variable MERCADOPAGO_ACCESS_TOKEN en tu archivo .env.local");
+    process.exit(1);
+  }
+
+  const isTestToken = accessToken.startsWith("TEST-");
+  const isProdToken = accessToken.startsWith("APP_USR-");
+
+  console.log(`🔑 Tipo de Credencial detectada: ${isTestToken ? "SANDBOX / TEST (Pruebas)" : isProdToken ? "PRODUCCIÓN (Real)" : "DESCONOCIDO"}`);
+  console.log(`🔐 Prefijo: ${accessToken.substring(0, 15)}... (Longitud: ${accessToken.length} caracteres)\n`);
+
+  try {
+    const client = new MercadoPagoConfig({
+      accessToken: accessToken.trim(),
+      options: { timeout: 10000 },
+    });
+
+    const preference = new Preference(client);
+
+    console.log("📡 Enviando solicitud de prueba a la API de Mercado Pago...");
+
+    const response = await preference.create({
+      body: {
+        items: [
+          {
+            id: "test-item-01",
+            title: "Diagnóstico de Conectividad Mercado Pago",
+            description: "Item temporal de prueba de conectividad",
+            quantity: 1,
+            currency_id: "PEN", // Ajustar a MXN, ARS, COP según el país de la cuenta
+            unit_price: 5.0,
+          },
+        ],
+        back_urls: {
+          success: "https://ejemplo.com/success",
+          failure: "https://ejemplo.com/failure",
+        },
+        statement_descriptor: "TEST DIAG",
+      },
+    });
+
+    console.log("\n✅ ¡CONEXIÓN EXITOSA CON MERCADO PAGO!");
+    console.log("--------------------------------------------------");
+    console.log(`🆔 Preference ID : ${response.id}`);
+    console.log(`🔗 Init Point     : ${response.init_point}`);
+    if (response.sandbox_init_point) {
+      console.log(`🧪 Sandbox Point  : ${response.sandbox_init_point}`);
+    }
+    console.log("--------------------------------------------------");
+    console.log("🎉 Tu token es válido y la API responde correctamente.\n");
+  } catch (err) {
+    console.error("\n❌ ERROR AL CONECTAR CON MERCADO PAGO:");
+    console.error("Mensaje :", err.message);
+    if (err.cause) console.error("Detalle :", JSON.stringify(err.cause, null, 2));
+    if (err.status) console.error("Código HTTP:", err.status);
+    console.log("\n💡 Pasos de solución:");
+    console.log("1. Revisa que el ACCESS_TOKEN no tenga comillas ni espacios al final en .env.local.");
+    console.log("2. Verifica que el país de la cuenta soporte la moneda indicada (ej. PEN para Perú, MXN para México).");
+  }
+}
+
+testConnection();
+```
+
+---
+
+## 5. GESTIÓN DUAL DE CREDENCIALES Y VARIABLES DE ENTORNO
+
+Para poder alternar entre Sandbox y Producción con un solo flag sin borrar claves:
+
+Archivo: `.env.local`:
 ```env
 # ============================================================================
-# MERCADO PAGO CREDENCIALES OFICIALES
+# CONFIGURACIÓN DUAL MERCADO PAGO
 # ============================================================================
-# Clave Pública: Solo se usa en el Frontend si vas a renderizar el Wallet/SDK JS
-NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+PAYMENT_MODE=production   # 'sandbox' para pruebas | 'production' para cobros reales
 
-# Clave Privada (Access Token): NUNCA exponer en el cliente. Solo Backend Server
-MERCADOPAGO_ACCESS_TOKEN=APP_USR-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxx
+# Credenciales de Producción (Obtenidas en Mercado Pago Developers > Credenciales de Producción)
+MERCADOPAGO_PROD_ACCESS_TOKEN=APP_USR-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxx
+NEXT_PUBLIC_MERCADOPAGO_PROD_PUBLIC_KEY=APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
-# Clave Secreta de Firma Webhook (Signature Secret en tu panel de Desarrolladores de MP):
+# Credenciales de Sandbox (Obtenidas en Mercado Pago Developers > Credenciales de Prueba)
+MERCADOPAGO_TEST_ACCESS_TOKEN=TEST-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxx
+NEXT_PUBLIC_MERCADOPAGO_TEST_PUBLIC_KEY=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+# Webhook Secret (Obtenido en la sección Webhooks del panel de MP)
 MERCADOPAGO_WEBHOOK_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# Entorno: 'sandbox' o 'production'
-MERCADOPAGO_ENVIRONMENT=production
-
-# URL Pública de Producción (Requerida para Webhooks y Retornos, DEBE TENER HTTPS)
+# URL pública de producción con HTTPS (Obligatorio para que los webhooks funcionen)
 NEXT_PUBLIC_SITE_URL=https://tudominio.com
+
+# Cadena de conexión directa a PostgreSQL de Supabase (Para ejecutar migraciones DDL)
+DATABASE_URL=postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
 ```
 
 ---
 
-## 5. BACKEND: CREACIÓN DE LA PREFERENCIA (`PREFERENCE`)
+## 6. CÓMO CREAR LA TABLA EN SUPABASE SIN BLOQUEOS DE POSTGREST
 
-Instalar la SDK oficial v2 en el proyecto:
-```bash
-npm install mercadopago
+Si la otra IA no puede crear la tabla porque `@supabase/supabase-js` bloquea `CREATE TABLE`, indícale que ejecute una de estas dos soluciones:
+
+### Opción A (Recomendada para la IA): Script de Migración Directa con `pg`
+Crear `scripts/migrate_payment_tables.js` y correr con `node scripts/migrate_payment_tables.js`:
+
+```javascript
+// scripts/migrate_payment_tables.js
+require("dotenv").config({ path: ".env.local" });
+const { Client } = require("pg");
+
+async function migrate() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.error("Falta DATABASE_URL en .env.local");
+    process.exit(1);
+  }
+
+  const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });
+
+  try {
+    await client.connect();
+    console.log("Conectado a PostgreSQL de Supabase...");
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.payment_transactions (
+        id TEXT PRIMARY KEY,
+        order_id TEXT,
+        user_id TEXT,
+        provider TEXT NOT NULL DEFAULT 'mercadopago',
+        amount NUMERIC(10, 2) NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'PEN',
+        status TEXT NOT NULL,
+        status_detail TEXT,
+        external_reference TEXT,
+        payer_email TEXT,
+        raw_response JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        CONSTRAINT uq_provider_transaction UNIQUE (provider, id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_payment_transactions_order ON public.payment_transactions(order_id);
+      CREATE INDEX IF NOT EXISTS idx_payment_transactions_user ON public.payment_transactions(user_id);
+    `);
+
+    console.log("✅ Tabla 'payment_transactions' creada exitosamente en Supabase.");
+  } catch (err) {
+    console.error("Error en migración:", err);
+  } finally {
+    await client.end();
+  }
+}
+
+migrate();
 ```
 
-Archivo: `src/app/api/payments/mercadopago/preference/route.ts` (Next.js App Router / Node.js):
+### Opción B: Copiar y Pegar en el SQL Editor de Supabase
+Ir a [Supabase Dashboard](https://supabase.com/dashboard) > **SQL Editor** > **New Query**, pegar y hacer clic en **Run**:
+```sql
+CREATE TABLE IF NOT EXISTS public.payment_transactions (
+    id TEXT PRIMARY KEY,
+    order_id TEXT,
+    user_id TEXT,
+    provider TEXT NOT NULL DEFAULT 'mercadopago',
+    amount NUMERIC(10, 2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'PEN',
+    status TEXT NOT NULL,
+    status_detail TEXT,
+    external_reference TEXT,
+    payer_email TEXT,
+    raw_response JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT uq_provider_transaction UNIQUE (provider, id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_order ON public.payment_transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_user ON public.payment_transactions(user_id);
+```
+
+---
+
+## 7. BACKEND: CREACIÓN BLINDADA DE LA PREFERENCIA (`PREFERENCE`)
+
+Archivo: `src/app/api/payments/mercadopago/preference/route.ts`:
 
 ```typescript
 import { NextResponse } from "next/server";
@@ -154,91 +365,92 @@ import { MercadoPagoConfig, Preference } from "mercadopago";
 
 export async function POST(req: Request) {
   try {
-    const { planId, userId, userEmail, userName, userSurname } = await req.json();
+    const { planId, userId, userEmail } = await req.json();
 
-    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+    // 1. Obtener credenciales según el entorno
+    const isProd = process.env.PAYMENT_MODE === "production";
+    const accessToken = isProd
+      ? process.env.MERCADOPAGO_PROD_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN
+      : process.env.MERCADOPAGO_TEST_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN;
+
     if (!accessToken) {
       return NextResponse.json(
-        { success: false, error: "Servidor no configurado con MERCADOPAGO_ACCESS_TOKEN" },
+        { success: false, error: "Credencial MERCADOPAGO_ACCESS_TOKEN no configurada." },
         { status: 500 }
       );
     }
 
-    // 1. Resolver el producto y precio en la base de datos (NUNCA confiar en montos que envía el cliente)
-    // Supongamos que tu producto vale S/ 49.00 PEN
-    const itemPrice = 49.00;
-    const itemCurrency = "PEN"; // PEN, MXN, ARS, COP, BRL según tu país
-    const itemTitle = "Membresía Pro Acceso Total - 1 Mes";
-
-    // 2. Base URL pública y segura (Mercado Pago exige HTTPS en producción para webhooks)
+    const isSandbox = accessToken.startsWith("TEST-");
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://tudominio.com";
 
-    // 3. Inicializar el SDK de Mercado Pago
+    // 2. Precio oficial en moneda local (PEN para Perú, MXN para México)
+    const itemPrice = 49.00;
+    const itemCurrency = "PEN";
+
+    // 3. Inicializar cliente oficial Mercado Pago v2
     const client = new MercadoPagoConfig({
-      accessToken,
+      accessToken: accessToken.trim(),
       options: { timeout: 10000 },
     });
 
     const preference = new Preference(client);
 
-    // 4. Crear la estructura external_reference para conciliación
-    const externalReference = JSON.stringify({
-      userId,
-      planId,
-      userEmail,
-      createdAt: new Date().toISOString(),
-    });
-
-    // 5. Construir el payload con todos los campos del Checklist de Calidad Oficial
-    const preferenceData: any = {
+    // 4. Armar el payload con las protecciones de trinchera
+    const preferencePayload: any = {
       items: [
         {
-          id: planId,
-          title: itemTitle,
-          description: "Acceso ilimitado a todas las funciones premium y simuladores.",
-          category_id: "services", // 'services', 'learnings', etc.
+          id: planId || "plan-pro",
+          title: "Suscripción Acceso Pro - 1 Mes",
+          description: "Acceso total a todas las herramientas y simulacros",
+          category_id: "services",
           quantity: 1,
           currency_id: itemCurrency,
           unit_price: itemPrice,
         },
       ],
-      payer: {
-        email: userEmail,
-        name: userName || "Estudiante",
-        surname: userSurname || "Salesforce",
-      },
+      external_reference: JSON.stringify({
+        userId,
+        planId,
+        userEmail,
+        createdAt: new Date().toISOString(),
+      }),
       back_urls: {
         success: `${siteUrl}/?payment=success&provider=mercadopago`,
         pending: `${siteUrl}/?payment=pending&provider=mercadopago`,
         failure: `${siteUrl}/?payment=failure&provider=mercadopago`,
       },
-      auto_return: "approved", // Redirige automáticamente al usuario apenas se aprueba
-      binary_mode: true,       // CRÍTICO: Solo 'approved' o 'rejected' (evita pagos colgados)
-      notification_url: `${siteUrl}/api/payments/mercadopago/webhook`,
-      statement_descriptor: "MIPLATAFORMA", // Máx 11 caracteres en el resumen bancario
-      external_reference: externalReference,
-      metadata: {
-        user_id: userId,
-        plan_id: planId,
-        user_email: userEmail,
-      },
-      payment_methods: {
-        installments: 12, // Permite hasta 12 cuotas según el país
-      },
+      auto_return: "approved",
+      binary_mode: true, // Solo aprueba o rechaza de inmediato (sin pagos pendientes colgados)
+      statement_descriptor: "MISERVICIO",
     };
 
-    const response = await preference.create({ body: preferenceData });
+    // Solo agregar notification_url si es un dominio público HTTPS (no localhost)
+    if (!siteUrl.includes("localhost") && !siteUrl.includes("127.0.0.1")) {
+      preferencePayload.notification_url = `${siteUrl}/api/payments/mercadopago/webhook`;
+    }
+
+    // Regla de Oro de Sandbox: En pruebas NO enviar payer.email para evitar el Error 145
+    // En producción solo enviarlo si no coincide con la cuenta recaudadora
+    const isCollector = userEmail?.toLowerCase() === process.env.COLLECTOR_EMAIL?.toLowerCase();
+    if (!isSandbox && userEmail && !isCollector) {
+      preferencePayload.payer = { email: userEmail };
+    }
+
+    // 5. Crear la preferencia
+    const response = await preference.create({ body: preferencePayload });
+
+    // Regla de Oro de Redirects: Usar SIEMPRE init_point para evitar el bucle de cookies
+    const redirectUrl = response.init_point || response.sandbox_init_point;
 
     return NextResponse.json({
       success: true,
       preferenceId: response.id,
-      initPoint: response.init_point,               // URL para redirigir en producción
-      sandboxInitPoint: response.sandbox_init_point, // URL para sandbox
+      initPoint: redirectUrl,
     });
   } catch (error: any) {
     console.error("Error creando preferencia en Mercado Pago:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Error al generar enlace de pago" },
+      { success: false, error: error.message || "Error al procesar el pago" },
       { status: 500 }
     );
   }
@@ -247,7 +459,7 @@ export async function POST(req: Request) {
 
 ---
 
-## 6. BACKEND: WEBHOOK SEGURO CON VERIFICACIÓN CRIPTOGRÁFICA (`x-signature`)
+## 8. BACKEND: WEBHOOK SEGURO CON FIRMA `x-signature` Y CONSULTA FIDEDIGNA
 
 Archivo: `src/app/api/payments/mercadopago/webhook/route.ts`:
 
@@ -256,42 +468,31 @@ import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import crypto from "crypto";
 
-/**
- * Validador criptográfico HMAC-SHA256 del header x-signature de Mercado Pago
- */
-function verifyMercadoPagoSignature(
-  xSignatureHeader: string | null,
-  xRequestIdHeader: string | null,
+function verifySignature(
+  xSignature: string | null,
+  xRequestId: string | null,
   dataId: string,
-  secretKey: string
+  secret: string
 ): boolean {
-  if (!xSignatureHeader || !secretKey) return true; // Si no hay secret configurado en dev, permitir
-
+  if (!xSignature || !secret) return true;
   try {
-    // xSignatureHeader viene en formato: "ts=1700000000,v1=abcdef0123456789..."
-    const parts = xSignatureHeader.split(",").reduce((acc: any, part) => {
-      const [key, value] = part.split("=");
-      if (key && value) acc[key.trim()] = value.trim();
+    const parts = xSignature.split(",").reduce((acc: any, part) => {
+      const [k, v] = part.split("=");
+      if (k && v) acc[k.trim()] = v.trim();
       return acc;
     }, {});
 
     const ts = parts["ts"];
-    const hash = parts["v1"];
+    const v1 = parts["v1"];
+    if (!ts || !v1) return false;
 
-    if (!ts || !hash) return false;
-
-    // Crear el manifiesto oficial de Mercado Pago: "id:[data.id];request-id:[x-request-id];ts:[ts];"
     let manifest = `id:${dataId};`;
-    if (xRequestIdHeader) {
-      manifest += `request-id:${xRequestIdHeader};`;
-    }
+    if (xRequestId) manifest += `request-id:${xRequestId};`;
     manifest += `ts:${ts};`;
 
-    // Generar el HMAC SHA-256
-    const hmac = crypto.createHmac("sha256", secretKey).update(manifest).digest("hex");
-    return hmac === hash;
-  } catch (e) {
-    console.error("Error verificando firma x-signature:", e);
+    const hash = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
+    return hash === v1;
+  } catch {
     return false;
   }
 }
@@ -301,79 +502,51 @@ export async function POST(req: Request) {
     const { searchParams } = new URL(req.url);
     const body = await req.json().catch(() => ({}));
 
-    // Mercado Pago puede enviar el ID en el query string o en el cuerpo JSON
     const paymentId = searchParams.get("data.id") || body?.data?.id || searchParams.get("id") || body?.id;
-    const topic = searchParams.get("type") || body?.type || body?.topic;
+    const type = searchParams.get("type") || body?.type;
 
-    // Solo nos interesan los eventos de tipo payment
-    if (!paymentId || (topic && topic !== "payment")) {
+    if (!paymentId || (type && type !== "payment")) {
       return NextResponse.json({ received: true });
     }
 
-    // 1. Validar firma criptográfica (Opcional pero altamente recomendado en Producción)
-    const xSignature = req.headers.get("x-signature");
-    const xRequestId = req.headers.get("x-request-id");
-    const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET || "";
-
-    if (webhookSecret && !verifyMercadoPagoSignature(xSignature, xRequestId, String(paymentId), webhookSecret)) {
-      console.warn("Mercado Pago Webhook: Firma criptográfica inválida descartada.");
+    // 1. Validar firma criptográfica
+    const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET || "";
+    if (secret && !verifySignature(req.headers.get("x-signature"), req.headers.get("x-request-id"), String(paymentId), secret)) {
+      console.warn("Webhook: Firma descartada por inválida");
       return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
     }
 
-    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-    if (!accessToken) {
-      return NextResponse.json({ error: "No access token" }, { status: 500 });
-    }
+    // 2. Consultar directamente a Mercado Pago para saber el estado real
+    const accessToken = process.env.MERCADOPAGO_PROD_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN;
+    const client = new MercadoPagoConfig({ accessToken: accessToken!.trim() });
+    const payment = await new Payment(client).get({ id: String(paymentId) });
 
-    // 2. Consultar directamente a Mercado Pago para saber el estado VERDADERO del pago
-    const client = new MercadoPagoConfig({ accessToken, options: { timeout: 10000 } });
-    const paymentService = new Payment(client);
-    const payment = await paymentService.get({ id: String(paymentId) });
+    if (!payment) return NextResponse.json({ received: true });
 
-    if (!payment) {
-      return NextResponse.json({ received: true });
-    }
-
-    console.log(`Webhook MP: Pago ${payment.id} estado = ${payment.status}`);
-
-    // 3. Procesar únicamente si está formalmente APROBADO
+    // 3. Si está formalmente aprobado, activar servicio con Idempotencia
     if (payment.status === "approved") {
       let extRef: any = {};
-      try {
-        extRef = JSON.parse(payment.external_reference || "{}");
-      } catch {
-        extRef = { userId: payment.external_reference };
-      }
+      try { extRef = JSON.parse(payment.external_reference || "{}"); } catch { extRef = {}; }
 
       const userId = extRef.userId || payment.metadata?.user_id;
       const planId = extRef.planId || payment.metadata?.plan_id;
-      const email = payment.payer?.email || extRef.userEmail;
 
-      // 4. Bloqueo de Idempotencia: Verificar si ya fue procesado en la BD
-      // const alreadyProcessed = await dbCheckPaymentExists(String(payment.id));
-      // if (!alreadyProcessed) {
-      //    await dbActivateSubscription(userId, planId, String(payment.id));
-      // }
+      console.log(`✅ Pago aprobado ${payment.id} para usuario ${userId}. Activando...`);
+      // Ejecutar activación idempotente en BD:
+      // await activateSubscriptionIdempotent(userId, planId, String(payment.id));
     }
 
-    // 5. Responder SIEMPRE con 200 OK inmediatamente
     return NextResponse.json({ success: true, status: payment.status });
-  } catch (error: any) {
-    console.error("Error en Webhook Mercado Pago:", error);
-    // Devolvemos 200 con log para evitar que Mercado Pago reintente en bucle infinito si es un error de formato
-    return NextResponse.json({ error: error.message }, { status: 200 });
+  } catch (err: any) {
+    console.error("Error en Webhook Mercado Pago:", err);
+    return NextResponse.json({ received: true }, { status: 200 }); // Responder 200 para evitar bucle de reintentos
   }
 }
 ```
 
 ---
 
-## 7. BACKEND: VERIFICACIÓN INMEDIATA EN EL RETORNO DEL CLIENTE (`VERIFY ROUTE`)
-
-Cuando el usuario completa el pago, Mercado Pago lo redirige a:
-`https://tudominio.com/?payment=success&payment_id=123456789&provider=mercadopago`
-
-El webhook puede tardar entre 2 y 10 segundos en llegar por latencia de red. Para que el usuario no sienta que "pagó pero no se activó", se implementa este endpoint:
+## 9. BACKEND: VERIFICACIÓN INMEDIATA EN EL RETORNO DEL CLIENTE (`/verify`)
 
 Archivo: `src/app/api/payments/mercadopago/verify/route.ts`:
 
@@ -388,12 +561,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "ID de pago requerido" }, { status: 400 });
     }
 
-    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
-    const client = new MercadoPagoConfig({ accessToken: accessToken!, options: { timeout: 10000 } });
-    const paymentService = new Payment(client);
-    
-    // Consultar estado real a Mercado Pago
-    const payment = await paymentService.get({ id: String(paymentId) });
+    const accessToken = process.env.MERCADOPAGO_PROD_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN;
+    const client = new MercadoPagoConfig({ accessToken: accessToken!.trim() });
+    const payment = await new Payment(client).get({ id: String(paymentId) });
 
     if (!payment) {
       return NextResponse.json({ success: false, error: "Pago no encontrado" }, { status: 404 });
@@ -402,24 +572,21 @@ export async function POST(req: Request) {
     if (payment.status === "approved") {
       let extRef: any = {};
       try { extRef = JSON.parse(payment.external_reference || "{}"); } catch { extRef = {}; }
-      
-      const userId = extRef.userId || payment.metadata?.user_id;
-      const planId = extRef.planId || payment.metadata?.plan_id;
 
-      // Activar con verificación de idempotencia en BD
-      // await dbActivateSubscription(userId, planId, String(payment.id));
+      // Activar con verificación de idempotencia en BD si el webhook aún no llegó
+      // await activateSubscriptionIdempotent(extRef.userId, extRef.planId, String(payment.id));
 
       return NextResponse.json({
         success: true,
         status: "approved",
-        message: "¡Pago verificado y suscripción activada con éxito!",
+        message: "¡Pago aprobado y verificado con éxito!",
       });
     }
 
     return NextResponse.json({
       success: false,
       status: payment.status,
-      message: `El pago se encuentra en estado: ${payment.status} (${payment.status_detail})`,
+      message: `Estado actual del pago: ${payment.status} (${payment.status_detail})`,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -429,7 +596,7 @@ export async function POST(req: Request) {
 
 ---
 
-## 8. FRONTEND: INTEGRACIÓN DEL BOTÓN Y EXPERIENCIA DE USUARIO
+## 10. FRONTEND: INTEGRACIÓN DEL BOTÓN DE CHECKOUT CON REDIRECCIÓN SEGURA
 
 Componente React / Next.js: `src/components/MercadoPagoButton.tsx`:
 
@@ -453,7 +620,6 @@ export function MercadoPagoButton({ planId, userId, userEmail }: Props) {
       setLoading(true);
       setErrorMessage(null);
 
-      // 1. Solicitar la creación de la preferencia a nuestro propio backend
       const response = await fetch("/api/payments/mercadopago/preference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -461,18 +627,15 @@ export function MercadoPagoButton({ planId, userId, userEmail }: Props) {
       });
 
       const data = await response.json();
-
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "No se pudo iniciar el pago con Mercado Pago");
+        throw new Error(data.error || "No se pudo iniciar el checkout con Mercado Pago");
       }
 
-      // 2. Redirigir al usuario al Checkout Pro oficial
-      // En producción: data.initPoint; En pruebas locales: data.sandboxInitPoint o initPoint
-      const redirectUrl = data.initPoint || data.sandboxInitPoint;
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
+      // Redirigir al usuario al initPoint (funciona en Sandbox y Producción sin bucles)
+      if (data.initPoint) {
+        window.location.href = data.initPoint;
       } else {
-        throw new Error("No se recibió la URL de redirección");
+        throw new Error("No se recibió la URL de pago.");
       }
     } catch (err: any) {
       setErrorMessage(err.message || "Error al conectar con la pasarela.");
@@ -485,7 +648,7 @@ export function MercadoPagoButton({ planId, userId, userEmail }: Props) {
       <button
         onClick={handleCheckout}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 bg-[#009EE3] hover:bg-[#0082BD] text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-3 bg-[#009EE3] hover:bg-[#0082BD] text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-md active:scale-[0.98] disabled:opacity-50 cursor-pointer"
       >
         {loading ? (
           <span className="flex items-center gap-2">
@@ -500,7 +663,7 @@ export function MercadoPagoButton({ planId, userId, userEmail }: Props) {
             <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
               <path d="M21 4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V8h18v10z"/>
             </svg>
-            <span>Pagar con Mercado Pago (Tarjetas / Cuotas)</span>
+            <span>Pagar con Mercado Pago (Tarjetas / Cuotas / Monedero)</span>
           </>
         )}
       </button>
@@ -515,130 +678,96 @@ export function MercadoPagoButton({ planId, userId, userEmail }: Props) {
 
 ---
 
-## 9. IDEMPOTENCIA Y BASE DE DATOS: ESQUEMA DE PERSISTENCIA
+## 11. IDEMPOTENCIA Y BASE DE DATOS: ESQUEMA DE PERSISTENCIA
 
-Para evitar transacciones duplicadas o usuarios no activados ante ráfagas concurrentes:
+Función TypeScript para asegurar que jamás se otorgue dos veces un beneficio si coinciden Webhook y Retorno:
 
-```sql
--- Tabla de transacciones y conciliación de Mercado Pago en PostgreSQL / Supabase
-CREATE TABLE IF NOT EXISTS public.payment_transactions (
-    id TEXT PRIMARY KEY,                       -- Mercado Pago Payment ID (ej: '1234567890')
-    user_id TEXT NOT NULL,                     -- ID del usuario en tu sistema
-    provider TEXT NOT NULL DEFAULT 'mercadopago',
-    plan_id TEXT NOT NULL,                     -- Plan adquirido
-    amount NUMERIC(10, 2) NOT NULL,            -- Monto cobrado
-    currency TEXT NOT NULL DEFAULT 'PEN',      -- Moneda local
-    status TEXT NOT NULL,                      -- 'approved', 'rejected', 'refunded'
-    status_detail TEXT,                        -- Detalle oficial de MP (ej: 'accredited')
-    external_reference TEXT,                   -- Metadata enviada en la preferencia
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    activated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    CONSTRAINT uq_payment_provider_id UNIQUE (provider, id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_payment_transactions_user ON public.payment_transactions(user_id);
-```
-
-### Función de Idempotencia en TypeScript:
 ```typescript
-export async function activateSubscriptionIdempotent(payment: {
-  transactionId: string;
-  userId: string;
-  planId: string;
-  amount: number;
-  currency: string;
-}): Promise<{ alreadyProcessed: boolean }> {
-  // 1. Intentar insertar la transacción. Si ya existe, la base de datos lo rechaza de inmediato (ON CONFLICT DO NOTHING)
-  const insertResult = await db.query(
-    `INSERT INTO public.payment_transactions (id, user_id, provider, plan_id, amount, currency, status)
-     VALUES ($1, $2, 'mercadopago', $3, $4, $5, 'approved')
-     ON CONFLICT (provider, id) DO NOTHING
-     RETURNING id;`,
-    [payment.transactionId, payment.userId, payment.planId, payment.amount, payment.currency]
-  );
+import { queryDb } from "@/lib/serverDb";
 
-  // Si no devolvió filas, significa que ya fue procesado antes (idempotencia cumplida)
-  if (insertResult.rowCount === 0) {
-    return { alreadyProcessed: true };
+export async function activateSubscriptionIdempotent(
+  userId: string,
+  planId: string,
+  paymentId: string,
+  amount: number,
+  currency: string
+): Promise<{ alreadyActivated: boolean }> {
+  // 1. Candado atómico: Intentar insertar la transacción en la base de datos
+  const insertSql = `
+    INSERT INTO public.payment_transactions (id, user_id, provider, plan_id, amount, currency, status)
+    VALUES ($1, $2, 'mercadopago', $3, $4, $5, 'approved')
+    ON CONFLICT (provider, id) DO NOTHING
+    RETURNING id;
+  `;
+  const rows = await queryDb(insertSql, [paymentId, userId, planId, amount, currency]);
+
+  // Si no devolvió filas, significa que ya fue insertado previamente por el webhook o el verify
+  if (!rows || rows.length === 0) {
+    console.log(`Idempotencia: Pago ${paymentId} ya estaba registrado en BD.`);
+    return { alreadyActivated: true };
   }
 
-  // 2. Si es la primera vez que se procesa, extender la fecha de suscripción del usuario
-  await db.query(
+  // 2. Primera vez: Actualizar la suscripción o pedido en la base de datos
+  await queryDb(
     `UPDATE public.users 
      SET subscription_plan = $2, 
          subscription_expires_at = NOW() + INTERVAL '30 days',
-         is_active = TRUE
+         is_active = TRUE 
      WHERE id = $1;`,
-    [payment.userId, payment.planId]
+    [userId, planId]
   );
 
-  return { alreadyProcessed: false };
+  return { alreadyActivated: false };
 }
 ```
 
 ---
 
-## 10. PROTOCOLO DE PRUEBAS EN SANDBOX Y HOMOLOGACIÓN OFICIAL
+## 12. PROTOCOLO DE PRUEBAS EN SANDBOX Y HOMOLOGACIÓN OFICIAL
 
-### 10.1 Tarjetas de Prueba Oficiales de Mercado Pago (Globales)
-Para probar en modo Sandbox o con usuarios de prueba sin gastar dinero real:
+### Tarjetas de Prueba Oficiales de Mercado Pago (Globales)
+Úsalas en Sandbox con cualquier nombre, fecha futura (ej. `11/28`) y DNI ficticio:
 
-| Estado Esperado | Número de Tarjeta | Fecha Exp. | CVC | Titular |
-| :--- | :--- | :--- | :--- | :--- |
-| **Aprobado Inmediato** | `4242 4242 4242 4242` | `11/28` | `123` | APRO |
-| **Fondos Insuficientes** | `4023 3611 1111 1114` | `11/28` | `123` | FOND |
-| **Rechazado por Tarjeta Vencida** | `4023 3611 1111 1115` | `11/20` | `123` | VENC |
-| **Rechazado por Código de Seguridad**| `4023 3611 1111 1116` | `11/28` | `999` | SEGU |
-
-> [!NOTE]
-> Cuando estés en modo Sandbox, en el formulario de Checkout ingresa cualquier DNI/RUT/documento de prueba válido para el país configurado.
-
-### 10.2 Checklist de Calidad para Pase a Producción (Homologación de Mercado Pago)
-Mercado Pago cuenta con un motor automático de evaluación de calidad (*Quality Evaluation Tool*). Para que tu aplicación pase con calificación 100%:
-- [x] Enviar `items[].quantity`, `items[].unit_price` y `items[].description`.
-- [x] Enviar `statement_descriptor` (nombre de fantasía de tu tienda en el extracto bancario).
-- [x] Configurar las 3 URLs de retorno (`back_urls.success`, `back_urls.pending`, `back_urls.failure`).
-- [x] Configurar `auto_return: "approved"`.
-- [x] Enviar `notification_url` con HTTPS para recepción de webhooks.
-- [x] Enviar `external_reference` con identificador único de orden/usuario.
-- [x] Enviar `payer.email` y `payer.name`.
-- [x] Implementar verificación de estado mediante API `Payment.get({ id })` tras recibir el webhook.
-- [x] Probar al menos un pago exitoso y un pago rechazado en Sandbox antes de solicitar credenciales de producción.
+| Estado Esperado | Número de Tarjeta | CVV | Resultado |
+| :--- | :--- | :--- | :--- |
+| **Aprobado Inmediato** | `4242 4242 4242 4242` | `123` | `approved` (accredited) |
+| **Fondos Insuficientes** | `4023 3611 1111 1114` | `123` | `rejected` (insufficient_amount) |
+| **Tarjeta Vencida** | `4023 3611 1111 1115` | `123` | `rejected` (expired_card) |
+| **Error en Código de Seguridad** | `4023 3611 1111 1116` | `999` | `rejected` (invalid_security_code) |
 
 ---
 
-## 11. PROMPT DIRECTIVO PARA TRANSFERIR A OTRA IA
+## 13. SUPER-PROMPT DIRECTIVO PARA TRANSFERIR A OTRA IA
 
-Copia y pega el siguiente bloque a otra IA (Claude, GPT, Antigravity, etc.) para que ejecute la integración en cualquier proyecto nuevo:
+Copia y pega este bloque íntegro en la otra IA para que resuelva de raíz cualquier problema de conexión con Mercado Pago y Supabase:
 
 ```markdown
-Eres un Arquitecto Senior Fullstack experto en pasarelas de pago y seguridad fintech.
-Tu tarea es implementar Mercado Pago Checkout Pro en este proyecto web siguiendo estrictamente estas directrices técnicas:
+Eres un Arquitecto Senior Fullstack especialista en pasarelas de pago y seguridad fintech.
+Tu tarea es implementar y conectar Mercado Pago Checkout Pro en este proyecto. Ya contamos con experiencia resolviendo los errores más comunes de Mercado Pago, así que debes seguir estrictamente estas reglas probadas:
 
-1. ARQUITECTURA DE INTEGRACIÓN:
-   - Utiliza Mercado Pago Checkout Pro con el SDK oficial de backend (`npm install mercadopago`).
-   - Implementa un endpoint POST `/api/payments/mercadopago/preference` que cree la preferencia con:
-     * `items`: id, title, description, quantity, unit_price, currency_id.
-     * `payer`: email y nombre resueltos desde el usuario autenticado.
-     * `back_urls`: success, pending, failure apuntando al dominio público.
-     * `auto_return: "approved"`.
-     * `binary_mode: true`.
-     * `notification_url` hacia el webhook oficial.
-     * `statement_descriptor` con el nombre de la empresa.
-     * `external_reference` que contenga el userId y planId en formato seguro.
+1. DIAGNÓSTICO Y CONEXIÓN INICIAL:
+   - Crea un script `test_mercadopago.js` en la raíz con el SDK oficial v2 (`npm install mercadopago`) y ejecútalo para verificar si el ACCESS_TOKEN responde con una preferencia mínima válida.
+   - Si el token comienza con `TEST-`, opera en modo Sandbox; si comienza con `APP_USR-`, opera en modo Producción.
+   - NUNCA pongas la PUBLIC_KEY en el backend ni intentes usar el método obsoleto `mercadopago.configure()`.
 
-2. SEGURIDAD Y WEBHOOKS:
-   - Implementa el endpoint POST `/api/payments/mercadopago/webhook`.
-   - NUNCA confíes en los datos recibidos en el body del webhook. Extrae el `paymentId` y consulta la API oficial con `new Payment(client).get({ id })`.
-   - Valida que `payment.status === 'approved'` antes de activar cualquier beneficio.
-   - Aplica el patrón de IDEMPOTENCIA en la base de datos para evitar dobles activaciones por condiciones de carrera entre el Webhook y la redirección del navegador.
-   - Responde siempre HTTP 200/201 al webhook para evitar reintentos continuos de Mercado Pago.
+2. CREACIÓN DE PREFERENCIA (CHECKOUT PRO):
+   - Endpoint: POST `/api/payments/mercadopago/preference`.
+   - Utiliza `new Preference(client).create({ body: preferencePayload })`.
+   - Moneda: La cuenta receptora es nacional; asegúrate de enviar la moneda local correspondiente (PEN para Perú, MXN para México, COP para Colombia, ARS para Argentina).
+   - REDIRECCIÓN SIN BUCLES: Usa SIEMPRE `response.init_point`. NO uses `sandbox_init_point` ya que provoca el error de cookies `ERR_TOO_MANY_REDIRECTS`.
+   - EVITAR ERROR 145 EN SANDBOX: En modo Sandbox, no envíes el objeto `payer.email` para evitar choque de entornos entre cuentas reales y de prueba.
+   - AUTO-PAGO: Asegúrate de que el email pagador no sea el mismo email de la cuenta dueña de Mercado Pago.
 
-3. FLUJO DE RETORNO Y EXPERIENCIA DE USUARIO:
-   - Implementa un endpoint `/api/payments/mercadopago/verify` para verificación instantánea cuando el cliente vuelve a la página tras pagar.
-   - Crea un botón de checkout en el frontend con estados de carga claros, manejo de errores y redirección suave a `init_point`.
+3. WEBHOOKS Y SEGURIDAD:
+   - Endpoint: POST `/api/payments/mercadopago/webhook`.
+   - NUNCA confíes en los datos recibidos en el body. Extrae el `paymentId` y llama a `new Payment(client).get({ id: paymentId })`.
+   - Responde siempre HTTP 200 al webhook para evitar reintentos continuos de Mercado Pago.
+   - Aplica bloqueo de IDEMPOTENCIA en la base de datos con restricción `UNIQUE` en la tabla de transacciones para evitar activaciones duplicadas entre el Webhook y la redirección del navegador.
 
-4. RIGOR TÉCNICO:
-   - No expongas jamás el `MERCADOPAGO_ACCESS_TOKEN` en el cliente.
-   - Añade tipado estricto en TypeScript y manejo defensivo de errores con try/catch en todas las rutas.
+4. BASE DE DATOS SUPABASE:
+   - No intentes crear tablas DDL (`CREATE TABLE`) usando `@supabase/supabase-js` porque PostgREST bloquea operaciones estructurales.
+   - Conéctate directamente con el driver `pg` de Node.js usando la cadena `DATABASE_URL` para ejecutar la migración de `payment_transactions`, o indícame el script SQL para ejecutarlo en el SQL Editor de Supabase.
+
+5. VERIFICACIÓN EN RETORNO DEL CLIENTE:
+   - Endpoint: POST `/api/payments/mercadopago/verify` para que, cuando el usuario regrese a la web tras pagar, se consulte a la API de Mercado Pago y se le dé acceso instantáneo sin esperar la latencia del webhook.
 ```

@@ -353,20 +353,20 @@ export const INITIAL_SETTINGS = {
   productsBannerText: "📦 ENVÍOS A NIVEL NACIONAL (Olva & Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163",
   shippingOptions: [
     {
-      id: "chiclayo_express",
-      title: "Express Chiclayo & Alrededores (< 2 horas)",
-      price: 6.00,
-      deliveryTime: "Menos de 2 horas",
-      description: "Chiclayo Centro, Santa Victoria, La Victoria, JLO y balnearios",
-      badge: "Express VIP"
-    },
-    {
       id: "salon_pickup",
       title: "Retiro en Salón de Belleza (Gratis)",
       price: 0.00,
       deliveryTime: "Inmediato en horario de atención",
       description: "Visítanos en nuestro salón y recoge tu pedido sin costo de envío",
       badge: "S/ 0.00"
+    },
+    {
+      id: "chiclayo_express",
+      title: "Express Chiclayo & Alrededores (< 2 horas)",
+      price: 6.00,
+      deliveryTime: "Menos de 2 horas",
+      description: "Chiclayo Centro, Santa Victoria, La Victoria, JLO y balnearios",
+      badge: "Express VIP"
     },
     {
       id: "olva_peru",
