@@ -27,7 +27,6 @@ export const CheckoutModal = () => {
     cartSubtotal,
     cartRawSubtotal,
     memberDiscountAmount,
-    memberDiscountPercent,
     currentUser,
     settings,
     createOrder,
@@ -571,7 +570,7 @@ export const CheckoutModal = () => {
                   gap: '0.35rem'
                 }}>
                   <Sparkles size={12} />
-                  <span>Club VIP: {currentUser.name.split(' ')[0]} (-{currentUser.discountPercent || settings.memberDiscountPercent || 10}%)</span>
+                  <span>Club VIP: {currentUser.name.split(' ')[0]} ✨</span>
                 </span>
               ) : (
                 <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold-light)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -888,7 +887,7 @@ export const CheckoutModal = () => {
 
                   {memberDiscountAmount > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--accent-gold)' }}>
-                      <span>💎 Descuento Club VIP (-{memberDiscountPercent}%):</span>
+                      <span>💎 Descuento Club VIP (Productos seleccionados):</span>
                       <span style={{ fontWeight: 700 }}>-S/ {memberDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}

@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   name TEXT,
   category TEXT,
   price NUMERIC,
+  member_discount_percent NUMERIC DEFAULT 0,
   stock INT DEFAULT 0,
   data JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),

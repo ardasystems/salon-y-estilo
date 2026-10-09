@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
-import { X, Trash2, ArrowRight, ShoppingCart, Truck, Zap } from 'lucide-react';
+import { X, Trash2, ArrowRight, ShoppingCart, Truck, Zap, Sparkles } from 'lucide-react';
 
 export const CartDrawer = () => {
   const {
@@ -12,7 +12,8 @@ export const CartDrawer = () => {
     cartSubtotal,
     cartRawSubtotal,
     memberDiscountAmount,
-    memberDiscountPercent,
+    currentUser,
+    setIsUserAuthOpen,
     setIsCheckoutOpen
   } = useStore();
 
@@ -225,8 +226,31 @@ export const CartDrawer = () => {
 
             {memberDiscountAmount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
-                <span style={{ color: 'var(--accent-gold)' }}>💎 Descuento Club VIP (-{memberDiscountPercent}%):</span>
+                <span style={{ color: 'var(--accent-gold)' }}>💎 Descuento Club VIP (Productos seleccionados):</span>
                 <span style={{ color: 'var(--accent-gold-light)', fontWeight: 700 }}>-S/ {memberDiscountAmount.toFixed(2)}</span>
+              </div>
+            )}
+
+            {!currentUser && cart.some(item => (item.memberDiscountPercent || 0) > 0) && (
+              <div
+                onClick={() => { setIsCartOpen(false); setIsUserAuthOpen(true); }}
+                style={{
+                  padding: '0.45rem 0.65rem',
+                  background: 'rgba(212, 175, 55, 0.1)',
+                  border: '1px dashed var(--accent-gold)',
+                  borderRadius: 'var(--radius-xs)',
+                  fontSize: '0.74rem',
+                  color: 'var(--accent-gold-light)',
+                  cursor: 'pointer',
+                  marginBottom: '0.65rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+                title="Haz clic para iniciar sesión o registrarte"
+              >
+                <Sparkles size={13} style={{ flexShrink: 0, color: 'var(--accent-gold)' }} />
+                <span>¡Regístrate o inicia sesión para activar descuentos VIP en tu bolsa!</span>
               </div>
             )}
 

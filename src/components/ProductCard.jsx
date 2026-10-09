@@ -3,9 +3,12 @@ import { useStore } from '../context/StoreContext';
 import { ShoppingCart, Eye, Star } from 'lucide-react';
 
 export const ProductCard = ({ product }) => {
-  const { addToCart, setQuickViewProduct, currentUser, settings } = useStore();
-  const memberDiscount = currentUser ? (currentUser.discountPercent || settings.memberDiscountPercent || 10) : 0;
-  const discountedPrice = memberDiscount > 0 ? (product.price * (1 - memberDiscount / 100)) : product.price;
+  const { addToCart, setQuickViewProduct, currentUser, setIsUserAuthOpen } = useStore();
+  const productDiscountPct = Number(product.memberDiscountPercent || 0);
+  const isMemberDiscountActive = Boolean(currentUser && productDiscountPct > 0);
+  const discountedPrice = isMemberDiscountActive
+    ? (product.price * (1 - productDiscountPct / 100))
+    : product.price;
   const [selectedShade, setSelectedShade] = useState(product.shades ? product.shades[0] : null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -240,18 +243,45 @@ export const ProductCard = ({ product }) => {
           {/* Price */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
-              <span className="product-card-price-main" style={{ fontSize: '1.2rem', fontWeight: 800, color: memberDiscount > 0 ? 'var(--accent-gold-light)' : '#FFFFFF', letterSpacing: '0.01em' }}>
+              <span className="product-card-price-main" style={{ fontSize: '1.2rem', fontWeight: 800, color: isMemberDiscountActive ? 'var(--accent-gold-light)' : '#FFFFFF', letterSpacing: '0.01em' }}>
                 S/ {discountedPrice.toFixed(2)}
               </span>
-              {(memberDiscount > 0 || (product.originalPrice && product.originalPrice > product.price)) && (
+              {(isMemberDiscountActive || (product.originalPrice && product.originalPrice > product.price)) && (
                 <span style={{ fontSize: '0.75rem', color: '#888', textDecoration: 'line-through' }}>
-                  S/ {(memberDiscount > 0 ? product.price : product.originalPrice).toFixed(2)}
+                  S/ {(isMemberDiscountActive ? product.price : product.originalPrice).toFixed(2)}
                 </span>
               )}
             </div>
-            <span style={{ fontSize: '0.64rem', color: 'var(--accent-gold-light)', letterSpacing: '0.02em', fontWeight: 600 }}>
-              {memberDiscount > 0 ? `💎 Precio Club VIP (-${memberDiscount}%)` : (settings.memberDiscountPercent ? `💎 -${settings.memberDiscountPercent}% Regístrate` : 'Envíos Perú')}
-            </span>
+            
+            {isMemberDiscountActive ? (
+              <span style={{ fontSize: '0.64rem', color: 'var(--accent-gold-light)', letterSpacing: '0.02em', fontWeight: 700 }}>
+                💎 Precio Club VIP (-{productDiscountPct}%)
+              </span>
+            ) : productDiscountPct > 0 ? (
+              <button
+                type="button"
+                onClick={() => setIsUserAuthOpen(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: '0.64rem',
+                  color: '#34D399',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  textDecoration: 'underline',
+                  textDecorationColor: 'rgba(52, 211, 153, 0.4)'
+                }}
+                title="Regístrate o inicia sesión para pagar con este descuento"
+              >
+                💎 -{productDiscountPct}% para registrados
+              </button>
+            ) : (
+              <span style={{ fontSize: '0.64rem', color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
+                Envíos Chiclayo & Perú
+              </span>
+            )}
           </div>
 
           {/* Add to Carrito button */}

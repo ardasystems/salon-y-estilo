@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { X, Star, ShoppingCart, Truck, Sparkles } from 'lucide-react';
 
 export const ProductQuickView = () => {
-  const { quickViewProduct, setQuickViewProduct, addToCart, currentUser, settings } = useStore();
+  const { quickViewProduct, setQuickViewProduct, addToCart, currentUser, setIsUserAuthOpen } = useStore();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedShade, setSelectedShade] = useState(
@@ -12,8 +12,11 @@ export const ProductQuickView = () => {
 
   if (!quickViewProduct) return null;
 
-  const memberDiscount = currentUser ? (currentUser.discountPercent || settings.memberDiscountPercent || 10) : 0;
-  const discountedPrice = memberDiscount > 0 ? (quickViewProduct.price * (1 - memberDiscount / 100)) : quickViewProduct.price;
+  const productDiscountPct = Number(quickViewProduct.memberDiscountPercent || 0);
+  const isMemberDiscountActive = Boolean(currentUser && productDiscountPct > 0);
+  const discountedPrice = isMemberDiscountActive
+    ? (quickViewProduct.price * (1 - productDiscountPct / 100))
+    : quickViewProduct.price;
 
   const handleAdd = () => {
     addToCart(quickViewProduct, quantity, selectedShade);
@@ -173,27 +176,44 @@ export const ProductQuickView = () => {
 
           {/* Price */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 800, color: memberDiscount > 0 ? 'var(--accent-gold-light)' : '#FFFFFF' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 800, color: isMemberDiscountActive ? 'var(--accent-gold-light)' : '#FFFFFF' }}>
               S/ {discountedPrice.toFixed(2)}
             </span>
-            {(memberDiscount > 0 || quickViewProduct.originalPrice) && (
+            {(isMemberDiscountActive || quickViewProduct.originalPrice) && (
               <span style={{ fontSize: '1.05rem', color: '#888', textDecoration: 'line-through' }}>
-                S/ {(memberDiscount > 0 ? quickViewProduct.price : quickViewProduct.originalPrice).toFixed(2)}
+                S/ {(isMemberDiscountActive ? quickViewProduct.price : quickViewProduct.originalPrice).toFixed(2)}
               </span>
             )}
-            {memberDiscount > 0 && (
+            {isMemberDiscountActive ? (
               <span style={{
                 background: 'rgba(212, 175, 55, 0.15)',
                 color: 'var(--accent-gold-light)',
                 border: '1px solid rgba(212, 175, 55, 0.4)',
-                padding: '0.2rem 0.55rem',
+                padding: '0.2rem 0.65rem',
                 borderRadius: 'var(--radius-full)',
                 fontSize: '0.74rem',
                 fontWeight: 700
               }}>
-                💎 Club VIP -{memberDiscount}%
+                💎 Club VIP -{productDiscountPct}%
               </span>
-            )}
+            ) : productDiscountPct > 0 ? (
+              <button
+                type="button"
+                onClick={() => { setQuickViewProduct(null); setIsUserAuthOpen(true); }}
+                style={{
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  color: '#34D399',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                💎 -{productDiscountPct}% para usuarios registrados
+              </button>
+            ) : null}
             <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', fontWeight: 700, marginLeft: 'auto' }}>
               {quickViewProduct.volume}
             </span>

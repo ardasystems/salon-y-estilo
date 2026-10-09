@@ -180,20 +180,20 @@ export const Navbar = () => {
                     transition: 'all 0.2s',
                     letterSpacing: '0.02em'
                   }}
-                  title={currentUser ? `Miembro Club VIP: ${currentUser.name}` : "Registrarse o Iniciar Sesión en Club VIP"}
+                  title={currentUser ? `Miembro Club VIP: ${currentUser.name} (Descuentos en productos seleccionados)` : "Club VIP: Promociones y descuentos en productos seleccionados"}
                 >
                   {currentUser ? (
                     <>
                       <Sparkles size={13} style={{ color: 'var(--accent-gold)' }} />
                       <span>{currentUser.name.split(' ')[0]}</span>
-                      <span style={{ fontSize: '0.68rem', background: 'rgba(212, 175, 55, 0.25)', padding: '0.1rem 0.35rem', borderRadius: '10px' }}>
-                        -{currentUser.discountPercent || settings.memberDiscountPercent || 10}%
+                      <span style={{ fontSize: '0.68rem', background: 'rgba(212, 175, 55, 0.25)', padding: '0.1rem 0.4rem', borderRadius: '10px', color: 'var(--accent-gold-light)', fontWeight: 800 }}>
+                        Club VIP
                       </span>
                     </>
                   ) : (
                     <>
-                      <User size={13} style={{ color: 'var(--accent-gold)' }} />
-                      <span>Club VIP (-{settings.memberDiscountPercent || 10}%)</span>
+                      <Sparkles size={13} style={{ color: 'var(--accent-gold)' }} />
+                      <span>Club VIP</span>
                     </>
                   )}
                 </button>

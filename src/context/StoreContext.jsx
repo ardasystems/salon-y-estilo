@@ -437,6 +437,7 @@ export const StoreProvider = ({ children }) => {
         id: product.id,
         name: product.name,
         price: product.price,
+        memberDiscountPercent: Number(product.memberDiscountPercent || 0),
         image: product.images ? product.images[0] : '',
         quantity,
         selectedShade: shade ? shade.name : null,
@@ -467,11 +468,20 @@ export const StoreProvider = ({ children }) => {
     setCart([]);
   };
 
-  const memberDiscountPercent = currentUser
-    ? (Number(currentUser.discountPercent) || Number(settings.memberDiscountPercent) || 10)
-    : 0;
   const cartRawSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const memberDiscountAmount = memberDiscountPercent > 0 ? (cartRawSubtotal * memberDiscountPercent) / 100 : 0;
+
+  // Descuento VIP calculado producto por producto para usuarios registrados
+  const memberDiscountAmount = currentUser
+    ? cart.reduce((sum, item) => {
+        const catalogProd = products.find(p => p.id === item.id);
+        const discountPct = Number(item.memberDiscountPercent ?? catalogProd?.memberDiscountPercent ?? 0);
+        if (discountPct > 0) {
+          return sum + ((item.price * item.quantity * discountPct) / 100);
+        }
+        return sum;
+      }, 0)
+    : 0;
+
   const cartSubtotal = Math.max(0, cartRawSubtotal - memberDiscountAmount);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -899,7 +909,6 @@ export const StoreProvider = ({ children }) => {
       cartSubtotal,
       cartRawSubtotal,
       cartItemCount,
-      memberDiscountPercent,
       memberDiscountAmount,
 
       // Registered Users & Club VIP

@@ -148,7 +148,7 @@ export const UserAuthModal = () => {
                 borderRadius: 'var(--radius-full)',
                 fontWeight: 700
               }}>
-                💎 Miembro Club VIP • {currentUser.discountPercent || discountPercent}% de Descuento
+                💎 Miembro Club VIP • Descuentos en Productos Seleccionados
               </span>
             </div>
 
@@ -176,7 +176,7 @@ export const UserAuthModal = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Beneficio activo:</span>
                 <span style={{ color: 'var(--accent-gold-light)', fontWeight: 700 }}>
-                  -{currentUser.discountPercent || discountPercent}% en todos los cosméticos
+                  Precios y promociones VIP en productos seleccionados
                 </span>
               </div>
             </div>
@@ -219,8 +219,8 @@ export const UserAuthModal = () => {
               </h3>
               <p style={{ fontSize: '0.8rem', color: '#B3B3B3', lineHeight: 1.45, maxWidth: '340px', margin: '0 auto' }}>
                 {activeTab === 'register'
-                  ? `Regístrate gratis y obtén ${discountPercent}% de descuento directo en todos los productos del catálogo.`
-                  : 'Ingresa a tu cuenta para aplicar tu descuento VIP en tus compras.'}
+                  ? 'Regístrate gratis para acceder a promociones exclusivas y descuentos en productos seleccionados.'
+                  : 'Ingresa a tu cuenta para activar tus precios y beneficios VIP en productos seleccionados.'}
               </p>
             </div>
 

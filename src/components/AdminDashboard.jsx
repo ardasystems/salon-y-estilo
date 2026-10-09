@@ -47,6 +47,7 @@ export const AdminDashboard = () => {
     keywordsText: '',
     price: '',
     originalPrice: '',
+    memberDiscountPercent: '',
     stock: '',
     volume: '30 ml',
     isBestseller: false,
@@ -227,6 +228,7 @@ export const AdminDashboard = () => {
       keywordsText: 'belleza, cuidado, cabello, rostro, nutrición',
       price: '',
       originalPrice: '',
+      memberDiscountPercent: '',
       stock: '20',
       volume: '30 ml',
       isBestseller: false,
@@ -247,6 +249,7 @@ export const AdminDashboard = () => {
       keywordsText: product.keywords ? product.keywords.join(', ') : '',
       price: product.price.toString(),
       originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
+      memberDiscountPercent: product.memberDiscountPercent !== undefined && product.memberDiscountPercent !== null ? product.memberDiscountPercent.toString() : '',
       stock: product.stock.toString(),
       volume: product.volume || '30 ml',
       isBestseller: product.isBestseller || false,
@@ -271,6 +274,7 @@ export const AdminDashboard = () => {
       keywords: keywordsList,
       price: parseFloat(productForm.price) || 0,
       originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : null,
+      memberDiscountPercent: productForm.memberDiscountPercent ? Math.min(100, Math.max(0, parseFloat(productForm.memberDiscountPercent))) : 0,
       stock: parseInt(productForm.stock, 10) || 0,
       volume: productForm.volume,
       isBestseller: productForm.isBestseller,
@@ -642,7 +646,25 @@ export const AdminDashboard = () => {
                           </span>
                         </td>
                         <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--accent-gold-light)' }}>
-                          S/ {p.price.toFixed(2)}
+                          <div>S/ {p.price.toFixed(2)}</div>
+                          {p.memberDiscountPercent > 0 && (
+                            <div style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              marginTop: '0.25rem',
+                              fontSize: '0.68rem',
+                              color: '#34D399',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              padding: '0.15rem 0.4rem',
+                              borderRadius: '4px',
+                              fontWeight: 700
+                            }}>
+                              <Sparkles size={10} />
+                              <span>VIP -{p.memberDiscountPercent}% (S/ {(p.price * (1 - p.memberDiscountPercent / 100)).toFixed(2)})</span>
+                            </div>
+                          )}
                         </td>
                         <td style={{ padding: '1rem' }}>
                           <span style={{
@@ -1731,32 +1753,16 @@ export const AdminDashboard = () => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Sparkles size={17} style={{ color: 'var(--accent-gold)' }} />
-                    <span>8. Programa de Fidelización Club VIP & Descuento para Registrados</span>
+                    <span>8. Programa Club VIP & Descuentos en Productos Seleccionados</span>
                   </h4>
                 </div>
 
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.9rem', lineHeight: 1.5 }}>
-                  Define el porcentaje de descuento global que se aplicará automáticamente a los productos cuando un cliente registrado inicie sesión en la web.
+                  Los porcentajes de descuento se asignan de manera flexible <strong>en cada producto individual</strong> desde la pestaña "Productos" (un cosmético puede tener 10%, otro 25% y otro 0%). Solo los clientes registrados en el Club VIP disfrutan de estas promociones y precios exclusivos al iniciar sesión.
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <div style={{ maxWidth: '160px' }}>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                      % Descuento VIP
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <input
-                        type="number"
-                        min="0"
-                        max="80"
-                        step="1"
-                        value={settingsForm.memberDiscountPercent !== undefined ? settingsForm.memberDiscountPercent : 10}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, memberDiscountPercent: parseFloat(e.target.value) || 0 })}
-                        style={{ width: '80px', padding: '0.55rem', borderRadius: 'var(--radius-xs)', fontSize: '0.88rem', fontWeight: 700, textAlign: 'center' }}
-                      />
-                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--accent-gold)' }}>% OFF</span>
-                    </div>
-                  </div>
+                <div style={{ background: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.25)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem', color: 'var(--accent-gold-light)' }}>
+                  ✨ <strong>Consejo:</strong> Para activar un descuento a un producto, ingresa a la pestaña "Productos en Catálogo", haz clic en el botón de editar (✏️) del producto deseado y define el "% Descuento para Usuarios Registrados".
                 </div>
               </div>
 
@@ -2091,6 +2097,52 @@ export const AdminDashboard = () => {
                       onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
                       style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
                     />
+                  </div>
+                </div>
+
+                {/* % Descuento Club VIP (Solo Usuarios Registrados) */}
+                <div style={{
+                  background: 'rgba(212, 175, 55, 0.08)',
+                  border: '1px solid rgba(212, 175, 55, 0.35)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.85rem 1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ flex: 1, minWidth: '220px' }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Sparkles size={14} style={{ color: 'var(--accent-gold)' }} />
+                      <span>% Descuento para Usuarios Registrados (Club VIP)</span>
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#B3B3B3', marginTop: '0.2rem', lineHeight: 1.4 }}>
+                      Define el descuento exclusivo para este producto (ej. 10%, 15%, 30%). Solo los clientes registrados pagarán el precio con descuento. Dejar en 0 o vacío si no aplica promoción.
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      max="90"
+                      step="1"
+                      placeholder="0"
+                      value={productForm.memberDiscountPercent}
+                      onChange={(e) => setProductForm({ ...productForm, memberDiscountPercent: e.target.value })}
+                      style={{
+                        width: '75px',
+                        padding: '0.5rem',
+                        borderRadius: 'var(--radius-xs)',
+                        textAlign: 'center',
+                        fontSize: '0.92rem',
+                        fontWeight: 800,
+                        background: '#1A1412',
+                        border: '1px solid var(--accent-gold)',
+                        color: '#FFFFFF'
+                      }}
+                    />
+                    <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--accent-gold)' }}>%</span>
                   </div>
                 </div>
 

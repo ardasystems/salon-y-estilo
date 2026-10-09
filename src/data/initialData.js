@@ -8,6 +8,7 @@ export const INITIAL_PRODUCTS = [
     keywords: ["niacinamida", "zinc", "manchas", "poros", "acne", "oleo", "grasa", "brillo", "iluminador", "skincare", "suero", "antimanchas"],
     price: 36.90,
     originalPrice: 45.00,
+    memberDiscountPercent: 15, // 15% de descuento solo para usuarios registrados
     stock: 24,
     isBestseller: true,
     isNew: false,
@@ -35,6 +36,7 @@ export const INITIAL_PRODUCTS = [
     keywords: ["labios", "lip", "gloss", "peptidos", "volumen", "hidratacion", "brillo labial", "aceite labial", "karite", "boca", "reparador"],
     price: 24.50,
     originalPrice: 32.00,
+    memberDiscountPercent: 10, // 10% de descuento solo para usuarios registrados
     stock: 18,
     isBestseller: true,
     isNew: false,
@@ -124,6 +126,7 @@ export const INITIAL_PRODUCTS = [
     keywords: ["bloqueador", "protector solar", "fps", "spf", "sol", "verano", "aqua gel", "toque seco", "uv", "playa", "invisible"],
     price: 39.90,
     originalPrice: 49.00,
+    memberDiscountPercent: 20, // 20% de descuento solo para usuarios registrados
     stock: 30,
     isBestseller: true,
     isNew: true,
@@ -151,6 +154,7 @@ export const INITIAL_PRODUCTS = [
     keywords: ["guasha", "gua sha", "rodillo", "roller", "cuarzo", "cuarzo rosa", "masaje facial", "antiedad", "lifting", "ojeras", "drenaje"],
     price: 29.90,
     originalPrice: 39.00,
+    memberDiscountPercent: 25, // 25% de descuento solo para usuarios registrados
     stock: 12,
     isBestseller: false,
     isNew: false,
@@ -377,7 +381,7 @@ export const INITIAL_SETTINGS = {
       badge: "Económico"
     }
   ],
-  memberDiscountPercent: 10 // % de descuento exclusivo para miembros del Club VIP registrados
+  memberDiscountBenefitText: "Promociones y descuentos exclusivos en productos seleccionados"
 };
 
 export const INITIAL_ORDERS = [
