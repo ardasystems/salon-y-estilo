@@ -161,6 +161,7 @@ export async function createPreferenceHandler({
   shippingMethod,
   customer,
   orderTotal,
+  paymentOption = 'all',
   siteUrl
 }) {
   const client = getMercadoPagoClient();
@@ -211,9 +212,20 @@ export async function createPreferenceHandler({
     customerName: customer.name,
     customerEmail: customer.email,
     customerPhone: customer.phone,
+    chosenPaymentOption: paymentOption,
     total: totalAmount,
     createdAt: new Date().toISOString()
   };
+
+  const preferencePaymentMethods = {
+    installments: 12
+  };
+
+  if (paymentOption === 'yape') {
+    preferencePaymentMethods.default_payment_method_id = 'yape';
+  } else if (paymentOption === 'cash') {
+    preferencePaymentMethods.default_payment_method_id = 'pagoefectivo_atm';
+  }
 
   const preferenceData = {
     items: preferenceItems,
@@ -239,7 +251,7 @@ export async function createPreferenceHandler({
       failure: `${cleanSiteUrl}/?payment=failure&order_id=${encodeURIComponent(orderId)}&provider=mercadopago`
     },
     auto_return: "approved",
-    binary_mode: true, // Trampa 3: Solo approved o rejected directo
+    binary_mode: (paymentOption === 'cash' || paymentOption === 'bank_transfer') ? false : true,
     notification_url: `${cleanSiteUrl}/api/payments/mercadopago/webhook`,
     statement_descriptor: "SALONESTILO", // Máx 11 caracteres en el resumen bancario
     external_reference: JSON.stringify(externalRefObj),
@@ -247,11 +259,10 @@ export async function createPreferenceHandler({
       order_id: orderId,
       customer_email: customer.email,
       customer_phone: customer.phone,
-      total_amount: totalAmount
+      total_amount: totalAmount,
+      chosen_payment_option: paymentOption
     },
-    payment_methods: {
-      installments: 12
-    }
+    payment_methods: preferencePaymentMethods
   };
 
   const response = await preference.create({ body: preferenceData });

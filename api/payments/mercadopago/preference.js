@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       try { body = JSON.parse(body); } catch {}
     }
 
-    const { orderId, items, shippingMethod, customer, orderTotal } = body || {};
+    const { orderId, items, shippingMethod, customer, orderTotal, paymentOption } = body || {};
 
     if (!orderId || !items || !customer) {
       return res.status(400).json({
@@ -40,6 +40,7 @@ export default async function handler(req, res) {
       shippingMethod,
       customer,
       orderTotal,
+      paymentOption,
       siteUrl: computedSiteUrl
     });
 

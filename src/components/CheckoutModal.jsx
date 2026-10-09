@@ -4,11 +4,9 @@ import confetti from 'canvas-confetti';
 import { 
   X, CheckCircle, ArrowRight, ShieldCheck, Copy, 
   QrCode, ExternalLink, Printer, Check, Zap, Truck, Store, Download, MapPin,
-  Camera, UploadCloud, FileText, MessageCircle, AlertCircle, CreditCard
+  FileText, MessageCircle, AlertCircle, CreditCard, Building2, Smartphone
 } from 'lucide-react';
 import { generateReceiptPDF } from '../utils/receiptGenerator';
-import { compressImage } from '../utils/imageCompressor';
-import { uploadToSalonAssets } from '../lib/supabase';
 
 // Helper to safely load persisted checkout data
 const getSavedCheckout = () => {
@@ -57,16 +55,10 @@ export const CheckoutModal = () => {
     return settings.shippingOptions[0];
   });
 
-  const [paymentMethod, setPaymentMethod] = useState(() => savedCheckout?.paymentMethod || 'mercadopago');
-  const [isProcessingMP, setIsProcessingMP] = useState(false);
-  const [mpError, setMpError] = useState(null);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState(() => savedCheckout?.selectedPaymentOption || 'yape');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
   const [isVerifyingReturn, setIsVerifyingReturn] = useState(false);
-  const [copiedPhone, setCopiedPhone] = useState(false);
-
-  // Voucher / Payment Proof Upload State
-  const [paymentProof, setPaymentProof] = useState(() => savedCheckout?.paymentProof || null);
-  const [paymentProofName, setPaymentProofName] = useState(() => savedCheckout?.paymentProofName || '');
-  const [isUploadingProof, setIsUploadingProof] = useState(false);
   const [receiptDownloaded, setReceiptDownloaded] = useState(() => savedCheckout?.receiptDownloaded || false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
@@ -79,13 +71,11 @@ export const CheckoutModal = () => {
         completedOrder,
         customer,
         selectedShipping,
-        paymentMethod,
-        paymentProof,
-        paymentProofName,
+        selectedPaymentOption,
         receiptDownloaded
       }));
     }
-  }, [isCheckoutOpen, step, completedOrder, customer, selectedShipping, paymentMethod, paymentProof, paymentProofName, receiptDownloaded]);
+  }, [isCheckoutOpen, step, completedOrder, customer, selectedShipping, selectedPaymentOption, receiptDownloaded]);
 
   // Handle Return from Mercado Pago (Synchronous Redirect UX)
   useEffect(() => {
@@ -147,8 +137,8 @@ export const CheckoutModal = () => {
           // Limpiar parámetros de la URL para evitar reprocesamientos si se recarga la página
           window.history.replaceState({}, document.title, window.location.pathname);
         } else if (paymentStatus === 'failure') {
-          showToast("El pago no pudo procesarse en Mercado Pago", "error");
-          setMpError("El pago fue cancelado o rechazado por tu banco. Puedes intentar con otra tarjeta o elegir Yape/Plin.");
+          showToast("El pago no pudo completarse", "error");
+          setPaymentError("El proceso no se completó o fue rechazado. Puedes intentar nuevamente con Yape o con otra tarjeta.");
           window.history.replaceState({}, document.title, window.location.pathname);
         } else if (paymentStatus === 'pending') {
           showToast("Tu pago en Mercado Pago está en proceso de validación bancaria", "info");
@@ -192,44 +182,58 @@ export const CheckoutModal = () => {
     }
   };
 
-  // Upload and compress voucher image with structured customer-associated filename
-  const handleProofUpload = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-
-    setIsUploadingProof(true);
-    try {
-      const compressed = await compressImage(file, 1000, 1000, 0.82);
-      const cleanName = (customer.name || 'Cliente').trim().replace(/[^a-zA-Z0-9]/g, '_');
-      const cleanDni = customer.dni ? `_DNI_${customer.dni.trim()}` : '';
-      const timeCode = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-      const fileName = `COMPROBANTE_${cleanName}${cleanDni}_${timeCode}.jpg`;
-
-      const uploadedUrl = await uploadToSalonAssets(compressed, 'vouchers');
-      setPaymentProof(uploadedUrl || compressed);
-      setPaymentProofName(fileName);
-      showToast("Constancia de pago cargada con éxito");
-    } catch (err) {
-      console.error(err);
-      showToast("Error al procesar la foto de constancia", "error");
-    } finally {
-      setIsUploadingProof(false);
+  // Helper for Payment Button Text & Colors according to selected option
+  const getButtonConfig = () => {
+    switch (selectedPaymentOption) {
+      case 'yape':
+        return {
+          label: `Pagar S/ ${orderTotal.toFixed(2)} con Yape`,
+          gradient: 'linear-gradient(135deg, #872391 0%, #681771 100%)',
+          shadow: '0 6px 25px rgba(135, 35, 145, 0.45)',
+          border: 'rgba(168, 85, 247, 0.6)'
+        };
+      case 'card':
+        return {
+          label: `Pagar S/ ${orderTotal.toFixed(2)} con Tarjeta`,
+          gradient: 'linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%)',
+          shadow: '0 6px 25px rgba(30, 64, 175, 0.45)',
+          border: 'rgba(96, 165, 250, 0.6)'
+        };
+      case 'cash':
+        return {
+          label: `Pagar S/ ${orderTotal.toFixed(2)} en Agente / Bodega`,
+          gradient: 'linear-gradient(135deg, #D97706 0%, #92400E 100%)',
+          shadow: '0 6px 25px rgba(217, 119, 6, 0.45)',
+          border: 'rgba(245, 158, 11, 0.6)'
+        };
+      case 'bank_transfer':
+        return {
+          label: `Pagar S/ ${orderTotal.toFixed(2)} con Banca por Internet`,
+          gradient: 'linear-gradient(135deg, #059669 0%, #064E3B 100%)',
+          shadow: '0 6px 25px rgba(5, 150, 105, 0.45)',
+          border: 'rgba(52, 211, 153, 0.6)'
+        };
+      default:
+        return {
+          label: `Pagar S/ ${orderTotal.toFixed(2)}`,
+          gradient: 'linear-gradient(135deg, #009EE3 0%, #0077B6 100%)',
+          shadow: '0 6px 25px rgba(0, 158, 227, 0.4)',
+          border: 'rgba(0, 158, 227, 0.6)'
+        };
     }
   };
 
   // Download PDF Receipt
   const handleDownloadReceipt = (orderObj = null) => {
     const targetOrder = orderObj || completedOrder || {
-      id: `SE-PROV-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: `SE-ORD-${Math.floor(1000 + Math.random() * 9000)}`,
       customer,
       items: cart,
       subtotal: cartSubtotal,
       shippingMethod: selectedShipping,
       total: orderTotal,
-      paymentMethod,
-      paymentProof,
-      paymentProofName,
-      paymentStatus: paymentProof ? 'comprobante_adjunto' : 'pendiente',
+      paymentMethod: selectedPaymentOption,
+      paymentStatus: 'pagado',
       createdAt: new Date().toISOString()
     };
 
@@ -238,13 +242,18 @@ export const CheckoutModal = () => {
     showToast("Constancia / Recibo Oficial (PDF) descargado");
   };
 
-  // WhatsApp Message Generator
+  // WhatsApp Message Generator (Notification)
   const openWhatsAppConfirmation = (orderToConfirm) => {
     const order = orderToConfirm || completedOrder;
     if (!order) return;
 
     const itemsList = order.items.map(i => `• ${i.quantity}x ${i.name} (S/ ${(i.price * i.quantity).toFixed(2)})`).join('\n');
-    const paymentLabel = order.paymentMethod.includes('yape') ? 'YAPE' : (order.paymentMethod.includes('plin') ? 'PLIN' : order.paymentMethod.toUpperCase());
+    const paymentLabel = {
+      yape: 'YAPE (Automático)',
+      card: 'TARJETA DÉBITO / CRÉDITO',
+      cash: 'PAGO EN EFECTIVO (Agentes PagoEfectivo)',
+      bank_transfer: 'BANCA POR INTERNET (Transferencia CIP)'
+    }[order.paymentOption || order.paymentMethod] || 'PAGO EN LÍNEA';
     
     const isPickupOrder = order.shippingMethod?.id === 'salon_pickup' || 
                          order.shippingMethod?.id === 'chiclayo_pickup' || 
@@ -259,9 +268,9 @@ export const CheckoutModal = () => {
       dispatchText = `*Modalidad:* ${order.shippingMethod.title}\n*Dirección de Entrega:* ${destParts || 'A coordinar'}`;
     }
 
-    const proofLine = order.paymentProofName 
-      ? `*Constancia Adjunta:* ${order.paymentProofName} (Cargada en sistema)`
-      : `*Constancia:* Adjuntando captura por este chat de WhatsApp`;
+    const txLine = order.mercadopagoPaymentId
+      ? `*Transacción Oficial:* #${order.mercadopagoPaymentId} (Acreditado al 100%)`
+      : `*Estado:* Acreditado`;
 
     const messageLines = [
       `✨ *CONFIRMACIÓN DE COMPRA ${(settings.storeName || 'SALÓN & ESTILO').toUpperCase()}*`,
@@ -278,10 +287,9 @@ export const CheckoutModal = () => {
       `*Costo Despacho:* ${order.shippingMethod.price === 0 ? 'GRATIS' : `S/ ${order.shippingMethod.price.toFixed(2)}`}`,
       `*TOTAL:* S/ ${order.total.toFixed(2)}`,
       `*Método:* ${paymentLabel}`,
-      proofLine,
-      `*Recibo Descargado:* ${receiptDownloaded ? 'Sí (PDF Oficial)' : 'Disponible'}`,
+      txLine,
       '',
-      `_Hola Salón & Estilo, acabo de registrar mi compra en la web y adjunto mi constancia de pago para validar el despacho._`
+      `_Hola Salón & Estilo, acabo de registrar mi compra en la web. Por favor confirmar la preparación del pedido._`
     ].filter(line => line !== null).join('\n');
 
     const cleanPhone = (settings.whatsappContact || '51920731163').replace(/\D/g, '');
@@ -289,65 +297,15 @@ export const CheckoutModal = () => {
     window.open(waUrl, '_blank');
   };
 
-  const handleDirectPaymentSubmit = (method) => {
-    if (!customer.name || !customer.phone) {
-      alert("Por favor completa al menos tu nombre y celular para coordinar.");
-      return;
-    }
-
-    if (!isPickup && (!customer.address || !customer.city)) {
-      alert("Por favor ingresa tu ciudad y dirección de entrega.");
-      return;
-    }
-
-    if (!paymentProof) {
-      alert("Por favor adjunta o toma una foto del comprobante de pago para habilitar la confirmación.");
-      return;
-    }
-
-    const orderData = {
-      customer,
-      items: cart,
-      subtotal: cartSubtotal,
-      shippingMethod: selectedShipping,
-      total: orderTotal,
-      paymentMethod: method,
-      paymentProof: paymentProof || null,
-      paymentProofName: paymentProofName || null,
-      paymentStatus: 'comprobante_adjunto'
-    };
-
-    const newOrder = createOrder(orderData);
-    setCompletedOrder(newOrder);
-    setStep('success');
-    triggerConfetti();
-
-    // Persist immediately
-    localStorage.setItem('salonestilo_active_checkout', JSON.stringify({
-      isOpen: true,
-      step: 'success',
-      completedOrder: newOrder,
-      customer,
-      selectedShipping,
-      paymentMethod: method,
-      paymentProof: paymentProof || null,
-      paymentProofName: paymentProofName || null,
-      receiptDownloaded
-    }));
-
-    // Notification toast: user can now download receipt and send via WhatsApp from success screen
-    showToast("¡Pedido registrado! Descarga tu recibo o envíalo a WhatsApp.");
-  };
-
-  // Mercado Pago Checkout Pro Submit Handler
-  const handleMercadoPagoSubmit = async () => {
+  // Automated Payment Submit Handler
+  const handlePaymentSubmit = async () => {
     if (!customer.name || !customer.phone) {
       alert("Por favor completa tu nombre y número de celular para registrar tu compra.");
       return;
     }
 
     if (!customer.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
-      alert("Por favor ingresa un correo electrónico válido para recibir tu recibo oficial de Mercado Pago.");
+      alert("Por favor ingresa un correo electrónico válido para recibir tu comprobante oficial.");
       return;
     }
 
@@ -361,8 +319,8 @@ export const CheckoutModal = () => {
       return;
     }
 
-    setIsProcessingMP(true);
-    setMpError(null);
+    setIsProcessingPayment(true);
+    setPaymentError(null);
 
     try {
       // 1. Registrar la orden preliminar en el estado y Supabase
@@ -372,29 +330,26 @@ export const CheckoutModal = () => {
         subtotal: cartSubtotal,
         shippingMethod: selectedShipping,
         total: orderTotal,
-        paymentMethod: 'mercadopago',
-        paymentStatus: 'pendiente_pago',
-        paymentProof: null,
-        paymentProofName: null
+        paymentMethod: selectedPaymentOption,
+        paymentOption: selectedPaymentOption,
+        paymentStatus: 'pendiente_pago'
       };
 
       const newOrder = await createOrder(orderData);
       setCompletedOrder(newOrder);
 
-      // Guardar respaldo local antes de salir a Mercado Pago
+      // Guardar respaldo local
       localStorage.setItem('salonestilo_active_checkout', JSON.stringify({
         isOpen: true,
         step: 'success',
         completedOrder: newOrder,
         customer,
         selectedShipping,
-        paymentMethod: 'mercadopago',
-        paymentProof: null,
-        paymentProofName: null,
+        selectedPaymentOption,
         receiptDownloaded: false
       }));
 
-      // 2. Solicitar creación de preferencia al backend oficial
+      // 2. Solicitar creación de preferencia
       const response = await fetch('/api/payments/mercadopago/preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -403,32 +358,32 @@ export const CheckoutModal = () => {
           items: cart,
           shippingMethod: selectedShipping,
           customer,
-          orderTotal
+          orderTotal,
+          paymentOption: selectedPaymentOption
         })
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || "No se pudo conectar con Mercado Pago. Verifica tus credenciales.");
+        throw new Error(data.error || "No se pudo conectar con la pasarela de pagos. Por favor intenta nuevamente.");
       }
 
       // 3. Determinar URL de redirección (Sandbox o Producción)
       const redirectUrl = data.redirectUrl || data.sandboxInitPoint || data.initPoint;
 
-
       if (!redirectUrl) {
-        throw new Error("No se recibió la URL de pago de Mercado Pago");
+        throw new Error("No se recibió la URL de pago");
       }
 
-      // 4. Redirección suave al Checkout Pro oficial
+      // 4. Redirección automática inmediata
       window.location.href = redirectUrl;
     } catch (err) {
-      console.error("Error iniciando Checkout Pro:", err);
-      const msg = err.message || "Error al conectar con la pasarela Mercado Pago.";
-      setMpError(msg);
+      console.error("Error iniciando pago:", err);
+      const msg = err.message || "Error al conectar con la pasarela de pagos.";
+      setPaymentError(msg);
       showToast(msg, "error");
-      setIsProcessingMP(false);
+      setIsProcessingPayment(false);
     }
   };
 
@@ -440,8 +395,6 @@ export const CheckoutModal = () => {
     localStorage.removeItem('salonestilo_active_checkout');
     setStep('form');
     setCompletedOrder(null);
-    setPaymentProof(null);
-    setPaymentProofName('');
     setReceiptDownloaded(false);
     setShowExitConfirm(false);
     setIsCheckoutOpen(false);
@@ -641,7 +594,7 @@ export const CheckoutModal = () => {
 
                     <div>
                       <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                        Correo Electrónico * (Para recibo de Mercado Pago y confirmación)
+                        Correo Electrónico * (Para tu recibo digital y confirmación)
                       </label>
                       <input
                         type="email"
@@ -798,440 +751,264 @@ export const CheckoutModal = () => {
                 display: 'flex',
                 flexDirection: 'column'
               }}>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--accent-gold-light)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>3</span>
-                  <span>Forma de Pago Local</span>
+                  <span>Elige tu Forma de Pago</span>
                 </h4>
+                <p style={{ fontSize: '0.74rem', color: '#9CA3AF', marginBottom: '0.9rem', lineHeight: 1.4 }}>
+                  Todos los pagos son 100% automatizados y seguros. Haz clic en la opción deseada para continuar:
+                </p>
 
-                {/* Payment Tabs Selector */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1.2fr 0.9fr 0.9fr',
-                  gap: '0.4rem',
-                  background: '#1A1412',
-                  padding: '0.35rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  marginBottom: '1.25rem'
-                }}>
-                  <button
-                    onClick={() => setPaymentMethod('mercadopago')}
+                {/* 4 Interactive Clickable Payment Options */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1.25rem' }}>
+                  {/* OPTION 1: YAPE */}
+                  <div
+                    onClick={() => setSelectedPaymentOption('yape')}
                     style={{
-                      padding: '0.55rem 0.4rem',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      background: paymentMethod === 'mercadopago' ? 'linear-gradient(135deg, #009EE3 0%, #0077B6 100%)' : 'transparent',
-                      color: paymentMethod === 'mercadopago' ? '#FFFFFF' : 'var(--text-muted)',
-                      boxShadow: paymentMethod === 'mercadopago' ? '0 0 15px rgba(0, 158, 227, 0.45)' : 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.3rem'
-                    }}
-                  >
-                    <span>MERCADO PAGO</span>
-                    <span style={{ fontSize: '0.62rem', background: '#FFE600', color: '#000', padding: '0.05rem 0.35rem', borderRadius: 'var(--radius-full)', fontWeight: 900 }}>PRO</span>
-                  </button>
-
-                  <button
-                    onClick={() => setPaymentMethod('yape_direct')}
-                    style={{
-                      padding: '0.55rem',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      background: paymentMethod === 'yape_direct' ? 'var(--yape-purple)' : 'transparent',
-                      color: paymentMethod === 'yape_direct' ? '#FFFFFF' : 'var(--text-muted)',
-                      boxShadow: paymentMethod === 'yape_direct' ? '0 0 15px rgba(139, 44, 158, 0.4)' : 'none'
-                    }}
-                  >
-                    YAPE MANUAL
-                  </button>
-
-                  <button
-                    onClick={() => setPaymentMethod('plin_direct')}
-                    style={{
-                      padding: '0.55rem',
-                      borderRadius: 'var(--radius-sm)',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      background: paymentMethod === 'plin_direct' ? 'var(--plin-cyan)' : 'transparent',
-                      color: paymentMethod === 'plin_direct' ? '#0D0A09' : 'var(--text-muted)',
-                      boxShadow: paymentMethod === 'plin_direct' ? '0 0 15px rgba(0, 194, 232, 0.4)' : 'none'
-                    }}
-                  >
-                    PLIN MANUAL
-                  </button>
-                </div>
-
-                {/* YAPE DIRECT */}
-                {paymentMethod === 'yape_direct' && (
-                  <div style={{
-                    background: '#191412',
-                    padding: '1.25rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid rgba(139, 44, 158, 0.4)',
-                    marginBottom: '1.25rem',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#E9A6F5', fontWeight: 700, fontSize: '0.88rem', marginBottom: '0.6rem' }}>
-                      <QrCode size={18} />
-                      <span>Pago Instantáneo Yape (0% Comisión)</span>
-                    </div>
-
-                    <div style={{
-                      width: '160px',
-                      height: '160px',
-                      margin: '0 auto 0.85rem auto',
-                      padding: '0.45rem',
-                      background: '#FFFFFF',
+                      padding: '0.85rem 1rem',
                       borderRadius: 'var(--radius-md)',
-                      boxShadow: '0 0 20px rgba(139, 44, 158, 0.35)',
-                      border: '2px solid var(--yape-purple)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden'
-                    }}>
-                      {settings.yapeQrImage ? (
-                        <img
-                          src={settings.yapeQrImage}
-                          alt="Código QR Yape"
-                          style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
-                        />
-                      ) : (
-                        <>
-                          <svg viewBox="0 0 100 100" width="100%" height="85%">
-                            <rect width="100" height="100" fill="#FFF" />
-                            <rect x="10" y="10" width="30" height="30" fill="#742284" />
-                            <rect x="15" y="15" width="20" height="20" fill="#FFF" />
-                            <rect x="20" y="20" width="10" height="10" fill="#742284" />
-                            <rect x="60" y="10" width="30" height="30" fill="#742284" />
-                            <rect x="65" y="15" width="20" height="20" fill="#FFF" />
-                            <rect x="70" y="20" width="10" height="10" fill="#742284" />
-                            <rect x="10" y="60" width="30" height="30" fill="#742284" />
-                            <rect x="15" y="65" width="20" height="20" fill="#FFF" />
-                            <rect x="20" y="70" width="10" height="10" fill="#742284" />
-                            <rect x="45" y="15" width="8" height="8" fill="#742284" />
-                            <rect x="50" y="45" width="12" height="12" fill="#742284" />
-                            <rect x="70" y="65" width="15" height="15" fill="#742284" />
-                          </svg>
-                          <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--yape-purple)' }}>
-                            YAPE S/ {orderTotal.toFixed(2)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    <div style={{ fontSize: '0.85rem', color: '#FFFFFF', marginBottom: '0.25rem' }}>
-                      Número: <strong>{settings.yapePhone}</strong>
-                    </div>
-                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
-                      Titular: <strong>{settings.yapeOwner}</strong>
-                    </div>
-
-                    <button
-                      onClick={() => copyPhoneNumber(settings.yapePhone)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        padding: '0.45rem 0.85rem',
-                        borderRadius: 'var(--radius-full)',
-                        background: 'rgba(139, 44, 158, 0.2)',
-                        color: '#E9A6F5',
-                        border: '1px solid rgba(139, 44, 158, 0.4)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        marginBottom: '0.75rem'
-                      }}
-                    >
-                      {copiedPhone ? <Check size={14} /> : <Copy size={14} />}
-                      <span>{copiedPhone ? '¡Copiado!' : 'Copiar número'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* PLIN DIRECT */}
-                {paymentMethod === 'plin_direct' && (
-                  <div style={{
-                    background: '#191412',
-                    padding: '1.25rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid rgba(0, 194, 232, 0.4)',
-                    marginBottom: '1.25rem',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: 'var(--plin-cyan)', fontWeight: 700, fontSize: '0.88rem', marginBottom: '0.6rem' }}>
-                      <QrCode size={18} />
-                      <span>Pago Instantáneo Plin (Interbank, BBVA, Scotiabank)</span>
-                    </div>
-
-                    <div style={{
-                      width: '160px',
-                      height: '160px',
-                      margin: '0 auto 0.85rem auto',
-                      padding: '0.45rem',
-                      background: '#FFFFFF',
-                      borderRadius: 'var(--radius-md)',
-                      boxShadow: '0 0 20px rgba(0, 194, 232, 0.35)',
-                      border: '2px solid var(--plin-cyan)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden'
-                    }}>
-                      {settings.plinQrImage ? (
-                        <img
-                          src={settings.plinQrImage}
-                          alt="Código QR Plin"
-                          style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '4px' }}
-                        />
-                      ) : (
-                        <>
-                          <svg viewBox="0 0 100 100" width="100%" height="85%">
-                            <rect width="100" height="100" fill="#FFF" />
-                            <rect x="10" y="10" width="30" height="30" fill="#00B4D8" />
-                            <rect x="15" y="15" width="20" height="20" fill="#FFF" />
-                            <rect x="20" y="20" width="10" height="10" fill="#00B4D8" />
-                            <rect x="60" y="10" width="30" height="30" fill="#00B4D8" />
-                            <rect x="65" y="15" width="20" height="20" fill="#FFF" />
-                            <rect x="70" y="20" width="10" height="10" fill="#00B4D8" />
-                            <rect x="10" y="60" width="30" height="30" fill="#00B4D8" />
-                            <rect x="15" y="65" width="20" height="20" fill="#FFF" />
-                            <rect x="20" y="70" width="10" height="10" fill="#00B4D8" />
-                            <rect x="45" y="25" width="10" height="10" fill="#00B4D8" />
-                            <rect x="55" y="55" width="12" height="12" fill="#00B4D8" />
-                          </svg>
-                          <span style={{ fontSize: '0.62rem', fontWeight: 800, color: 'var(--plin-cyan)' }}>
-                            PLIN S/ {orderTotal.toFixed(2)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-
-                    <div style={{ fontSize: '0.85rem', color: '#FFFFFF', marginBottom: '0.25rem' }}>
-                      Número: <strong>{settings.plinPhone}</strong>
-                    </div>
-                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
-                      Titular: <strong>{settings.plinOwner}</strong>
-                    </div>
-
-                    <button
-                      onClick={() => copyPhoneNumber(settings.plinPhone)}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        padding: '0.45rem 0.85rem',
-                        borderRadius: 'var(--radius-full)',
-                        background: 'rgba(0, 194, 232, 0.15)',
-                        color: 'var(--plin-cyan)',
-                        border: '1px solid rgba(0, 194, 232, 0.4)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        marginBottom: '0.75rem'
-                      }}
-                    >
-                      {copiedPhone ? <Check size={14} /> : <Copy size={14} />}
-                      <span>{copiedPhone ? '¡Copiado!' : 'Copiar número'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* MERCADO PAGO CHECKOUT PRO */}
-                {paymentMethod === 'mercadopago' && (
-                  <div style={{
-                    background: '#14181B',
-                    padding: '1.25rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid rgba(0, 158, 227, 0.4)',
-                    marginBottom: '1.25rem'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#009EE3', fontWeight: 800, fontSize: '0.88rem' }}>
-                        <CreditCard size={18} />
-                        <span>Pasarela Oficial Mercado Pago</span>
-                      </div>
-                      <span style={{ fontSize: '0.68rem', background: 'rgba(0, 158, 227, 0.18)', color: '#009EE3', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700, border: '1px solid rgba(0, 158, 227, 0.3)' }}>
-                        Confirmación Automática
-                      </span>
-                    </div>
-
-                    <p style={{ fontSize: '0.78rem', color: '#E2E8F0', lineHeight: 1.5, marginBottom: '0.85rem' }}>
-                      Elige dentro de Mercado Pago tu medio de pago favorito con acreditación 100% inmediata y sin comisiones:
-                    </p>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', marginBottom: '0.85rem' }}>
-                      <div style={{ background: '#0D1013', padding: '0.55rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 158, 227, 0.25)' }}>
-                        <div style={{ fontSize: '0.66rem', color: '#38BDF8', fontWeight: 700 }}>Billetera Digital</div>
-                        <div style={{ fontSize: '0.76rem', color: '#FFF', fontWeight: 800, marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <span style={{ color: 'var(--yape-purple)', fontWeight: 900 }}>Yape</span> (QR o código directo)
-                        </div>
-                      </div>
-                      <div style={{ background: '#0D1013', padding: '0.55rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 158, 227, 0.25)' }}>
-                        <div style={{ fontSize: '0.66rem', color: '#38BDF8', fontWeight: 700 }}>Tarjetas Débito / Crédito</div>
-                        <div style={{ fontSize: '0.76rem', color: '#FFF', fontWeight: 800, marginTop: '0.15rem' }}>
-                          Visa, Mastercard, AMEX
-                        </div>
-                      </div>
-                      <div style={{ background: '#0D1013', padding: '0.55rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 158, 227, 0.25)' }}>
-                        <div style={{ fontSize: '0.66rem', color: '#38BDF8', fontWeight: 700 }}>Agentes y Bodegas</div>
-                        <div style={{ fontSize: '0.76rem', color: '#FFF', fontWeight: 800, marginTop: '0.15rem' }}>
-                          PagoEfectivo (BCP, BBVA, Interbank)
-                        </div>
-                      </div>
-                      <div style={{ background: '#0D1013', padding: '0.55rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 158, 227, 0.25)' }}>
-                        <div style={{ fontSize: '0.66rem', color: '#38BDF8', fontWeight: 700 }}>Banca por Internet</div>
-                        <div style={{ fontSize: '0.76rem', color: '#FFF', fontWeight: 800, marginTop: '0.15rem' }}>
-                          Transferencia bancaria CIP
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', color: '#94A3B8' }}>
-                      <ShieldCheck size={16} style={{ color: '#34D399', flexShrink: 0 }} />
-                      <span>No necesitas subir capturas ni fotos. Tu pago se valida y acredita de forma automática.</span>
-                    </div>
-
-                    {mpError && (
-                      <div style={{ marginTop: '0.75rem', padding: '0.65rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem', color: '#FCA5A5' }}>
-                        ⚠️ {mpError}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ADJUNTAR CONSTANCIA DE PAGO (SOLO PARA TRANSFERENCIA DIRECTA MANUAL YAPE / PLIN) */}
-                {paymentMethod !== 'mercadopago' && (
-                  <div style={{
-                    background: '#191412',
-                    padding: '1.2rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: paymentProof ? '1px solid rgba(52, 211, 153, 0.45)' : '1px dashed rgba(212, 175, 55, 0.35)',
-                    marginBottom: '1.25rem',
-                    transition: 'all 0.3s ease'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: paymentProof ? '#34D399' : 'var(--accent-gold-light)', fontWeight: 700, fontSize: '0.85rem' }}>
-                        <UploadCloud size={17} />
-                        <span>{paymentProof ? 'Constancia Adjuntada en el Sistema' : 'Adjuntar Voucher de Pago Manual'}</span>
-                      </div>
-                      {paymentProof && (
-                        <span style={{ fontSize: '0.68rem', background: 'rgba(52, 211, 153, 0.15)', color: '#34D399', padding: '0.15rem 0.55rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                          ✓ Listo
-                        </span>
-                      )}
-                    </div>
-
-                    <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '0.75rem', lineHeight: 1.4 }}>
-                      Sube una foto o captura de tu transferencia manual al número del salón (desde tu cámara o galería) para habilitar la confirmación.
-                    </p>
-
-                    {!paymentProof ? (
-                      <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.6rem',
-                        padding: '0.75rem 1rem',
-                        borderRadius: 'var(--radius-sm)',
-                        background: 'rgba(212, 175, 55, 0.08)',
-                        border: '1px solid rgba(212, 175, 55, 0.3)',
-                        color: 'var(--accent-gold-light)',
-                        cursor: 'pointer',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                        transition: 'all 0.2s',
-                        textAlign: 'center'
-                      }}>
-                        <Camera size={16} />
-                        <span>{isUploadingProof ? 'Comprimiendo y cargando...' : 'Tomar Foto o Seleccionar de Galería'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleProofUpload}
-                          disabled={isUploadingProof}
-                          style={{ display: 'none' }}
-                        />
-                      </label>
-                    ) : (
-                      <div>
+                      background: selectedPaymentOption === 'yape' ? 'rgba(135, 35, 145, 0.16)' : '#161210',
+                      border: selectedPaymentOption === 'yape' ? '1.5px solid #A855F7' : '1px solid rgba(255, 255, 255, 0.1)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: selectedPaymentOption === 'yape' ? '0 0 16px rgba(168, 85, 247, 0.25)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <div style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '8px',
+                          background: 'linear-gradient(135deg, #872391 0%, #4E1359 100%)',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.85rem',
-                          background: '#0D0A09',
-                          padding: '0.65rem 0.85rem',
-                          borderRadius: 'var(--radius-sm)',
-                          border: '1px solid rgba(52, 211, 153, 0.3)',
-                          marginBottom: '0.75rem'
+                          justifyContent: 'center',
+                          color: '#FFF',
+                          fontWeight: 900,
+                          fontSize: '0.85rem',
+                          boxShadow: '0 2px 8px rgba(135, 35, 145, 0.4)'
                         }}>
-                          <img
-                            src={paymentProof}
-                            alt="Constancia de Pago"
-                            style={{ width: '46px', height: '46px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }}
-                          />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {paymentProofName}
-                            </div>
-                            <div style={{ fontSize: '0.68rem', color: '#34D399', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.15rem' }}>
-                              <Check size={12} />
-                              <span>Voucher verificado y comprimido</span>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPaymentProof(null);
-                              setPaymentProofName('');
-                              setReceiptDownloaded(false);
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#F87171',
-                              cursor: 'pointer',
-                              padding: '0.35rem',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}
-                            title="Eliminar o cambiar foto"
-                          >
-                            <X size={16} />
-                          </button>
+                          Y!
                         </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
+                            Yape
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
+                            Aprobación con app Yape o código QR directo
+                          </div>
+                        </div>
+                      </div>
 
-                        {/* Botón Habilitado para Descargar Constancia / Recibo en PDF tras adjuntar */}
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadReceipt()}
-                          style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            padding: '0.65rem 1rem',
-                            borderRadius: 'var(--radius-sm)',
-                            background: 'rgba(212, 175, 55, 0.15)',
-                            border: '1px solid var(--accent-gold)',
-                            color: 'var(--accent-gold-light)',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          <Download size={15} />
-                          <span>{receiptDownloaded ? '✓ Recibo / Constancia Oficial Descargada' : 'Descargar Constancia Oficial (PDF)'}</span>
-                        </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.65rem', background: 'rgba(168, 85, 247, 0.2)', color: '#D8B4FE', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                          Instantáneo
+                        </span>
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: selectedPaymentOption === 'yape' ? '5px solid #A855F7' : '2px solid #555',
+                          background: selectedPaymentOption === 'yape' ? '#FFF' : 'transparent',
+                          transition: 'all 0.2s ease'
+                        }} />
+                      </div>
+                    </div>
+
+                    {selectedPaymentOption === 'yape' && (
+                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(168, 85, 247, 0.25)', fontSize: '0.74rem', color: '#E9D5FF', lineHeight: 1.45 }}>
+                        ✨ Paga al instante desde tu app Yape escaneando el código QR o ingresando tu código de aprobación. Tu compra se acredita automáticamente en segundos, sin subir vouchers.
                       </div>
                     )}
+                  </div>
+
+                  {/* OPTION 2: TARJETAS DÉBITO Y CRÉDITO */}
+                  <div
+                    onClick={() => setSelectedPaymentOption('card')}
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      background: selectedPaymentOption === 'card' ? 'rgba(59, 130, 246, 0.14)' : '#161210',
+                      border: selectedPaymentOption === 'card' ? '1.5px solid #60A5FA' : '1px solid rgba(255, 255, 255, 0.1)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: selectedPaymentOption === 'card' ? '0 0 16px rgba(59, 130, 246, 0.25)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '8px',
+                          background: '#1E293B',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#60A5FA'
+                        }}>
+                          <CreditCard size={18} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
+                            Tarjetas de Débito y Crédito
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
+                            Visa, Mastercard, American Express, Diners Club
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.2)', color: '#93C5FD', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                          Hasta 12 Cuotas
+                        </span>
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: selectedPaymentOption === 'card' ? '5px solid #60A5FA' : '2px solid #555',
+                          background: selectedPaymentOption === 'card' ? '#FFF' : 'transparent',
+                          transition: 'all 0.2s ease'
+                        }} />
+                      </div>
+                    </div>
+
+                    {selectedPaymentOption === 'card' && (
+                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(59, 130, 246, 0.25)', fontSize: '0.74rem', color: '#BFDBFE', lineHeight: 1.45 }}>
+                        🔒 Procesamiento seguro con cifrado bancario SSL 256-bit y protocolo 3D Secure. Acepta cualquier banco (BCP, BBVA, Interbank, Scotiabank, BanBif y tarjetas internacionales).
+                      </div>
+                    )}
+                  </div>
+
+                  {/* OPTION 3: EFECTIVO EN AGENTES Y BODEGAS (PAGOEFECTIVO) */}
+                  <div
+                    onClick={() => setSelectedPaymentOption('cash')}
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      background: selectedPaymentOption === 'cash' ? 'rgba(245, 158, 11, 0.14)' : '#161210',
+                      border: selectedPaymentOption === 'cash' ? '1.5px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.1)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: selectedPaymentOption === 'cash' ? '0 0 16px rgba(245, 158, 11, 0.25)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '8px',
+                          background: '#FFCC00',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#1A1A1A',
+                          fontWeight: 900,
+                          fontSize: '0.72rem'
+                        }}>
+                          CIP
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
+                            Efectivo en Agentes y Bodegas
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
+                            PagoEfectivo: BCP, BBVA, Interbank, Tambo, KasNet
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.2)', color: '#FCD34D', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                          Sin Tarjeta
+                        </span>
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: selectedPaymentOption === 'cash' ? '5px solid #F59E0B' : '2px solid #555',
+                          background: selectedPaymentOption === 'cash' ? '#FFF' : 'transparent',
+                          transition: 'all 0.2s ease'
+                        }} />
+                      </div>
+                    </div>
+
+                    {selectedPaymentOption === 'cash' && (
+                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(245, 158, 11, 0.25)', fontSize: '0.74rem', color: '#FDE68A', lineHeight: 1.45 }}>
+                        🏪 Recibirás un código CIP oficial de PagoEfectivo con instrucciones para pagar en efectivo en cualquier agente bancario, botica o bodega de tu preferencia.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* OPTION 4: BANCA POR INTERNET */}
+                  <div
+                    onClick={() => setSelectedPaymentOption('bank_transfer')}
+                    style={{
+                      padding: '0.85rem 1rem',
+                      borderRadius: 'var(--radius-md)',
+                      background: selectedPaymentOption === 'bank_transfer' ? 'rgba(16, 185, 129, 0.14)' : '#161210',
+                      border: selectedPaymentOption === 'bank_transfer' ? '1.5px solid #10B981' : '1px solid rgba(255, 255, 255, 0.1)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: selectedPaymentOption === 'bank_transfer' ? '0 0 16px rgba(16, 185, 129, 0.25)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '8px',
+                          background: '#064E3B',
+                          border: '1px solid rgba(16, 185, 129, 0.4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#10B981'
+                        }}>
+                          <Zap size={17} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#FFFFFF' }}>
+                            Banca por Internet / Móvil
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>
+                            Transferencia bancaria con código CIP
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.2)', color: '#6EE7B7', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                          Online Directo
+                        </span>
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          border: selectedPaymentOption === 'bank_transfer' ? '5px solid #10B981' : '2px solid #555',
+                          background: selectedPaymentOption === 'bank_transfer' ? '#FFF' : 'transparent',
+                          transition: 'all 0.2s ease'
+                        }} />
+                      </div>
+                    </div>
+
+                    {selectedPaymentOption === 'bank_transfer' && (
+                      <div style={{ marginTop: '0.65rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(16, 185, 129, 0.25)', fontSize: '0.74rem', color: '#A7F3D0', lineHeight: 1.45 }}>
+                        📱 Paga de forma directa ingresando a la app móvil o banca web de tu banco en la opción "Pago de Servicios" indicando tu código CIP.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {paymentError && (
+                  <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 'var(--radius-sm)', fontSize: '0.76rem', color: '#FCA5A5' }}>
+                    ⚠️ {paymentError}
                   </div>
                 )}
 
@@ -1251,106 +1028,53 @@ export const CheckoutModal = () => {
                   </div>
                 </div>
 
-                {/* Final Button */}
-                {paymentMethod === 'mercadopago' ? (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={handleMercadoPagoSubmit}
-                      disabled={isProcessingMP || cart.length === 0}
-                      style={{
-                        width: '100%',
-                        padding: '1.05rem',
-                        background: 'linear-gradient(135deg, #009EE3 0%, #0081B4 100%)',
-                        color: '#FFFFFF',
-                        fontWeight: 800,
-                        fontSize: '0.94rem',
-                        borderRadius: 'var(--radius-full)',
-                        border: '1px solid rgba(0, 158, 227, 0.5)',
-                        boxShadow: '0 6px 25px rgba(0, 158, 227, 0.4)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.65rem',
-                        cursor: isProcessingMP ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.25s ease'
-                      }}
-                    >
-                      {isProcessingMP ? (
-                        <>
-                          <span style={{ width: '18px', height: '18px', border: '2px solid #FFF', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
-                          <span>Conectando con Mercado Pago...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard size={18} />
-                          <span>Pagar S/ {orderTotal.toFixed(2)} con Mercado Pago</span>
-                        </>
-                      )}
-                    </button>
-                    <div style={{ fontSize: '0.73rem', color: '#94A3B8', textAlign: 'center', marginTop: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                      <ShieldCheck size={14} style={{ color: '#34D399' }} />
-                      <span>Acepta Yape, Tarjetas Débito/Crédito y Agentes PagoEfectivo</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <button
-                      onClick={() => handleDirectPaymentSubmit(paymentMethod)}
-                      disabled={!paymentProof || isUploadingProof}
-                      style={{
-                        width: '100%',
-                        padding: '1.05rem',
-                        fontSize: '0.92rem',
-                        fontWeight: 800,
-                        borderRadius: 'var(--radius-full)',
-                        color: !paymentProof ? 'rgba(255, 255, 255, 0.55)' : (paymentMethod === 'yape_direct' ? '#FFFFFF' : '#0D0A09'),
-                        background: !paymentProof 
-                          ? 'rgba(255, 255, 255, 0.08)' 
-                          : (paymentMethod === 'yape_direct' 
-                              ? 'linear-gradient(135deg, #A033B6 0%, #8B2C9E 100%)' 
-                              : 'linear-gradient(135deg, #38BDF8 0%, #00C2E8 100%)'),
-                        boxShadow: !paymentProof 
-                          ? 'none' 
-                          : (paymentMethod === 'yape_direct'
-                              ? '0 6px 25px rgba(139, 44, 158, 0.45)'
-                              : '0 6px 25px rgba(0, 194, 232, 0.45)'),
-                        cursor: !paymentProof ? 'not-allowed' : 'pointer',
-                        border: !paymentProof ? '1px dashed rgba(255, 255, 255, 0.25)' : 'none',
-                        opacity: !paymentProof ? 0.6 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.65rem',
-                        transition: 'all 0.25s ease'
-                      }}
-                    >
-                      <CheckCircle size={18} />
-                      <span>
-                        {paymentProof 
-                          ? 'Confirmar Pedido' 
-                          : 'Adjunta tu comprobante para confirmar pedido'}
-                      </span>
-                    </button>
+                {/* Single Automated Action Button */}
+                {(() => {
+                  const btn = getButtonConfig();
+                  return (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handlePaymentSubmit}
+                        disabled={isProcessingPayment || cart.length === 0}
+                        style={{
+                          width: '100%',
+                          padding: '1.05rem',
+                          background: btn.gradient,
+                          color: '#FFFFFF',
+                          fontWeight: 800,
+                          fontSize: '0.94rem',
+                          borderRadius: 'var(--radius-full)',
+                          border: `1px solid ${btn.border}`,
+                          boxShadow: btn.shadow,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.65rem',
+                          cursor: isProcessingPayment ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.25s ease'
+                        }}
+                      >
+                        {isProcessingPayment ? (
+                          <>
+                            <span style={{ width: '18px', height: '18px', border: '2px solid #FFF', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
+                            <span>Conectando pasarela segura...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle size={18} />
+                            <span>{btn.label}</span>
+                          </>
+                        )}
+                      </button>
 
-                    {!paymentProof && (
-                      <p style={{
-                        fontSize: '0.74rem',
-                        color: 'var(--accent-gold-light)',
-                        textAlign: 'center',
-                        margin: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.4rem',
-                        padding: '0.2rem 0'
-                      }}>
-                        <AlertCircle size={14} style={{ color: 'var(--accent-gold)' }} />
-                        <span>Sube o toma la foto de tu constancia de pago para habilitar la confirmación.</span>
-                      </p>
-                    )}
-                  </div>
-                )}
+                      <div style={{ fontSize: '0.73rem', color: '#94A3B8', textAlign: 'center', marginTop: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                        <ShieldCheck size={14} style={{ color: '#34D399' }} />
+                        <span>Pago 100% seguro con acreditación automática e inmediata</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -1415,7 +1139,7 @@ export const CheckoutModal = () => {
                 </strong>
               </div>
 
-              {/* Pago Acreditado vía Mercado Pago */}
+              {/* Pago Acreditado Automáticamente */}
               {completedOrder.mercadopagoPaymentId && (
                 <div style={{
                   display: 'flex',
@@ -1423,47 +1147,19 @@ export const CheckoutModal = () => {
                   gap: '0.75rem',
                   marginTop: '0.75rem',
                   padding: '0.75rem 1rem',
-                  background: 'rgba(0, 158, 227, 0.1)',
+                  background: 'rgba(16, 185, 129, 0.12)',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid rgba(0, 158, 227, 0.4)'
+                  border: '1px solid rgba(16, 185, 129, 0.4)'
                 }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#009EE3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', flexShrink: 0 }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', flexShrink: 0 }}>
                     <CheckCircle size={20} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.76rem', color: '#009EE3', fontWeight: 800 }}>
-                      ✓ Pago Acreditado vía Mercado Pago
+                    <div style={{ fontSize: '0.76rem', color: '#10B981', fontWeight: 800 }}>
+                      ✓ Pago Acreditado Automáticamente
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#ECE8E1' }}>
                       ID Transacción Oficial: <strong>#{completedOrder.mercadopagoPaymentId}</strong>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Constancia Adjunta en la Orden */}
-              {completedOrder.paymentProof && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  marginTop: '0.75rem',
-                  padding: '0.65rem 0.85rem',
-                  background: '#161210',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid rgba(52, 211, 153, 0.3)'
-                }}>
-                  <img
-                    src={completedOrder.paymentProof}
-                    alt="Constancia Adjunta"
-                    style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.2)' }}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.7rem', color: '#34D399', fontWeight: 700 }}>
-                      ✓ Constancia de Pago Vinculada
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: '#CBD5E1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {completedOrder.paymentProofName || 'Voucher Registrado'}
                     </div>
                   </div>
                 </div>

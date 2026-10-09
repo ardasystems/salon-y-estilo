@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 import { ProductCard } from './ProductCard';
 import { Search, Truck, ChevronLeft, ChevronRight, ArrowUpDown, X } from 'lucide-react';
-import { YapeBadge, PlinBadge, MercadoPagoBadge, PagoEfectivoBadge, CardsBadge } from './PaymentIcons';
 
 export const ProductsSection = () => {
   const {

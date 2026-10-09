@@ -145,9 +145,10 @@ export const Hero = () => {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <span style={{ color: 'var(--yape-purple)', fontWeight: 800 }}>YAPE</span>
-                <span style={{ opacity: 0.5 }}>/</span>
-                <span style={{ color: 'var(--plin-cyan)', fontWeight: 800 }}>PLIN</span>
-                <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>0% Comisión</span>
+                <span style={{ opacity: 0.5 }}>•</span>
+                <span style={{ color: '#60A5FA', fontWeight: 800 }}>TARJETAS</span>
+                <span style={{ opacity: 0.5 }}>•</span>
+                <span style={{ color: '#F59E0B', fontWeight: 800 }}>PAGOEFECTIVO</span>
               </div>
               <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-gold)' }} />
               <div>Retiro Gratis Showroom</div>

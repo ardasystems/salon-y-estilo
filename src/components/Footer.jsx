@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
 import { BookOpen, MapPin, Phone, Sparkles, Lock, ExternalLink } from 'lucide-react';
-import { YapeBadge, PlinBadge, MercadoPagoBadge, CardsBadge, PagoEfectivoBadge } from './PaymentIcons';
+import { YapeBadge, CardsBadge, PagoEfectivoBadge } from './PaymentIcons';
 
 export const Footer = () => {
   const { setIsLibroOpen, settings, setIsAdminAuthOpen } = useStore();
@@ -203,15 +203,13 @@ export const Footer = () => {
               Pagos en Soles
             </h4>
             <p style={{ fontSize: '0.82rem', marginBottom: '1rem', lineHeight: 1.5, color: '#CCCCCC' }}>
-              Aceptamos pagos 100% seguros con Mercado Pago (Yape, Tarjetas Débito/Crédito y PagoEfectivo):
+              Aceptamos pagos 100% automatizados con confirmación instantánea:
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-              <MercadoPagoBadge size="sm" />
               <YapeBadge size="sm" />
               <CardsBadge size="sm" />
               <PagoEfectivoBadge size="sm" />
-              <PlinBadge size="sm" />
             </div>
           </div>
 

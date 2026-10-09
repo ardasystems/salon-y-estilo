@@ -10,8 +10,8 @@ export const TrustBadges = () => {
     },
     {
       icon: <Smartphone size={22} style={{ color: 'var(--yape-purple)' }} />,
-      title: "Yape & Plin Directo",
-      desc: "Transfiere seguro y sin comisiones intermediarias. QR automático al instante."
+      title: "Yape, Tarjetas & Efectivo",
+      desc: "Pago 100% automático e inmediato con Yape, Tarjetas de Débito/Crédito y Agentes."
     },
     {
       icon: <Store size={22} style={{ color: 'var(--accent-rose)' }} />,
@@ -19,7 +19,7 @@ export const TrustBadges = () => {
       desc: "S/ 0 en movilidad retirando tu pedido en nuestro showroom en Calle San José."
     },
     {
-      icon: <PackageCheck size={22} style={{ color: 'var(--plin-cyan)' }} />,
+      icon: <PackageCheck size={22} style={{ color: '#60A5FA' }} />,
       title: "Envíos a Todo el Perú",
       desc: "Despachos seguros vía Olva Courier a tu puerta o Shalom a tu agencia."
     }

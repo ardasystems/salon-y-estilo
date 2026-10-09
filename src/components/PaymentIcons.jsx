@@ -33,30 +33,6 @@ export const YapeBadge = ({ size = 'normal' }) => (
   </div>
 );
 
-export const PlinBadge = ({ size = 'normal' }) => (
-  <div style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.45rem',
-    background: 'linear-gradient(135deg, #00B4D8 0%, #0077B6 100%)',
-    border: '1px solid rgba(0, 180, 216, 0.5)',
-    color: '#FFFFFF',
-    padding: size === 'sm' ? '0.22rem 0.6rem' : '0.35rem 0.85rem',
-    borderRadius: 'var(--radius-sm)',
-    fontSize: size === 'sm' ? '0.74rem' : '0.82rem',
-    fontWeight: 900,
-    boxShadow: '0 2px 8px rgba(0, 180, 216, 0.3)',
-    userSelect: 'none'
-  }}>
-    <svg width={size === 'sm' ? "14" : "16"} height={size === 'sm' ? "14" : "16"} viewBox="0 0 24 24" fill="currentColor">
-      <circle cx="8" cy="12" r="5" fill="#FFFFFF" fillOpacity="0.95" />
-      <circle cx="16" cy="12" r="5" fill="#FFFFFF" fillOpacity="0.65" />
-    </svg>
-    <span style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900, letterSpacing: '0.04em' }}>
-      plin
-    </span>
-  </div>
-);
 
 export const MercadoPagoBadge = ({ size = 'normal' }) => (
   <div style={{

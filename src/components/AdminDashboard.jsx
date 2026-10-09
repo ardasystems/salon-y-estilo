@@ -151,19 +151,6 @@ export const AdminDashboard = () => {
     }
   };
 
-  const handlePlinQrUpload = async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      try {
-        const compressed = await compressImage(file, 600, 600, 0.85);
-        const uploadedUrl = await uploadToSalonAssets(compressed, 'qr');
-        setSettingsForm(prev => ({ ...prev, plinQrImage: uploadedUrl || compressed }));
-        showToast("Código QR de Plin cargado con éxito");
-      } catch (err) {
-        showToast("Error al procesar QR de Plin", "error");
-      }
-    }
-  };
 
   const handleBeforeImageUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -509,7 +496,7 @@ export const AdminDashboard = () => {
           <div style={{ background: '#161210', padding: '1.6rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(212, 175, 55, 0.2)', boxShadow: '0 8px 25px rgba(0,0,0,0.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.78rem', marginBottom: '0.5rem' }}>
               <span>Ticket Promedio</span>
-              <TrendingUp size={18} style={{ color: 'var(--plin-cyan)' }} />
+              <TrendingUp size={18} style={{ color: '#60A5FA' }} />
             </div>
             <div style={{ fontSize: '1.8rem', fontWeight: 700, color: '#FFFFFF' }}>
               S/ {averageTicket.toFixed(2)}
@@ -962,7 +949,7 @@ export const AdminDashboard = () => {
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Órdenes de Compra</h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Revisa los pedidos de Chiclayo y provincias con su comprobante de Yape/Plin o confirmación automática de Mercado Pago.
+                Revisa los pedidos de Chiclayo y provincias con su confirmación automática de pago.
               </p>
             </div>
 
@@ -988,10 +975,10 @@ export const AdminDashboard = () => {
                         padding: '0.2rem 0.65rem',
                         borderRadius: 'var(--radius-full)',
                         fontWeight: 800,
-                        background: order.paymentMethod.includes('yape') ? 'rgba(139, 44, 158, 0.2)' : (order.paymentMethod.includes('plin') ? 'rgba(0, 194, 232, 0.2)' : 'rgba(212, 175, 55, 0.2)'),
-                        color: order.paymentMethod.includes('yape') ? '#E9A6F5' : (order.paymentMethod.includes('plin') ? 'var(--plin-cyan)' : 'var(--accent-gold-light)')
+                        background: order.paymentMethod?.includes('yape') ? 'rgba(139, 44, 158, 0.2)' : (order.paymentMethod?.includes('card') ? 'rgba(59, 130, 246, 0.2)' : 'rgba(212, 175, 55, 0.2)'),
+                        color: order.paymentMethod?.includes('yape') ? '#E9A6F5' : (order.paymentMethod?.includes('card') ? '#93C5FD' : 'var(--accent-gold-light)')
                       }}>
-                        {order.paymentMethod.toUpperCase()}
+                        {(order.paymentOption || order.paymentMethod || 'AUTOMÁTICO').toUpperCase()}
                       </span>
                     </div>
 
@@ -1331,7 +1318,7 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* 3. Contact Phones & Yape / Plin */}
+              {/* 3. Contact & Digital Payments */}
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
                   <Phone size={16} style={{ color: 'var(--accent-gold)' }} />
@@ -1455,108 +1442,6 @@ export const AdminDashboard = () => {
                           placeholder="O pega aquí la URL de la imagen de tu QR Yape"
                           value={settingsForm.yapeQrImage || ''}
                           onChange={(e) => setSettingsForm({ ...settingsForm, yapeQrImage: e.target.value })}
-                          style={{ width: '100%', padding: '0.45rem 0.7rem', borderRadius: 'var(--radius-xs)', fontSize: '0.78rem' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* PLIN CONFIGURATION (PHONE, OWNER & QR IMAGE) */}
-                <div style={{ background: '#110D0B', padding: '1.1rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 194, 232, 0.3)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--plin-cyan)', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                    <QrCode size={16} />
-                    <span>Configuración de Pagos Plin</span>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', marginBottom: '1rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Número de Celular Plin</label>
-                      <input
-                        type="text"
-                        value={settingsForm.plinPhone || '920 731 163'}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, plinPhone: e.target.value })}
-                        style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Titular de la Cuenta Plin</label>
-                      <input
-                        type="text"
-                        value={settingsForm.plinOwner || ''}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, plinOwner: e.target.value })}
-                        style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '0.74rem', color: '#FFFFFF', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
-                      Imagen del Código QR Plin (Para escanear en Checkout)
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-                      <div style={{
-                        width: '58px',
-                        height: '58px',
-                        borderRadius: 'var(--radius-sm)',
-                        background: '#FFF',
-                        border: '1.5px solid var(--plin-cyan)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        flexShrink: 0
-                      }}>
-                        {settingsForm.plinQrImage ? (
-                          <img src={settingsForm.plinQrImage} alt="QR Plin" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        ) : (
-                          <QrCode size={28} style={{ color: 'var(--plin-cyan)' }} />
-                        )}
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <label style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            background: 'rgba(0, 194, 232, 0.15)',
-                            border: '1px solid rgba(0, 194, 232, 0.4)',
-                            color: 'var(--plin-cyan)',
-                            padding: '0.4rem 0.8rem',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.74rem',
-                            fontWeight: 600,
-                            cursor: 'pointer'
-                          }}>
-                            <Upload size={13} />
-                            <span>Subir QR Plin</span>
-                            <input type="file" accept="image/*" onChange={handlePlinQrUpload} style={{ display: 'none' }} />
-                          </label>
-
-                          {settingsForm.plinQrImage && (
-                            <button
-                              type="button"
-                              onClick={() => setSettingsForm({ ...settingsForm, plinQrImage: '' })}
-                              style={{
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: 'var(--radius-sm)',
-                                background: '#261715',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                color: '#D4D4D4',
-                                fontSize: '0.72rem'
-                              }}
-                            >
-                              Restablecer a QR Vectorial
-                            </button>
-                          )}
-                        </div>
-
-                        <input
-                          type="text"
-                          placeholder="O pega aquí la URL de la imagen de tu QR Plin"
-                          value={settingsForm.plinQrImage || ''}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, plinQrImage: e.target.value })}
                           style={{ width: '100%', padding: '0.45rem 0.7rem', borderRadius: 'var(--radius-xs)', fontSize: '0.78rem' }}
                         />
                       </div>

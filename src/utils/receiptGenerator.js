@@ -199,20 +199,20 @@ export function generateReceiptPDF(order, settings = {}) {
   doc.setFontSize(8.5);
   doc.setTextColor(90, 90, 95);
   const paymentMethodLabel = {
-    yape_direct: 'Billetera Digital Yape (Directo)',
-    plin_direct: 'Billetera Digital Plin (Directo)',
-    mercadopago: 'Mercado Pago Oficial (Yape, Tarjetas o PagoEfectivo)',
-    mercadopago_card: 'Mercado Pago (Tarjeta Débito/Crédito)',
-    mercadopago_yape: 'Mercado Pago (Yape Oficial)'
-  }[order.paymentMethod] || 'Mercado Pago / Billetera Digital';
+    yape: 'Yape (Acreditación Automática)',
+    card: 'Tarjeta Débito / Crédito (Acreditación Automática)',
+    cash: 'PagoEfectivo Agentes / Bodegas (Código CIP)',
+    bank_transfer: 'Banca por Internet / Móvil (Código CIP)',
+    mercadopago: 'Pasarela Oficial Segura'
+  }[order.paymentOption || order.paymentMethod] || 'Pago Digital Automatizado';
 
   doc.text(`Método de Pago: ${paymentMethodLabel}`, 14, y + 10);
-  doc.text(`Estado del Pago: ${order.paymentStatus ? order.paymentStatus.toUpperCase() : 'PENDIENTE DE VERIFICACIÓN'}`, 14, y + 16);
+  doc.text(`Estado del Pago: ${order.paymentStatus ? order.paymentStatus.toUpperCase() : 'PAGADO / ACREDITADO'}`, 14, y + 16);
   if (order.mercadopagoPaymentId) {
-    doc.setTextColor(0, 158, 227);
-    doc.text(`ID Transacción MP: #${order.mercadopagoPaymentId}`, 14, y + 21);
+    doc.setTextColor(16, 185, 129);
+    doc.text(`ID Transacción Oficial: #${order.mercadopagoPaymentId}`, 14, y + 21);
     doc.setTextColor(90, 90, 95);
-    doc.text('Transacción procesada y asegurada con Mercado Pago.', 14, y + 26);
+    doc.text('Transacción procesada y acreditada al 100%.', 14, y + 26);
   } else if (order.paymentProofName) {
     doc.setTextColor(179, 142, 60);
     doc.text(`Constancia Adjunta: ${order.paymentProofName}`, 14, y + 21);
