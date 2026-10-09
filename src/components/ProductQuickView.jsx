@@ -283,7 +283,7 @@ export const ProductQuickView = () => {
             color: '#B3B3B3'
           }}>
             <Truck size={15} style={{ color: 'var(--accent-gold)' }} />
-            <span>Envíos asegurados a todo el Perú (Olva/Shalom) | Express &lt; 2h en Chiclayo.</span>
+            <span>Envíos asegurados a todo el Perú (Shalom) | Express &lt; 2h en Chiclayo.</span>
           </div>
         </div>
       </div>

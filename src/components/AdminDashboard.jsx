@@ -337,30 +337,25 @@ export const AdminDashboard = () => {
   const handleSaveSettings = (e) => {
     e.preventDefault();
     const currentOptions = settingsForm.shippingOptions || settings.shippingOptions || [];
-    const updatedShippingOptions = currentOptions.map(opt => {
-      if (opt.id === 'pimentel_chiclayo_express') {
-        return {
-          ...opt,
-          deliveryTime: settingsForm.expressTime || opt.deliveryTime,
-          price: settingsForm.expressPrice !== undefined ? parseFloat(settingsForm.expressPrice) : opt.price
-        };
-      }
-      if (opt.id === 'olva_peru') {
-        return {
-          ...opt,
-          deliveryTime: settingsForm.olvaTime || opt.deliveryTime,
-          price: settingsForm.olvaPrice !== undefined ? parseFloat(settingsForm.olvaPrice) : opt.price
-        };
-      }
-      if (opt.id === 'shalom_peru') {
-        return {
-          ...opt,
-          deliveryTime: settingsForm.shalomTime || opt.deliveryTime,
-          price: settingsForm.shalomPrice !== undefined ? parseFloat(settingsForm.shalomPrice) : opt.price
-        };
-      }
-      return opt;
-    });
+    const updatedShippingOptions = currentOptions
+      .filter(opt => opt && opt.id !== 'olva_peru' && !/olva/i.test(opt.title || ''))
+      .map(opt => {
+        if (opt.id === 'pimentel_chiclayo_express' || opt.id === 'chiclayo_express') {
+          return {
+            ...opt,
+            deliveryTime: settingsForm.expressTime || opt.deliveryTime,
+            price: settingsForm.expressPrice !== undefined ? parseFloat(settingsForm.expressPrice) : opt.price
+          };
+        }
+        if (opt.id === 'shalom_peru') {
+          return {
+            ...opt,
+            deliveryTime: settingsForm.shalomTime || opt.deliveryTime,
+            price: settingsForm.shalomPrice !== undefined ? parseFloat(settingsForm.shalomPrice) : opt.price
+          };
+        }
+        return opt;
+      });
 
     const payload = {
       ...settingsForm,
@@ -1554,33 +1549,6 @@ export const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Olva Courier Nacional */}
-                  <div style={{ background: '#110D0B', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#FFFFFF', marginBottom: '0.5rem' }}>
-                      📦 Olva Courier Domicilio (Nivel Nacional / Provincias)
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
-                      <div>
-                        <label style={{ fontSize: '0.72rem', color: '#A3A3A3', display: 'block', marginBottom: '0.2rem' }}>Tiempo estimado</label>
-                        <input
-                          type="text"
-                          value={settingsForm.olvaTime || '24 a 72 horas'}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, olvaTime: e.target.value })}
-                          style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-xs)', fontSize: '0.82rem' }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '0.72rem', color: '#A3A3A3', display: 'block', marginBottom: '0.2rem' }}>Costo (S/.)</label>
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={settingsForm.olvaPrice !== undefined ? settingsForm.olvaPrice : 14.00}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, olvaPrice: parseFloat(e.target.value) || 0 })}
-                          style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-xs)', fontSize: '0.82rem' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Shalom Agencia Nacional */}
                   <div style={{ background: '#110D0B', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
@@ -1623,7 +1591,7 @@ export const AdminDashboard = () => {
                   </label>
                   <textarea
                     rows={2}
-                    value={settingsForm.productsBannerText || "📦 ENVÍOS A NIVEL NACIONAL (Olva & Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163"}
+                    value={settingsForm.productsBannerText || "📦 ENVÍOS A NIVEL NACIONAL (Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163"}
                     onChange={(e) => setSettingsForm({ ...settingsForm, productsBannerText: e.target.value })}
                     style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
                   />

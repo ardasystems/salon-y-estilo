@@ -222,7 +222,7 @@ export const CartDrawer = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', color: 'var(--accent-gold-light)', marginBottom: '1.25rem' }}>
               <Truck size={14} />
-              <span>Envíos a todo el Perú (Olva Courier / Shalom) y Express local.</span>
+              <span>Envíos a todo el Perú (Shalom Courier) y Express Chiclayo.</span>
             </div>
 
             <button

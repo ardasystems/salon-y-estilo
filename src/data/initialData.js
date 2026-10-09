@@ -350,7 +350,7 @@ export const INITIAL_SETTINGS = {
   mercadopagoPublicKey: "",
   mercadopagoEnvironment: "sandbox", // 'sandbox' | 'production'
 
-  productsBannerText: "📦 ENVÍOS A NIVEL NACIONAL (Olva & Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163",
+  productsBannerText: "📦 ENVÍOS A NIVEL NACIONAL (Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163",
   shippingOptions: [
     {
       id: "salon_pickup",
@@ -367,14 +367,6 @@ export const INITIAL_SETTINGS = {
       deliveryTime: "Menos de 2 horas",
       description: "Chiclayo Centro, Santa Victoria, La Victoria, JLO y balnearios",
       badge: "Express VIP"
-    },
-    {
-      id: "olva_peru",
-      title: "Olva Courier Domicilio (Nacional)",
-      price: 14.00,
-      deliveryTime: "24 a 72 horas",
-      description: "Entrega a domicilio asegurada en Lima y todas las provincias del Perú",
-      badge: "A Domicilio"
     },
     {
       id: "shalom_peru",

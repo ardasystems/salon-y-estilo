@@ -39,7 +39,7 @@ export const ProductsSection = () => {
     }
   };
 
-  const bannerText = settings.productsBannerText || "Envíos Olva & Shalom a todo el Perú • Express < 2h en Chiclayo y alrededores";
+  const bannerText = settings.productsBannerText || "Envíos Shalom a todo el Perú • Express < 2h en Chiclayo y alrededores";
 
   return (
     <div ref={productsTopRef} style={{ animation: 'fadeIn 0.35s ease-out', padding: '1rem 0 5rem 0', background: 'var(--bg-canvas)' }}>

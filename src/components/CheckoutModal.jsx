@@ -28,7 +28,8 @@ export const CheckoutModal = () => {
     settings,
     createOrder,
     showToast,
-    setActiveMainTab
+    setActiveMainTab,
+    setQuickViewProduct
   } = useStore();
 
   const savedCheckout = getSavedCheckout();
@@ -48,10 +49,26 @@ export const CheckoutModal = () => {
     notes: ''
   });
 
+  // Filtrar Olva Courier y garantizar que Retiro en Salón sea siempre la primera opción (#1)
+  const availableShippingOptions = (settings.shippingOptions || [])
+    .filter(opt => opt && opt.id !== 'olva_peru' && !/olva/i.test(opt.title || ''))
+    .sort((a, b) => {
+      const isPickupA = a.id === 'salon_pickup' || /retiro/i.test(a.title || '');
+      const isPickupB = b.id === 'salon_pickup' || /retiro/i.test(b.title || '');
+      if (isPickupA && !isPickupB) return -1;
+      if (!isPickupA && isPickupB) return 1;
+      return 0;
+    });
+
   const [selectedShipping, setSelectedShipping] = useState(() => {
     // Por defecto 'Retiro en Salón de Belleza (Gratis)' como primera opción
-    const pickupOption = settings.shippingOptions?.find(o => o.id === 'salon_pickup' || /retiro/i.test(o.title));
-    return pickupOption || settings.shippingOptions?.[0];
+    const pickupOption = availableShippingOptions.find(o => o.id === 'salon_pickup' || /retiro/i.test(o.title || ''));
+    return pickupOption || availableShippingOptions[0] || {
+      id: "salon_pickup",
+      title: "Retiro en Salón de Belleza (Gratis)",
+      price: 0,
+      description: "Visítanos en nuestro salón y recoge tu pedido sin costo de envío"
+    };
   });
 
   const [selectedPaymentOption, setSelectedPaymentOption] = useState('all');
@@ -278,15 +295,16 @@ export const CheckoutModal = () => {
     if (!customer.phone || customer.phone.replace(/\D/g, '').length < 8) {
       errors.phone = "Por favor ingresa tu número de celular (9 dígitos)";
     }
-    if (!customer.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
-      errors.email = "Por favor ingresa un correo electrónico válido";
-    }
+    // DNI y dirección SOLO cuando es para despacho / envío a domicilio o agencia
     if (!isPickup) {
+      if (!customer.dni || customer.dni.trim().length < 6) {
+        errors.dni = "Por favor ingresa tu DNI o CE para el despacho";
+      }
       if (!customer.city || customer.city.trim().length < 2) {
         errors.city = "Por favor ingresa tu ciudad de destino";
       }
       if (!customer.address || customer.address.trim().length < 3) {
-        errors.address = "Por favor ingresa tu dirección exacta o agencia";
+        errors.address = "Por favor ingresa tu dirección exacta o agencia Shalom";
       }
     }
 
@@ -531,7 +549,7 @@ export const CheckoutModal = () => {
                 <div style={{ marginBottom: '1.8rem' }}>
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>1</span>
-                    <span>Tus Datos de Contacto y Entrega</span>
+                    <span>{isPickup ? 'Tus Datos para Retiro en Salón' : 'Tus Datos de Contacto y Envío'}</span>
                   </h4>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -562,87 +580,64 @@ export const CheckoutModal = () => {
                       )}
                     </div>
 
-                    {/* DNI & Celular */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                      <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                          DNI o CE * (Para envío)
-                        </label>
-                        <input
-                          type="text"
-                          maxLength={12}
-                          placeholder="8 dígitos"
-                          value={customer.dni}
-                          onChange={(e) => handleInputChange('dni', e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '0.65rem 0.9rem',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.88rem',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            background: '#161210',
-                            color: '#FFFFFF'
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                          Celular / WhatsApp *
-                        </label>
-                        <input
-                          type="tel"
-                          placeholder="9XXXXXXXX"
-                          value={customer.phone}
-                          onChange={(e) => handleInputChange('phone', e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '0.65rem 0.9rem',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.88rem',
-                            border: validationErrors.phone ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
-                            background: validationErrors.phone ? 'rgba(239, 68, 68, 0.08)' : '#161210',
-                            color: '#FFFFFF'
-                          }}
-                        />
-                        {validationErrors.phone && (
-                          <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
-                            ⚠️ {validationErrors.phone}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Correo */}
+                    {/* Celular / WhatsApp */}
                     <div>
                       <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                        Correo Electrónico * (Para tu recibo digital y confirmación)
+                        Celular / WhatsApp *
                       </label>
                       <input
-                        type="email"
-                        placeholder="tu-correo@ejemplo.com"
-                        value={customer.email || ''}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        type="tel"
+                        placeholder="9XXXXXXXX"
+                        value={customer.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
                         style={{
                           width: '100%',
                           padding: '0.65rem 0.9rem',
                           borderRadius: 'var(--radius-sm)',
                           fontSize: '0.88rem',
-                          border: validationErrors.email ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
-                          background: validationErrors.email ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                          border: validationErrors.phone ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                          background: validationErrors.phone ? 'rgba(239, 68, 68, 0.08)' : '#161210',
                           color: '#FFFFFF'
                         }}
                       />
-                      {validationErrors.email && (
+                      {validationErrors.phone && (
                         <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
-                          ⚠️ {validationErrors.email}
+                          ⚠️ {validationErrors.phone}
                         </span>
                       )}
                     </div>
 
-                    {/* Campos de Dirección Integrados en Sección 1 */}
+                    {/* DNI y Dirección: SOLO VISIBLE CUANDO ES ENVÍO (NO PARA RECOJO EN TIENDA) */}
                     {!isPickup ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                          <div>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                              DNI o CE * (Para envío)
+                            </label>
+                            <input
+                              type="text"
+                              maxLength={12}
+                              placeholder="8 dígitos"
+                              value={customer.dni}
+                              onChange={(e) => handleInputChange('dni', e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '0.65rem 0.9rem',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '0.88rem',
+                                border: validationErrors.dni ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                                background: validationErrors.dni ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                                color: '#FFFFFF'
+                              }}
+                            />
+                            {validationErrors.dni && (
+                              <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
+                                ⚠️ {validationErrors.dni}
+                              </span>
+                            )}
+                          </div>
+
                           <div>
                             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
                               Ciudad de destino *
@@ -668,26 +663,6 @@ export const CheckoutModal = () => {
                               </span>
                             )}
                           </div>
-                          <div>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                              Distrito / Zona
-                            </label>
-                            <input
-                              type="text"
-                              value={customer.district}
-                              onChange={(e) => handleInputChange('district', e.target.value)}
-                              placeholder="Santa Victoria / La Victoria..."
-                              style={{
-                                width: '100%',
-                                padding: '0.65rem 0.9rem',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.88rem',
-                                border: '1px solid rgba(255,255,255,0.15)',
-                                background: '#161210',
-                                color: '#FFFFFF'
-                              }}
-                            />
-                          </div>
                         </div>
 
                         <div>
@@ -698,7 +673,7 @@ export const CheckoutModal = () => {
                             type="text"
                             value={customer.address}
                             onChange={(e) => handleInputChange('address', e.target.value)}
-                            placeholder="Calle, número, departamento o agencia Shalom"
+                            placeholder="Calle, número, departamento o agencia Shalom de tu ciudad"
                             style={{
                               width: '100%',
                               padding: '0.65rem 0.9rem',
@@ -744,7 +719,7 @@ export const CheckoutModal = () => {
                           <strong style={{ color: 'var(--accent-gold-light)', display: 'block' }}>
                             Retiro en Salón de Belleza (Gratis)
                           </strong>
-                          {settings.salonAddress || 'Chiclayo, Lambayeque - Perú'}. No requieres ingresar dirección; tu pedido se preparará inmediatamente para recojo en tienda.
+                          {settings.salonAddress || 'Chiclayo, Lambayeque - Perú'}. No requieres ingresar DNI ni dirección; tu pedido estará listo inmediatamente en nuestro salón.
                         </div>
                       </div>
                     )}
@@ -755,11 +730,11 @@ export const CheckoutModal = () => {
                 <div>
                   <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>2</span>
-                    <span>Modalidad de Despacho (Chiclayo & Perú)</span>
+                    <span>Modalidad de Despacho</span>
                   </h4>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    {settings.shippingOptions.map((opt) => (
+                    {availableShippingOptions.map((opt) => (
                       <div
                         key={opt.id}
                         onClick={() => setSelectedShipping(opt)}
@@ -803,7 +778,7 @@ export const CheckoutModal = () => {
                 </div>
               </div>
 
-              {/* Right Column: Payment & Totals */}
+              {/* Right Column: Order Details & Payment */}
               <div style={{
                 background: '#120E0C',
                 padding: '1.6rem',
@@ -812,6 +787,97 @@ export const CheckoutModal = () => {
                 display: 'flex',
                 flexDirection: 'column'
               }}>
+                {/* Detalle de Productos en la compra con link interactivo */}
+                <div style={{
+                  marginBottom: '1.1rem',
+                  padding: '0.9rem',
+                  background: '#161210',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid rgba(212, 175, 55, 0.2)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Tu Pedido ({cart.length} {cart.length === 1 ? 'producto' : 'productos'})
+                    </span>
+                    <span style={{ fontSize: '0.68rem', color: '#9CA3AF' }}>Clic en el producto para ver detalles</span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '0.2rem' }}>
+                    {cart.map((item, idx) => {
+                      const itemImg = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : (item.image || '');
+                      return (
+                        <div
+                          key={`${item.id}-${idx}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.45rem',
+                            borderRadius: 'var(--radius-sm)',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.06)'
+                          }}
+                        >
+                          {itemImg ? (
+                            <img
+                              src={itemImg}
+                              alt={item.name}
+                              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', border: '1px solid rgba(212, 175, 55, 0.3)', flexShrink: 0 }}
+                            />
+                          ) : (
+                            <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#25201E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.7rem', color: 'var(--accent-gold)' }}>
+                              📦
+                            </div>
+                          )}
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <button
+                              type="button"
+                              onClick={() => setQuickViewProduct(item)}
+                              title="Ver detalles completos del producto"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                textAlign: 'left',
+                                color: '#FFFFFF',
+                                fontSize: '0.82rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                textDecoration: 'underline',
+                                textDecorationColor: 'rgba(212, 175, 55, 0.4)',
+                                textUnderlineOffset: '2px',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              <span>{item.name}</span>
+                              <ExternalLink size={12} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                            </button>
+                            {item.selectedShade && (
+                              <div style={{ fontSize: '0.7rem', color: '#D4AF37' }}>
+                                Tono: {item.selectedShade}
+                              </div>
+                            )}
+                            <div style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>
+                              {item.quantity} x S/ {(item.price || 0).toFixed(2)}
+                            </div>
+                          </div>
+
+                          <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--accent-gold-light)', flexShrink: 0 }}>
+                            S/ {((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--accent-gold-light)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>3</span>
                   <span>Forma de Pago Segura</span>
@@ -1014,7 +1080,7 @@ export const CheckoutModal = () => {
               Tu código de seguimiento oficial es <strong>#{completedOrder.id}</strong>.
               {completedOrder.shippingMethod.id.includes('chiclayo')
                 ? ' Nuestro equipo en Chiclayo ya inició la preparación prioritaria de tu paquete.'
-                : ' Te remitiremos el número de guía de Olva/Shalom apenas sea procesado.'}
+                : ' Te remitiremos el número de guía de Shalom apenas sea procesado.'}
             </p>
 
             <div style={{
@@ -1031,8 +1097,10 @@ export const CheckoutModal = () => {
                 <strong style={{ color: '#FFFFFF' }}>{completedOrder.shippingMethod.title}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>DNI / Cliente:</span>
-                <strong style={{ color: '#FFFFFF' }}>{completedOrder.customer.dni} • {completedOrder.customer.name}</strong>
+                <span style={{ color: 'var(--text-muted)' }}>Cliente:</span>
+                <strong style={{ color: '#FFFFFF' }}>
+                  {completedOrder.customer.dni ? `${completedOrder.customer.dni} • ` : ''}{completedOrder.customer.name}
+                </strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Destino:</span>
@@ -1041,6 +1109,66 @@ export const CheckoutModal = () => {
                     ? `Retiro en Salón (${settings.salonAddress || 'Chiclayo'})`
                     : `${completedOrder.customer.city || ''} (${completedOrder.customer.address || ''})`}
                 </strong>
+              </div>
+
+              {/* Lista de productos comprados con link para ver detalle */}
+              <div style={{
+                margin: '0.85rem 0',
+                padding: '0.75rem',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-gold)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Productos Comprados:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                  {(completedOrder.items || []).map((it, idx) => {
+                    const itImg = Array.isArray(it.images) && it.images.length > 0 ? it.images[0] : (it.image || '');
+                    return (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.65rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0 }}>
+                          {itImg ? (
+                            <img src={itImg} alt={it.name} style={{ width: '30px', height: '30px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(212, 175, 55, 0.25)' }} />
+                          ) : (
+                            <div style={{ width: '30px', height: '30px', borderRadius: '4px', background: '#25201E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>📦</div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setQuickViewProduct(it)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              color: '#FFFFFF',
+                              textDecoration: 'underline',
+                              textDecorationColor: 'rgba(212, 175, 55, 0.45)',
+                              textUnderlineOffset: '2px',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              maxWidth: '220px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title="Ver detalles de este producto"
+                          >
+                            <span>{it.quantity}x {it.name}</span>
+                            <ExternalLink size={11} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                          </button>
+                        </div>
+                        <span style={{ color: 'var(--accent-gold-light)', fontWeight: 700, fontSize: '0.82rem', flexShrink: 0 }}>
+                          S/ {((it.price || 0) * (it.quantity || 1)).toFixed(2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Pago Acreditado Automáticamente */}

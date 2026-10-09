@@ -192,7 +192,7 @@ export const Footer = () => {
               </div>
               <div style={{ display: 'flex', gap: '0.65rem' }}>
                 <Sparkles size={17} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '0.1rem' }} />
-                <span>Motorizado Express en &lt; 2h en Chiclayo y alrededores | Olva & Shalom a nivel nacional.</span>
+                <span>Motorizado Express en &lt; 2h en Chiclayo y alrededores | Shalom a nivel nacional.</span>
               </div>
             </div>
           </div>

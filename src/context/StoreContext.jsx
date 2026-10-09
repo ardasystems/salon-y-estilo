@@ -611,45 +611,52 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  const normStr = (str) => (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
   // Filtered & Sorted Products
   const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === "Todos" || product.category === selectedCategory;
-    const query = searchQuery.toLowerCase().trim();
+    const pCat = product.category || "";
+    const matchesCategory = selectedCategory === "Todos" || normStr(pCat) === normStr(selectedCategory);
+    const query = normStr(searchQuery);
     if (query === "") return matchesCategory;
 
     const matchesKeywords = Array.isArray(product.keywords) 
-      ? product.keywords.some(k => k && k.toLowerCase().includes(query))
+      ? product.keywords.some(k => k && normStr(k).includes(query))
       : false;
 
     const matchesSearch = 
-      (product.name && product.name.toLowerCase().includes(query)) ||
-      (product.subtitle && product.subtitle.toLowerCase().includes(query)) ||
-      (product.description && product.description.toLowerCase().includes(query)) ||
-      (product.category && product.category.toLowerCase().includes(query)) ||
+      normStr(product.name).includes(query) ||
+      normStr(product.subtitle).includes(query) ||
+      normStr(product.description).includes(query) ||
+      normStr(product.category).includes(query) ||
       matchesKeywords;
 
     return matchesCategory && matchesSearch;
   }).sort((a, b) => {
-    if (productSortBy === 'precio-menor') return a.price - b.price;
-    if (productSortBy === 'precio-mayor') return b.price - a.price;
+    if (productSortBy === 'precio-menor') return (a.price || 0) - (b.price || 0);
+    if (productSortBy === 'precio-mayor') return (b.price || 0) - (a.price || 0);
     if (productSortBy === 'mas-comprados') return (b.reviewsCount || 0) - (a.reviewsCount || 0);
     if (productSortBy === 'recientes') return (b.id || '').localeCompare(a.id || '');
     return 0; // 'destacados'
   });
 
-  const productCategories = ["Todos", ...new Set(products.map(p => p.category))];
+  const productCategories = ["Todos", ...Array.from(new Set(products.map(p => p.category?.trim()).filter(Boolean)))];
 
   // Filtered Services
   const filteredServices = services.filter(service => {
-    const matchesCategory = selectedServiceCategory === "Todos" || service.category === selectedServiceCategory;
-    const matchesSearch = serviceSearchQuery === "" || 
-      service.name.toLowerCase().includes(serviceSearchQuery.toLowerCase()) ||
-      service.description.toLowerCase().includes(serviceSearchQuery.toLowerCase()) ||
-      service.category.toLowerCase().includes(serviceSearchQuery.toLowerCase());
+    const sCat = service.category || "";
+    const matchesCategory = selectedServiceCategory === "Todos" || normStr(sCat) === normStr(selectedServiceCategory);
+    const q = normStr(serviceSearchQuery);
+    if (q === "") return matchesCategory;
+
+    const matchesSearch = 
+      normStr(service.name).includes(q) ||
+      normStr(service.description).includes(q) ||
+      normStr(service.category).includes(q);
     return matchesCategory && matchesSearch;
   });
 
-  const serviceCategories = ["Todos", ...new Set(services.map(s => s.category))];
+  const serviceCategories = ["Todos", ...Array.from(new Set(services.map(s => s.category?.trim()).filter(Boolean)))];
 
   return (
     <StoreContext.Provider value={{

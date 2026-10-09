@@ -153,7 +153,7 @@ export const Hero = () => {
               <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-gold)' }} />
               <div>Retiro Gratis Showroom</div>
               <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-gold)' }} />
-              <div>Olva & Shalom Nacional</div>
+              <div>Shalom Nacional</div>
             </div>
           </motion.div>
 

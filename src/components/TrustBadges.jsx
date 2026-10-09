@@ -21,7 +21,7 @@ export const TrustBadges = () => {
     {
       icon: <PackageCheck size={22} style={{ color: '#60A5FA' }} />,
       title: "Envíos a Todo el Perú",
-      desc: "Despachos seguros vía Olva Courier a tu puerta o Shalom a tu agencia."
+      desc: "Despachos seguros vía Shalom a tu agencia o Express en Chiclayo."
     }
   ];
 
