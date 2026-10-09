@@ -9,8 +9,10 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "db:backup": "node scripts/backup-cloud-data.js",
-    "db:restore": "node scripts/restore-cloud-data.js"
+    "db:restore": "node scripts/restore-cloud-data.js",
+    "db:migrate": "node scripts/migrate_payment_tables.js"
   },
+
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "canvas-confetti": "^1.9.4",
@@ -18,10 +20,12 @@
     "jspdf": "^4.2.1",
     "lucide-react": "^1.48.0",
     "mercadopago": "^3.6.1",
+    "pg": "^8.23.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
