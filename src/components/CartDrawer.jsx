@@ -10,6 +10,9 @@ export const CartDrawer = () => {
     removeFromCart,
     updateCartQuantity,
     cartSubtotal,
+    cartRawSubtotal,
+    memberDiscountAmount,
+    memberDiscountPercent,
     setIsCheckoutOpen
   } = useStore();
 
@@ -213,8 +216,22 @@ export const CartDrawer = () => {
             background: '#0A0A0A',
             borderTop: '1px solid rgba(255, 255, 255, 0.15)'
           }}>
+            {memberDiscountAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', fontSize: '0.78rem' }}>
+                <span style={{ color: '#A3A3A3' }}>Subtotal original:</span>
+                <span style={{ color: '#A3A3A3', textDecoration: 'line-through' }}>S/ {cartRawSubtotal.toFixed(2)}</span>
+              </div>
+            )}
+
+            {memberDiscountAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--accent-gold)' }}>💎 Descuento Club VIP (-{memberDiscountPercent}%):</span>
+                <span style={{ color: 'var(--accent-gold-light)', fontWeight: 700 }}>-S/ {memberDiscountAmount.toFixed(2)}</span>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.9rem', color: '#A3A3A3', fontWeight: 600 }}>Subtotal:</span>
+              <span style={{ fontSize: '0.9rem', color: '#A3A3A3', fontWeight: 600 }}>Total Productos:</span>
               <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FFFFFF' }}>
                 S/ {cartSubtotal.toFixed(2)}
               </span>

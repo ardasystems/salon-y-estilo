@@ -3,7 +3,9 @@ import { useStore } from '../context/StoreContext';
 import { ShoppingCart, Eye, Star } from 'lucide-react';
 
 export const ProductCard = ({ product }) => {
-  const { addToCart, setQuickViewProduct } = useStore();
+  const { addToCart, setQuickViewProduct, currentUser, settings } = useStore();
+  const memberDiscount = currentUser ? (currentUser.discountPercent || settings.memberDiscountPercent || 10) : 0;
+  const discountedPrice = memberDiscount > 0 ? (product.price * (1 - memberDiscount / 100)) : product.price;
   const [selectedShade, setSelectedShade] = useState(product.shades ? product.shades[0] : null);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -237,18 +239,18 @@ export const ProductCard = ({ product }) => {
         }}>
           {/* Price */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
-              <span className="product-card-price-main" style={{ fontSize: '1.2rem', fontWeight: 800, color: '#FFFFFF', letterSpacing: '0.01em' }}>
-                S/ {product.price.toFixed(2)}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+              <span className="product-card-price-main" style={{ fontSize: '1.2rem', fontWeight: 800, color: memberDiscount > 0 ? 'var(--accent-gold-light)' : '#FFFFFF', letterSpacing: '0.01em' }}>
+                S/ {discountedPrice.toFixed(2)}
               </span>
-              {product.originalPrice && product.originalPrice > product.price && (
+              {(memberDiscount > 0 || (product.originalPrice && product.originalPrice > product.price)) && (
                 <span style={{ fontSize: '0.75rem', color: '#888', textDecoration: 'line-through' }}>
-                  S/ {product.originalPrice.toFixed(2)}
+                  S/ {(memberDiscount > 0 ? product.price : product.originalPrice).toFixed(2)}
                 </span>
               )}
             </div>
-            <span style={{ fontSize: '0.64rem', color: 'var(--accent-gold-light)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
-              Envíos Perú
+            <span style={{ fontSize: '0.64rem', color: 'var(--accent-gold-light)', letterSpacing: '0.02em', fontWeight: 600 }}>
+              {memberDiscount > 0 ? `💎 Precio Club VIP (-${memberDiscount}%)` : (settings.memberDiscountPercent ? `💎 -${settings.memberDiscountPercent}% Regístrate` : 'Envíos Perú')}
             </span>
           </div>
 

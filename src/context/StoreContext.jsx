@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_PRODUCTS, INITIAL_SERVICES, INITIAL_SETTINGS, INITIAL_ORDERS, INITIAL_COMPARISON_CASES } from '../data/initialData';
+import { INITIAL_PRODUCTS, INITIAL_SERVICES, INITIAL_SETTINGS, INITIAL_ORDERS, INITIAL_COMPARISON_CASES, INITIAL_REGISTERED_USERS } from '../data/initialData';
 import { supabase } from '../lib/supabase';
 
 const StoreContext = createContext(null);
@@ -105,8 +105,42 @@ export const StoreProvider = ({ children }) => {
   const [isLibroOpen, setIsLibroOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [bookingService, setBookingService] = useState(null);
-  const [isAdminView, setIsAdminView] = useState(false);
+  // Admin persistence across page reload
+  const [isAdminView, setIsAdminView] = useState(() => {
+    try {
+      return localStorage.getItem('salonestilo_is_admin') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('salonestilo_is_admin', isAdminView ? 'true' : 'false');
+    } catch {}
+  }, [isAdminView]);
+
+  // Registered Users (Club VIP) State
+  const [registeredUsers, setRegisteredUsers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('salonestilo_registered_users');
+      return saved ? JSON.parse(saved) : (INITIAL_REGISTERED_USERS || []);
+    } catch {
+      return INITIAL_REGISTERED_USERS || [];
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('salonestilo_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isUserAuthOpen, setIsUserAuthOpen] = useState(false);
 
   // Products filtering, search & sorting
   const [selectedCategory, setSelectedCategory] = useState("Todos");
@@ -155,6 +189,22 @@ export const StoreProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('salonestilo_comparison_cases', JSON.stringify(comparisonCases));
   }, [comparisonCases]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('salonestilo_registered_users', JSON.stringify(registeredUsers));
+    } catch {}
+  }, [registeredUsers]);
+
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem('salonestilo_current_user', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('salonestilo_current_user');
+      }
+    } catch {}
+  }, [currentUser]);
 
   // ==========================================
   // SUPABASE: Fetch fresh data on application load
@@ -258,6 +308,30 @@ export const StoreProvider = ({ children }) => {
           setComplaints(mapped);
         }
 
+        // 7. Registered Users
+        try {
+          const { data: dbUsers, error: uErr } = await supabase
+            .from('registered_users')
+            .select('*')
+            .order('registered_at', { ascending: false });
+
+          if (dbUsers && dbUsers.length > 0 && !uErr) {
+            const mapped = dbUsers.map(u => ({
+              ...u.data,
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              phone: u.phone,
+              role: u.role || 'vip',
+              discountPercent: u.discount_percent !== null ? Number(u.discount_percent) : 10,
+              registeredAt: u.registered_at,
+              ordersCount: u.data?.ordersCount || 0
+            }));
+            setRegisteredUsers(mapped);
+          }
+        } catch {
+          // fallback to local storage
+        }
       } catch (err) {
         console.warn('Initial cloud sync error (falling back to cache):', err);
       }
@@ -393,7 +467,12 @@ export const StoreProvider = ({ children }) => {
     setCart([]);
   };
 
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const memberDiscountPercent = currentUser
+    ? (Number(currentUser.discountPercent) || Number(settings.memberDiscountPercent) || 10)
+    : 0;
+  const cartRawSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const memberDiscountAmount = memberDiscountPercent > 0 ? (cartRawSubtotal * memberDiscountPercent) / 100 : 0;
+  const cartSubtotal = Math.max(0, cartRawSubtotal - memberDiscountAmount);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // ==========================================
@@ -611,6 +690,111 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  // ==========================================
+  // Registered Users (Club VIP) CRUD & Auth
+  // ==========================================
+  const registerUser = async ({ name, email, phone, password }) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPhone = (phone || '').replace(/\D/g, '');
+
+    if (!name || name.trim().length < 2) {
+      throw new Error("Por favor ingresa tus nombres y apellidos.");
+    }
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new Error("Por favor ingresa un correo electrónico válido.");
+    }
+
+    const existing = registeredUsers.find(u => (u.email || '').toLowerCase() === cleanEmail);
+    if (existing) {
+      throw new Error("Este correo ya está registrado en el Club VIP. Inicia sesión con tu cuenta.");
+    }
+
+    const discount = Number(settings.memberDiscountPercent) || 10;
+    const newUser = {
+      id: `usr-${Date.now().toString().slice(-6)}`,
+      name: name.trim(),
+      email: cleanEmail,
+      phone: cleanPhone,
+      password_hash: password ? btoa(password) : '',
+      role: 'vip',
+      discountPercent: discount,
+      registeredAt: new Date().toISOString(),
+      ordersCount: 0
+    };
+
+    setRegisteredUsers(prev => [newUser, ...prev]);
+    setCurrentUser(newUser);
+    showToast(`¡Bienvenida(o) ${newUser.name.split(' ')[0]}! Accedes a ${discount}% de descuento VIP.`);
+
+    try {
+      await supabase.from('registered_users').insert({
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        phone: newUser.phone,
+        password_hash: newUser.password_hash,
+        role: newUser.role,
+        discount_percent: newUser.discountPercent,
+        data: newUser,
+        registered_at: newUser.registeredAt
+      });
+    } catch (err) {
+      console.warn("Error inserting registered user in Supabase:", err);
+    }
+
+    return newUser;
+  };
+
+  const loginUser = async ({ email, password }) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const user = registeredUsers.find(u => (u.email || '').toLowerCase() === cleanEmail);
+
+    if (!user) {
+      throw new Error("No existe una cuenta registrada con este correo. Regístrate gratis.");
+    }
+
+    setCurrentUser(user);
+    showToast(`¡Hola de nuevo, ${user.name.split(' ')[0]}! Descuento Club VIP activo.`);
+    return user;
+  };
+
+  const logoutUser = () => {
+    setCurrentUser(null);
+    showToast("Has cerrado tu sesión de usuario.");
+  };
+
+  const updateUserDiscount = async (userId, discountPercent) => {
+    const num = Math.max(0, Math.min(100, Number(discountPercent) || 0));
+    setRegisteredUsers(prev => prev.map(u => u.id === userId ? { ...u, discountPercent: num } : u));
+    if (currentUser?.id === userId) {
+      setCurrentUser(prev => ({ ...prev, discountPercent: num }));
+    }
+    showToast("Descuento de usuario actualizado");
+
+    try {
+      await supabase.from('registered_users').update({
+        discount_percent: num,
+        updated_at: new Date().toISOString()
+      }).eq('id', userId);
+    } catch (err) {
+      console.warn("Error updating user discount in Supabase:", err);
+    }
+  };
+
+  const deleteRegisteredUser = async (userId) => {
+    setRegisteredUsers(prev => prev.filter(u => u.id !== userId));
+    if (currentUser?.id === userId) {
+      setCurrentUser(null);
+    }
+    showToast("Usuario eliminado del registro");
+
+    try {
+      await supabase.from('registered_users').delete().eq('id', userId);
+    } catch (err) {
+      console.warn("Error deleting registered user in Supabase:", err);
+    }
+  };
+
   const normStr = (str) => (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
   // Filtered & Sorted Products
@@ -713,7 +897,21 @@ export const StoreProvider = ({ children }) => {
       updateCartQuantity,
       clearCart,
       cartSubtotal,
+      cartRawSubtotal,
       cartItemCount,
+      memberDiscountPercent,
+      memberDiscountAmount,
+
+      // Registered Users & Club VIP
+      registeredUsers,
+      currentUser,
+      registerUser,
+      loginUser,
+      logoutUser,
+      updateUserDiscount,
+      deleteRegisteredUser,
+      isUserAuthOpen,
+      setIsUserAuthOpen,
 
       // Modals
       isCartOpen,

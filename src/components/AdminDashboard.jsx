@@ -4,7 +4,7 @@ import {
   Package, ShoppingCart, Settings, Plus, Edit2, Trash2, 
   DollarSign, TrendingUp, Phone, BookOpen, X, Upload, Image as ImageIcon, 
   Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode,
-  Download, Database, ShieldCheck, CreditCard, CheckCircle
+  Download, Database, ShieldCheck, CreditCard, CheckCircle, Users, UserCheck
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 import { uploadToSalonAssets } from '../lib/supabase';
@@ -27,11 +27,15 @@ export const AdminDashboard = () => {
     settings,
     updateSettings,
     complaints,
+    registeredUsers,
+    updateUserDiscount,
+    deleteRegisteredUser,
     setIsAdminView,
     showToast
   } = useStore();
 
   const [activeTab, setActiveTab] = useState('products');
+  const [userSearch, setUserSearch] = useState('');
   
   // Product Modal State
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -554,6 +558,7 @@ export const AdminDashboard = () => {
             { id: 'services', label: `Servicios del Salón (${services.length})`, icon: <Scissors size={16} /> },
             { id: 'comparison', label: `Antes & Después (${comparisonCases ? comparisonCases.length : 0})`, icon: <Sparkles size={16} /> },
             { id: 'orders', label: `Órdenes Recibidas (${orders.length})`, icon: <ShoppingCart size={16} /> },
+            { id: 'users', label: `Usuarios Registrados (${(registeredUsers || []).length})`, icon: <Users size={16} /> },
             { id: 'settings', label: 'Ajustes de Tienda & Logo', icon: <Settings size={16} /> },
             { id: 'complaints', label: `Libro de Reclamaciones (${complaints.length})`, icon: <BookOpen size={16} /> }
           ].map(tab => (
@@ -1721,12 +1726,226 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* 8. Club VIP & Descuento para Usuarios Registrados */}
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Sparkles size={17} style={{ color: 'var(--accent-gold)' }} />
+                    <span>8. Programa de Fidelización Club VIP & Descuento para Registrados</span>
+                  </h4>
+                </div>
+
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.9rem', lineHeight: 1.5 }}>
+                  Define el porcentaje de descuento global que se aplicará automáticamente a los productos cuando un cliente registrado inicie sesión en la web.
+                </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ maxWidth: '160px' }}>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                      % Descuento VIP
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="80"
+                        step="1"
+                        value={settingsForm.memberDiscountPercent !== undefined ? settingsForm.memberDiscountPercent : 10}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, memberDiscountPercent: parseFloat(e.target.value) || 0 })}
+                        style={{ width: '80px', padding: '0.55rem', borderRadius: 'var(--radius-xs)', fontSize: '0.88rem', fontWeight: 700, textAlign: 'center' }}
+                      />
+                      <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--accent-gold)' }}>% OFF</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div style={{ paddingTop: '1.25rem', borderTop: '1px solid rgba(212, 175, 55, 0.25)' }}>
                 <button type="submit" className="btn-luxury-gold admin-save-btn" style={{ padding: '0.85rem 2.4rem', fontSize: '0.84rem' }}>
                   Guardar Todos los Ajustes
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* TAB: USUARIOS REGISTRADOS */}
+        {activeTab === 'users' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>
+                  Usuarios Registrados & Club VIP ({registeredUsers.length})
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Seguimiento de compradores registrados, nivel de fidelización y personalización de descuentos.
+                </p>
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, correo o celular..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  style={{
+                    padding: '0.6rem 1.1rem',
+                    borderRadius: 'var(--radius-full)',
+                    background: '#161210',
+                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    color: '#FFFFFF',
+                    fontSize: '0.82rem',
+                    minWidth: '280px'
+                  }}
+                />
+              </div>
+            </div>
+
+            {registeredUsers.length === 0 ? (
+              <div style={{ background: '#161210', padding: '3.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--text-muted)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                <Users size={44} style={{ opacity: 0.4, marginBottom: '0.75rem', color: 'var(--accent-gold)' }} />
+                <p>No hay usuarios registrados en el Club VIP todavía.</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto', background: '#14100E', borderRadius: 'var(--radius-md)', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.83rem' }}>
+                  <thead>
+                    <tr style={{ background: '#1C1513', borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'var(--accent-gold)' }}>
+                      <th style={{ padding: '0.9rem 1rem' }}>Cliente</th>
+                      <th style={{ padding: '0.9rem 1rem' }}>Contacto Directo</th>
+                      <th style={{ padding: '0.9rem 1rem' }}>Nivel</th>
+                      <th style={{ padding: '0.9rem 1rem' }}>% Descuento</th>
+                      <th style={{ padding: '0.9rem 1rem' }}>Fecha Registro</th>
+                      <th style={{ padding: '0.9rem 1rem' }}>Compras</th>
+                      <th style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registeredUsers
+                      .filter(u => {
+                        if (!userSearch.trim()) return true;
+                        const q = userSearch.toLowerCase();
+                        return (u.name || '').toLowerCase().includes(q) ||
+                               (u.email || '').toLowerCase().includes(q) ||
+                               (u.phone || '').includes(q);
+                      })
+                      .map((u) => (
+                        <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: '#FFFFFF' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <div style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                background: 'rgba(212, 175, 55, 0.15)',
+                                color: 'var(--accent-gold-light)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 800,
+                                fontSize: '0.76rem',
+                                border: '1px solid rgba(212, 175, 55, 0.3)'
+                              }}>
+                                {u.name ? u.name.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                              <div>
+                                <div>{u.name}</div>
+                                <div style={{ fontSize: '0.7rem', color: '#888' }}>ID: #{u.id}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', color: '#D4D4D4' }}>
+                            <div>{u.email}</div>
+                            {u.phone && (
+                              <a
+                                href={`https://wa.me/51${u.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: '0.75rem', color: 'var(--accent-gold-light)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.2rem' }}
+                              >
+                                <Phone size={12} />
+                                <span>{u.phone}</span>
+                              </a>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem' }}>
+                            <span style={{
+                              background: 'rgba(212, 175, 55, 0.15)',
+                              color: 'var(--accent-gold-light)',
+                              border: '1px solid rgba(212, 175, 55, 0.4)',
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: 'var(--radius-full)',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}>
+                              <Sparkles size={11} />
+                              <span>{u.role === 'vip' ? 'Club VIP' : 'Miembro'}</span>
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <input
+                                type="number"
+                                min="0"
+                                max="80"
+                                defaultValue={u.discountPercent !== undefined ? u.discountPercent : 10}
+                                onBlur={(e) => updateUserDiscount(u.id, e.target.value)}
+                                style={{
+                                  width: '56px',
+                                  padding: '0.35rem',
+                                  borderRadius: 'var(--radius-xs)',
+                                  textAlign: 'center',
+                                  fontSize: '0.82rem',
+                                  fontWeight: 700,
+                                  background: '#1F1714',
+                                  border: '1px solid rgba(212, 175, 55, 0.35)',
+                                  color: '#FFFFFF'
+                                }}
+                              />
+                              <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>%</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', color: '#9CA3AF', fontSize: '0.76rem' }}>
+                            {u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Reciente'}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: '#FFFFFF' }}>
+                            {u.ordersCount || 0}
+                          </td>
+                          <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`¿Eliminar al usuario ${u.name} de los registros?`)) {
+                                  deleteRegisteredUser(u.id);
+                                }
+                              }}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                color: '#EF4444',
+                                borderRadius: 'var(--radius-xs)',
+                                padding: '0.35rem 0.6rem',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                fontSize: '0.74rem'
+                              }}
+                              title="Eliminar usuario"
+                            >
+                              <Trash2 size={13} />
+                              <span>Borrar</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

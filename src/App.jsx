@@ -10,6 +10,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { LibroReclamacionesModal } from './components/LibroReclamacionesModal';
 import { AdminAuthModal } from './components/AdminAuthModal';
+import { UserAuthModal } from './components/UserAuthModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { Footer } from './components/Footer';
 import { CheckCircle, ShoppingCart } from 'lucide-react';
@@ -62,6 +63,7 @@ export const MainApp = () => {
       <CheckoutModal />
       <LibroReclamacionesModal />
       <AdminAuthModal isOpen={isAdminAuthOpen} onClose={() => setIsAdminAuthOpen(false)} />
+      <UserAuthModal />
 
       {/* Floating Shopping Cart for Mobile (Bottom Left at same height as WhatsApp) */}
       {!isAdminView && (

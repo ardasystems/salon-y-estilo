@@ -376,7 +376,8 @@ export const INITIAL_SETTINGS = {
       description: "Recojo seguro en cualquier agencia Shalom de tu ciudad",
       badge: "Económico"
     }
-  ]
+  ],
+  memberDiscountPercent: 10 // % de descuento exclusivo para miembros del Club VIP registrados
 };
 
 export const INITIAL_ORDERS = [
@@ -426,5 +427,38 @@ export const INITIAL_ORDERS = [
     paymentMethod: "mercadopago",
     paymentStatus: "en_camino",
     paymentProof: null
+  }
+];
+
+export const INITIAL_REGISTERED_USERS = [
+  {
+    id: "usr-001",
+    name: "Camila Santisteban",
+    email: "camila.santi@gmail.com",
+    phone: "974112233",
+    role: "vip",
+    discountPercent: 10,
+    registeredAt: "2026-09-10T14:20:00Z",
+    ordersCount: 2
+  },
+  {
+    id: "usr-002",
+    name: "Luciana Farfán",
+    email: "lufarfan@hotmail.com",
+    phone: "944556677",
+    role: "vip",
+    discountPercent: 10,
+    registeredAt: "2026-09-18T19:00:00Z",
+    ordersCount: 1
+  },
+  {
+    id: "usr-003",
+    name: "Valeria Montero",
+    email: "valeria.montero@gmail.com",
+    phone: "956321487",
+    role: "member",
+    discountPercent: 10,
+    registeredAt: "2026-09-28T11:45:00Z",
+    ordersCount: 0
   }
 ];

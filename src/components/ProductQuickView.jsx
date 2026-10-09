@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { X, Star, ShoppingCart, Truck, Sparkles } from 'lucide-react';
 
 export const ProductQuickView = () => {
-  const { quickViewProduct, setQuickViewProduct, addToCart } = useStore();
+  const { quickViewProduct, setQuickViewProduct, addToCart, currentUser, settings } = useStore();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedShade, setSelectedShade] = useState(
@@ -11,6 +11,9 @@ export const ProductQuickView = () => {
   );
 
   if (!quickViewProduct) return null;
+
+  const memberDiscount = currentUser ? (currentUser.discountPercent || settings.memberDiscountPercent || 10) : 0;
+  const discountedPrice = memberDiscount > 0 ? (quickViewProduct.price * (1 - memberDiscount / 100)) : quickViewProduct.price;
 
   const handleAdd = () => {
     addToCart(quickViewProduct, quantity, selectedShade);
@@ -169,16 +172,29 @@ export const ProductQuickView = () => {
           </div>
 
           {/* Price */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem', marginBottom: '1.25rem' }}>
-            <span style={{ fontSize: '2rem', fontWeight: 800, color: '#FFFFFF' }}>
-              S/ {quickViewProduct.price.toFixed(2)}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '2rem', fontWeight: 800, color: memberDiscount > 0 ? 'var(--accent-gold-light)' : '#FFFFFF' }}>
+              S/ {discountedPrice.toFixed(2)}
             </span>
-            {quickViewProduct.originalPrice && (
+            {(memberDiscount > 0 || quickViewProduct.originalPrice) && (
               <span style={{ fontSize: '1.05rem', color: '#888', textDecoration: 'line-through' }}>
-                S/ {quickViewProduct.originalPrice.toFixed(2)}
+                S/ {(memberDiscount > 0 ? quickViewProduct.price : quickViewProduct.originalPrice).toFixed(2)}
               </span>
             )}
-            <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', fontWeight: 700 }}>
+            {memberDiscount > 0 && (
+              <span style={{
+                background: 'rgba(212, 175, 55, 0.15)',
+                color: 'var(--accent-gold-light)',
+                border: '1px solid rgba(212, 175, 55, 0.4)',
+                padding: '0.2rem 0.55rem',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.74rem',
+                fontWeight: 700
+              }}>
+                💎 Club VIP -{memberDiscount}%
+              </span>
+            )}
+            <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', fontWeight: 700, marginLeft: 'auto' }}>
               {quickViewProduct.volume}
             </span>
           </div>

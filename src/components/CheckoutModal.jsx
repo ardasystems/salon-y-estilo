@@ -25,6 +25,10 @@ export const CheckoutModal = () => {
     setIsCheckoutOpen,
     cart,
     cartSubtotal,
+    cartRawSubtotal,
+    memberDiscountAmount,
+    memberDiscountPercent,
+    currentUser,
     settings,
     createOrder,
     showToast,
@@ -184,7 +188,11 @@ export const CheckoutModal = () => {
   };
 
   const handleInputChange = (field, value) => {
-    setCustomer(prev => ({ ...prev, [field]: value }));
+    let cleanVal = value;
+    if (field === 'phone') {
+      cleanVal = value.replace(/\D/g, '');
+    }
+    setCustomer(prev => ({ ...prev, [field]: cleanVal }));
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: null }));
     }
@@ -292,8 +300,8 @@ export const CheckoutModal = () => {
     if (!customer.name || customer.name.trim().length < 2) {
       errors.name = "Por favor ingresa tus nombres y apellidos";
     }
-    if (!customer.phone || customer.phone.replace(/\D/g, '').length < 8) {
-      errors.phone = "Por favor ingresa tu número de celular (9 dígitos)";
+    if (!customer.phone || customer.phone.replace(/\D/g, '').length === 0) {
+      errors.phone = "Por favor ingresa tu número de celular (solo números)";
     }
     // DNI y dirección SOLO cuando es para despacho / envío a domicilio o agencia
     if (!isPickup) {
@@ -423,14 +431,14 @@ export const CheckoutModal = () => {
         style={{
           background: '#15110F',
           borderRadius: 'var(--radius-lg)',
-          maxWidth: step === 'success' ? '600px' : '960px',
+          maxWidth: step === 'success' ? '560px' : '960px',
           width: '100%',
-          maxHeight: '92vh',
+          maxHeight: '94vh',
           overflowY: 'auto',
           boxShadow: '0 30px 80px rgba(0, 0, 0, 0.9), 0 0 50px rgba(212, 175, 55, 0.15)',
           border: '1px solid var(--accent-gold-border)',
           position: 'relative',
-          padding: '2.2rem'
+          padding: '1.25rem 1.6rem'
         }}
       >
         {/* Anuncio modal: confirmación si realmente desea abandonar */}
@@ -526,283 +534,267 @@ export const CheckoutModal = () => {
           <X size={18} />
         </button>
 
-        {/* STEP 1: FORM */}
+        {/* STEP 1: ULTRA-CLEAN ZERO-SCROLL FORM */}
         {step === 'form' && (
           <div>
-            <div style={{ marginBottom: '1.8rem', borderBottom: '1px solid rgba(212, 175, 55, 0.15)', paddingBottom: '1.1rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
-                Checkout Seguro • Salón & Estilo
-              </span>
-              <h2 style={{ fontSize: '1.9rem', color: '#FFFFFF', marginTop: '0.2rem', fontFamily: 'var(--font-serif)' }}>
-                Destino de Envío & Métodos de Pago
-              </h2>
+            {/* Compact Header */}
+            <div style={{
+              marginBottom: '1rem',
+              borderBottom: '1px solid rgba(212, 175, 55, 0.15)',
+              paddingBottom: '0.65rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '0.5rem'
+            }}>
+              <div>
+                <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                  Checkout Express • Salón & Estilo
+                </span>
+                <h2 style={{ fontSize: '1.35rem', color: '#FFFFFF', margin: '0.1rem 0 0 0', fontFamily: 'var(--font-serif)' }}>
+                  Finalizar Compra
+                </h2>
+              </div>
+
+              {currentUser ? (
+                <span style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  color: 'var(--accent-gold-light)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: 'var(--radius-full)',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}>
+                  <Sparkles size={12} />
+                  <span>Club VIP: {currentUser.name.split(' ')[0]} (-{currentUser.discountPercent || settings.memberDiscountPercent || 10}%)</span>
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold-light)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <ShieldCheck size={13} style={{ color: '#10B981' }} />
+                  <span>Acreditación Automática con Mercado Pago</span>
+                </span>
+              )}
             </div>
 
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '2.2rem'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
+              gap: '1.25rem'
             }}>
-              {/* Left Column: Customer & Shipping */}
-              <div>
-                {/* 1. Datos Personales y Entrega */}
-                <div style={{ marginBottom: '1.8rem' }}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>1</span>
-                    <span>{isPickup ? 'Tus Datos para Retiro en Salón' : 'Tus Datos de Contacto y Envío'}</span>
-                  </h4>
+              {/* Left Column: Entrega & Datos */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                {/* 1. Modalidad de Despacho (Retiro en Salón #1) */}
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-gold-light)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.45rem' }}>
+                    <Truck size={13} style={{ color: 'var(--accent-gold)' }} />
+                    <span>1. Modalidad de Entrega</span>
+                  </label>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {/* Nombres */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {availableShippingOptions.map((opt) => {
+                      const isSel = selectedShipping?.id === opt.id;
+                      return (
+                        <div
+                          key={opt.id}
+                          onClick={() => setSelectedShipping(opt)}
+                          style={{
+                            padding: '0.55rem 0.85rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: isSel ? '1.5px solid var(--accent-gold)' : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: isSel ? 'rgba(212, 175, 55, 0.12)' : '#161210',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <div style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '50%',
+                              border: isSel ? '4px solid var(--accent-gold)' : '2px solid rgba(255,255,255,0.25)',
+                              background: '#0D0A09'
+                            }} />
+                            <div style={{ fontSize: '0.8rem', fontWeight: isSel ? 700 : 500, color: '#FFFFFF' }}>
+                              {opt.title}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--accent-gold-light)' }}>
+                            {opt.price === 0 ? 'GRATIS' : `S/ ${opt.price.toFixed(2)}`}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {isPickup && (
+                    <div style={{
+                      marginTop: '0.4rem',
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: 'var(--radius-xs)',
+                      background: 'rgba(212, 175, 55, 0.08)',
+                      border: '1px dashed rgba(212, 175, 55, 0.3)',
+                      fontSize: '0.72rem',
+                      color: '#E5E5E5',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem'
+                    }}>
+                      <Store size={14} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                      <span>{settings.salonAddress || 'Av. Rivera del Mar / Calle San Martín, Chiclayo'}. ¡Listo de inmediato!</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Tus Datos de Contacto */}
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-gold-light)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.45rem' }}>
+                    <User size={13} style={{ color: 'var(--accent-gold)' }} />
+                    <span>2. Datos de Contacto {isPickup ? '(Sin DNI)' : '(Para Despacho)'}</span>
+                  </label>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem' }}>
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                        Nombres y Apellidos *
-                      </label>
                       <input
                         type="text"
-                        placeholder="Ej. Carolina Reátegui"
+                        placeholder="Nombres y Apellidos *"
                         value={customer.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '0.65rem 0.9rem',
+                          padding: '0.55rem 0.75rem',
                           borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.88rem',
+                          fontSize: '0.82rem',
                           border: validationErrors.name ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
                           background: validationErrors.name ? 'rgba(239, 68, 68, 0.08)' : '#161210',
                           color: '#FFFFFF'
                         }}
                       />
                       {validationErrors.name && (
-                        <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
-                          ⚠️ {validationErrors.name}
-                        </span>
+                        <span style={{ fontSize: '0.68rem', color: '#EF4444', display: 'block', marginTop: '0.15rem' }}>⚠️ {validationErrors.name}</span>
                       )}
                     </div>
 
-                    {/* Celular / WhatsApp */}
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                        Celular / WhatsApp *
-                      </label>
                       <input
                         type="tel"
-                        placeholder="9XXXXXXXX"
+                        inputMode="numeric"
+                        placeholder="Celular / WhatsApp *"
                         value={customer.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
                         style={{
                           width: '100%',
-                          padding: '0.65rem 0.9rem',
+                          padding: '0.55rem 0.75rem',
                           borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.88rem',
+                          fontSize: '0.82rem',
                           border: validationErrors.phone ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
                           background: validationErrors.phone ? 'rgba(239, 68, 68, 0.08)' : '#161210',
                           color: '#FFFFFF'
                         }}
                       />
                       {validationErrors.phone && (
-                        <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
-                          ⚠️ {validationErrors.phone}
-                        </span>
+                        <span style={{ fontSize: '0.68rem', color: '#EF4444', display: 'block', marginTop: '0.15rem' }}>⚠️ {validationErrors.phone}</span>
                       )}
                     </div>
+                  </div>
 
-                    {/* DNI y Dirección: SOLO VISIBLE CUANDO ES ENVÍO (NO PARA RECOJO EN TIENDA) */}
-                    {!isPickup ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                          <div>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                              DNI o CE * (Para envío)
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={12}
-                              placeholder="8 dígitos"
-                              value={customer.dni}
-                              onChange={(e) => handleInputChange('dni', e.target.value)}
-                              style={{
-                                width: '100%',
-                                padding: '0.65rem 0.9rem',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.88rem',
-                                border: validationErrors.dni ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
-                                background: validationErrors.dni ? 'rgba(239, 68, 68, 0.08)' : '#161210',
-                                color: '#FFFFFF'
-                              }}
-                            />
-                            {validationErrors.dni && (
-                              <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
-                                ⚠️ {validationErrors.dni}
-                              </span>
-                            )}
-                          </div>
-
-                          <div>
-                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                              Ciudad de destino *
-                            </label>
-                            <input
-                              type="text"
-                              value={customer.city}
-                              onChange={(e) => handleInputChange('city', e.target.value)}
-                              placeholder="Chiclayo / Lima / Trujillo..."
-                              style={{
-                                width: '100%',
-                                padding: '0.65rem 0.9rem',
-                                borderRadius: 'var(--radius-sm)',
-                                fontSize: '0.88rem',
-                                border: validationErrors.city ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
-                                background: validationErrors.city ? 'rgba(239, 68, 68, 0.08)' : '#161210',
-                                color: '#FFFFFF'
-                              }}
-                            />
-                            {validationErrors.city && (
-                              <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
-                                ⚠️ {validationErrors.city}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
+                  {/* Campos de envío SOLO si no es recojo */}
+                  {!isPickup && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginTop: '0.55rem', paddingTop: '0.55rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem' }}>
                         <div>
-                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                            Dirección exacta o Agencia Shalom *
-                          </label>
                           <input
                             type="text"
-                            value={customer.address}
-                            onChange={(e) => handleInputChange('address', e.target.value)}
-                            placeholder="Calle, número, departamento o agencia Shalom de tu ciudad"
+                            placeholder="DNI o CE * (Para Courier)"
+                            value={customer.dni}
+                            onChange={(e) => handleInputChange('dni', e.target.value)}
                             style={{
                               width: '100%',
-                              padding: '0.65rem 0.9rem',
+                              padding: '0.55rem 0.75rem',
                               borderRadius: 'var(--radius-sm)',
-                              fontSize: '0.88rem',
-                              border: validationErrors.address ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
-                              background: validationErrors.address ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                              fontSize: '0.82rem',
+                              border: validationErrors.dni ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                              background: validationErrors.dni ? 'rgba(239, 68, 68, 0.08)' : '#161210',
                               color: '#FFFFFF'
                             }}
                           />
-                          {validationErrors.address && (
-                            <span style={{ fontSize: '0.72rem', color: '#EF4444', marginTop: '0.25rem', display: 'block' }}>
-                              ⚠️ {validationErrors.address}
-                            </span>
+                          {validationErrors.dni && (
+                            <span style={{ fontSize: '0.68rem', color: '#EF4444', display: 'block' }}>⚠️ {validationErrors.dni}</span>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="Ciudad de Destino *"
+                            value={customer.city}
+                            onChange={(e) => handleInputChange('city', e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '0.55rem 0.75rem',
+                              borderRadius: 'var(--radius-sm)',
+                              fontSize: '0.82rem',
+                              border: validationErrors.city ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                              background: validationErrors.city ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                              color: '#FFFFFF'
+                            }}
+                          />
+                          {validationErrors.city && (
+                            <span style={{ fontSize: '0.68rem', color: '#EF4444', display: 'block' }}>⚠️ {validationErrors.city}</span>
                           )}
                         </div>
                       </div>
-                    ) : (
-                      <div style={{
-                        marginTop: '0.35rem',
-                        background: 'rgba(212, 175, 55, 0.08)',
-                        border: '1px dashed rgba(212, 175, 55, 0.4)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '0.85rem 1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem'
-                      }}>
-                        <div style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: 'rgba(212, 175, 55, 0.15)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--accent-gold)',
-                          flexShrink: 0
-                        }}>
-                          <Store size={17} />
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: '#ECE8E1', lineHeight: 1.45 }}>
-                          <strong style={{ color: 'var(--accent-gold-light)', display: 'block' }}>
-                            Retiro en Salón de Belleza (Gratis)
-                          </strong>
-                          {settings.salonAddress || 'Chiclayo, Lambayeque - Perú'}. No requieres ingresar DNI ni dirección; tu pedido estará listo inmediatamente en nuestro salón.
-                        </div>
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Dirección exacta o Agencia Shalom *"
+                          value={customer.address}
+                          onChange={(e) => handleInputChange('address', e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '0.55rem 0.75rem',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '0.82rem',
+                            border: validationErrors.address ? '1.5px solid #EF4444' : '1px solid rgba(255,255,255,0.15)',
+                            background: validationErrors.address ? 'rgba(239, 68, 68, 0.08)' : '#161210',
+                            color: '#FFFFFF'
+                          }}
+                        />
+                        {validationErrors.address && (
+                          <span style={{ fontSize: '0.68rem', color: '#EF4444', display: 'block' }}>⚠️ {validationErrors.address}</span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. Destino & Método de Entrega */}
-                <div>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>2</span>
-                    <span>Modalidad de Despacho</span>
-                  </h4>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    {availableShippingOptions.map((opt) => (
-                      <div
-                        key={opt.id}
-                        onClick={() => setSelectedShipping(opt)}
-                        style={{
-                          padding: '0.85rem 1rem',
-                          borderRadius: 'var(--radius-md)',
-                          border: selectedShipping?.id === opt.id ? '2px solid var(--accent-gold)' : '1px solid rgba(212, 175, 55, 0.15)',
-                          background: selectedShipping?.id === opt.id ? 'rgba(212, 175, 55, 0.1)' : '#191412',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div style={{
-                            width: '18px',
-                            height: '18px',
-                            borderRadius: '50%',
-                            border: selectedShipping?.id === opt.id ? '5px solid var(--accent-gold)' : '2px solid rgba(255,255,255,0.2)',
-                            background: '#0D0A09'
-                          }} />
-                          <div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#FFFFFF' }}>
-                              {opt.title}
-                            </div>
-                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                              {opt.description}
-                            </div>
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--accent-gold-light)' }}>
-                            {opt.price === 0 ? 'GRATIS' : `S/ ${opt.price.toFixed(2)}`}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Right Column: Order Details & Payment */}
+              {/* Right Column: Tu Pedido, Desglose & Pago Seguro */}
               <div style={{
                 background: '#120E0C',
-                padding: '1.6rem',
+                padding: '1.1rem',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid rgba(212, 175, 55, 0.2)',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                justifyContent: 'space-between'
               }}>
-                {/* Detalle de Productos en la compra con link interactivo */}
-                <div style={{
-                  marginBottom: '1.1rem',
-                  padding: '0.9rem',
-                  background: '#161210',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      Tu Pedido ({cart.length} {cart.length === 1 ? 'producto' : 'productos'})
+                {/* 1. Resumen de Productos con Link a Detalles */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-gold-light)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Tu Pedido ({cart.length})
                     </span>
-                    <span style={{ fontSize: '0.68rem', color: '#9CA3AF' }}>Clic en el producto para ver detalles</span>
+                    <span style={{ fontSize: '0.68rem', color: '#9CA3AF' }}>Clic para ver detalles</span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '0.2rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', maxHeight: '135px', overflowY: 'auto', paddingRight: '0.2rem' }}>
                     {cart.map((item, idx) => {
                       const itemImg = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : (item.image || '');
                       return (
@@ -811,239 +803,159 @@ export const CheckoutModal = () => {
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '0.75rem',
-                            padding: '0.45rem',
-                            borderRadius: 'var(--radius-sm)',
+                            justifyContent: 'space-between',
+                            gap: '0.5rem',
+                            padding: '0.35rem 0.5rem',
+                            borderRadius: 'var(--radius-xs)',
                             background: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid rgba(255, 255, 255, 0.06)'
+                            border: '1px solid rgba(255, 255, 255, 0.05)'
                           }}
                         >
-                          {itemImg ? (
-                            <img
-                              src={itemImg}
-                              alt={item.name}
-                              style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', border: '1px solid rgba(212, 175, 55, 0.3)', flexShrink: 0 }}
-                            />
-                          ) : (
-                            <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#25201E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '0.7rem', color: 'var(--accent-gold)' }}>
-                              📦
-                            </div>
-                          )}
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
+                            {itemImg ? (
+                              <img src={itemImg} alt={item.name} style={{ width: '32px', height: '32px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: '#25201E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>📦</div>
+                            )}
                             <button
                               type="button"
                               onClick={() => setQuickViewProduct(item)}
-                              title="Ver detalles completos del producto"
                               style={{
                                 background: 'none',
                                 border: 'none',
                                 padding: 0,
                                 textAlign: 'left',
                                 color: '#FFFFFF',
-                                fontSize: '0.82rem',
+                                fontSize: '0.78rem',
                                 fontWeight: 600,
                                 cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.35rem',
                                 textDecoration: 'underline',
                                 textDecorationColor: 'rgba(212, 175, 55, 0.4)',
-                                textUnderlineOffset: '2px',
-                                maxWidth: '100%',
+                                whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
+                                maxWidth: '160px'
                               }}
+                              title="Ver detalles completos del producto"
                             >
-                              <span>{item.name}</span>
-                              <ExternalLink size={12} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                              <span>{item.quantity}x {item.name}</span>
                             </button>
-                            {item.selectedShade && (
-                              <div style={{ fontSize: '0.7rem', color: '#D4AF37' }}>
-                                Tono: {item.selectedShade}
-                              </div>
-                            )}
-                            <div style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>
-                              {item.quantity} x S/ {(item.price || 0).toFixed(2)}
-                            </div>
                           </div>
-
-                          <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--accent-gold-light)', flexShrink: 0 }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-gold-light)', flexShrink: 0 }}>
                             S/ {((item.price || 0) * (item.quantity || 1)).toFixed(2)}
-                          </div>
+                          </span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--accent-gold-light)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent-gold)', color: '#0D0A09', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>3</span>
-                  <span>Forma de Pago Segura</span>
-                </h4>
-                <p style={{ fontSize: '0.74rem', color: '#9CA3AF', marginBottom: '0.85rem', lineHeight: 1.4 }}>
-                  Aceptamos todos los medios de pago con acreditación instantánea y 0% comisión adicional:
-                </p>
-
-                {/* Showcase of Available Payment Methods */}
+                {/* 2. Medios de Pago Disponibles (Fila Compacta) */}
                 <div style={{
+                  padding: '0.45rem 0.65rem',
                   background: '#161210',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid rgba(212, 175, 55, 0.25)',
-                  padding: '1rem 1.1rem',
+                  borderRadius: 'var(--radius-xs)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  marginBottom: '0.75rem',
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem',
-                  marginBottom: '1rem'
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.35rem'
                 }}>
-                  {/* Yape */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #872391 0%, #4E1359 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 900, fontSize: '0.8rem' }}>
-                        Y!
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Yape</div>
-                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>QR en pantalla o código directo desde tu app</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', background: 'rgba(168, 85, 247, 0.2)', color: '#D8B4FE', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                      Instantáneo
-                    </span>
-                  </div>
-
-                  {/* Tarjetas */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#1E293B', border: '1px solid rgba(255, 255, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60A5FA' }}>
-                        <CreditCard size={17} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Tarjetas de Débito y Crédito</div>
-                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>Visa, Mastercard, AMEX, Diners (hasta 12 cuotas)</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', background: 'rgba(59, 130, 246, 0.2)', color: '#93C5FD', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                      Sin Recargo
-                    </span>
-                  </div>
-
-                  {/* Agentes & Bodegas */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.65rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#FFCC00', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1A1A1A', fontWeight: 900, fontSize: '0.7rem' }}>
-                        CIP
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Efectivo en Agentes y Bodegas</div>
-                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>PagoEfectivo: BCP, BBVA, Interbank, Tambo, KasNet</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.2)', color: '#FCD34D', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                      En Efectivo
-                    </span>
-                  </div>
-
-                  {/* Transferencia CIP */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#064E3B', border: '1px solid rgba(16, 185, 129, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981' }}>
-                        <Zap size={16} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#FFFFFF' }}>Banca por Internet / Móvil</div>
-                        <div style={{ fontSize: '0.72rem', color: '#CBD5E1' }}>Transferencia bancaria con código CIP oficial</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.65rem', background: 'rgba(16, 185, 129, 0.2)', color: '#6EE7B7', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                      Banca Web
-                    </span>
+                  <span style={{ fontSize: '0.68rem', color: '#9CA3AF', fontWeight: 600 }}>Aceptamos:</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.66rem', background: '#872391', color: '#FFF', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 800 }}>YAPE</span>
+                    <span style={{ fontSize: '0.66rem', background: '#1E293B', color: '#93C5FD', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>TARJETAS</span>
+                    <span style={{ fontSize: '0.66rem', background: '#FFCC00', color: '#000', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 800 }}>EFECTIVO CIP</span>
+                    <span style={{ fontSize: '0.66rem', background: '#064E3B', color: '#6EE7B7', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>BANCA WEB</span>
                   </div>
                 </div>
 
-
-                {/* Error Banner */}
+                {/* Error Banner si existe */}
                 {paymentError && (
-                  <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 'var(--radius-sm)', fontSize: '0.76rem', color: '#FCA5A5' }}>
+                  <div style={{ marginBottom: '0.65rem', padding: '0.55rem 0.75rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 'var(--radius-xs)', fontSize: '0.74rem', color: '#FCA5A5' }}>
                     ⚠️ {paymentError}
                   </div>
                 )}
 
-                {/* Totals Breakdown */}
-                <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(212, 175, 55, 0.15)', paddingTop: '1rem', marginBottom: '1.25rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                {/* 3. Totales & Descuentos */}
+                <div style={{ borderTop: '1px solid rgba(212, 175, 55, 0.15)', paddingTop: '0.65rem', marginBottom: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                     <span>Subtotal:</span>
-                    <span>S/ {cartSubtotal.toFixed(2)}</span>
+                    <span>S/ {cartRawSubtotal.toFixed(2)}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                    <span>Envío ({selectedShipping?.title.split('(')[0]}):</span>
-                    <span>{selectedShipping?.price === 0 ? 'GRATIS' : `S/ ${selectedShipping?.price.toFixed(2)}`}</span>
+
+                  {memberDiscountAmount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--accent-gold)' }}>
+                      <span>💎 Descuento Club VIP (-{memberDiscountPercent}%):</span>
+                      <span style={{ fontWeight: 700 }}>-S/ {memberDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    <span>Despacho:</span>
+                    <span style={{ color: selectedShipping?.price === 0 ? 'var(--accent-gold)' : '#FFFFFF', fontWeight: 600 }}>
+                      {selectedShipping?.price === 0 ? 'GRATIS' : `S/ ${selectedShipping?.price.toFixed(2)}`}
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-gold-light)' }}>
-                    <span>Total a Pagar:</span>
-                    <span>S/ {orderTotal.toFixed(2)}</span>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: '0.35rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}>Total a Pagar:</span>
+                    <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-gold-light)' }}>
+                      S/ {orderTotal.toFixed(2)}
+                    </span>
                   </div>
                 </div>
 
-                {/* Single Automated Action Button */}
-                {(() => {
-                  const btn = getButtonConfig();
-                  return (
-                    <div>
-                      <button
-                        type="button"
-                        onClick={handlePaymentSubmit}
-                        disabled={isProcessingPayment || cart.length === 0}
-                        style={{
-                          width: '100%',
-                          padding: '1.05rem',
-                          background: btn.gradient,
-                          color: '#FFFFFF',
-                          fontWeight: 800,
-                          fontSize: '0.94rem',
-                          borderRadius: 'var(--radius-full)',
-                          border: `1px solid ${btn.border}`,
-                          boxShadow: btn.shadow,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.65rem',
-                          cursor: isProcessingPayment ? 'not-allowed' : 'pointer',
-                          transition: 'all 0.25s ease'
-                        }}
-                      >
-                        {isProcessingPayment ? (
-                          <>
-                            <span style={{ width: '18px', height: '18px', border: '2px solid #FFF', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
-                            <span>Conectando pasarela segura...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle size={18} />
-                            <span>{btn.label}</span>
-                          </>
-                        )}
-                      </button>
+                {/* 4. Botón de Pago Principal */}
+                <button
+                  type="button"
+                  onClick={handlePaymentSubmit}
+                  disabled={isProcessingPayment || cart.length === 0}
+                  className="btn-luxury-gold"
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 800,
+                    borderRadius: 'var(--radius-full)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 20px rgba(212, 175, 55, 0.35)',
+                    cursor: isProcessingPayment ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isProcessingPayment ? (
+                    <>
+                      <span style={{ width: '16px', height: '16px', border: '2px solid #FFF', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }}></span>
+                      <span>Conectando pasarela segura...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={17} />
+                      <span>Continuar al Pago Seguro • S/ {orderTotal.toFixed(2)}</span>
+                    </>
+                  )}
+                </button>
 
-                      <div style={{ fontSize: '0.73rem', color: '#94A3B8', textAlign: 'center', marginTop: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                        <ShieldCheck size={14} style={{ color: '#34D399' }} />
-                        <span>Pago 100% seguro con acreditación automática e inmediata</span>
-                      </div>
-                    </div>
-                  );
-                })()}
+                <div style={{ fontSize: '0.68rem', color: '#94A3B8', textAlign: 'center', marginTop: '0.45rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}>
+                  <ShieldCheck size={13} style={{ color: '#34D399' }} />
+                  <span>Pago oficial encriptado con Mercado Pago • Acreditación instantánea</span>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* STEP 2: SUCCESS */}
+        {/* STEP 2: ZERO-SCROLL SUCCESS SCREEN */}
         {step === 'success' && completedOrder && (
-          <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+          <div style={{ textAlign: 'center', padding: '0.4rem 0' }}>
             <div style={{
-              width: '68px',
-              height: '68px',
+              width: '46px',
+              height: '46px',
               borderRadius: '50%',
               background: 'rgba(212, 175, 55, 0.15)',
               border: '2px solid var(--accent-gold)',
@@ -1051,46 +963,44 @@ export const CheckoutModal = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 1.25rem auto',
-              boxShadow: '0 0 30px rgba(212, 175, 55, 0.3)'
+              margin: '0 auto 0.5rem auto',
+              boxShadow: '0 0 25px rgba(212, 175, 55, 0.3)'
             }}>
-              <CheckCircle size={38} />
+              <CheckCircle size={24} />
             </div>
 
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
               ¡Orden Confirmada con Éxito!
             </span>
-            <h2 style={{ fontSize: '2.2rem', color: '#FFFFFF', marginTop: '0.2rem', marginBottom: '0.6rem', fontFamily: 'var(--font-serif)' }}>
+            <h2 style={{ fontSize: '1.4rem', color: '#FFFFFF', marginTop: '0.1rem', marginBottom: '0.35rem', fontFamily: 'var(--font-serif)' }}>
               Gracias por tu compra, {completedOrder.customer.name.split(' ')[0]} ✨
             </h2>
 
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', maxWidth: '440px', margin: '0 auto 1.6rem auto', lineHeight: 1.55 }}>
-              Tu código de seguimiento oficial es <strong>#{completedOrder.id}</strong>.
-              {completedOrder.shippingMethod.id.includes('chiclayo')
-                ? ' Nuestro equipo en Chiclayo ya inició la preparación prioritaria de tu paquete.'
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '420px', margin: '0 auto 0.75rem auto', lineHeight: 1.45 }}>
+              Código de seguimiento: <strong style={{ color: 'var(--accent-gold-light)' }}>#{completedOrder.id}</strong>.
+              {completedOrder.shippingMethod.id.includes('chiclayo') || isPickup
+                ? ' Prepararemos tu pedido inmediatamente en nuestro salón de Chiclayo.'
                 : ' Te remitiremos el número de guía de Shalom apenas sea procesado.'}
             </p>
 
             <div style={{
               background: '#0D0A09',
               borderRadius: 'var(--radius-md)',
-              padding: '1.5rem',
+              padding: '0.85rem 1rem',
               textAlign: 'left',
-              marginBottom: '1.6rem',
+              marginBottom: '0.9rem',
               border: '1px solid rgba(212, 175, 55, 0.25)',
-              fontSize: '0.85rem'
+              fontSize: '0.78rem'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Método de Entrega:</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.3rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Entrega:</span>
                 <strong style={{ color: '#FFFFFF' }}>{completedOrder.shippingMethod.title}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.3rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Cliente:</span>
-                <strong style={{ color: '#FFFFFF' }}>
-                  {completedOrder.customer.dni ? `${completedOrder.customer.dni} • ` : ''}{completedOrder.customer.name}
-                </strong>
+                <strong style={{ color: '#FFFFFF' }}>{completedOrder.customer.name}</strong>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.3rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Destino:</span>
                 <strong style={{ color: '#FFFFFF' }}>
                   {(/retiro/i.test(completedOrder.shippingMethod?.title || '') || completedOrder.shippingMethod?.id === 'salon_pickup')
@@ -1099,27 +1009,24 @@ export const CheckoutModal = () => {
                 </strong>
               </div>
 
-              {/* Lista de productos comprados con link para ver detalle */}
+              {/* Lista de productos comprados */}
               <div style={{
-                margin: '0.85rem 0',
-                padding: '0.75rem',
+                margin: '0.45rem 0',
+                padding: '0.45rem',
                 background: 'rgba(255, 255, 255, 0.03)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid rgba(255, 255, 255, 0.08)'
+                borderRadius: 'var(--radius-xs)',
+                border: '1px solid rgba(255, 255, 255, 0.06)'
               }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--accent-gold)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                  Productos Comprados:
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '85px', overflowY: 'auto' }}>
                   {(completedOrder.items || []).map((it, idx) => {
                     const itImg = Array.isArray(it.images) && it.images.length > 0 ? it.images[0] : (it.image || '');
                     return (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.65rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0 }}>
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
                           {itImg ? (
-                            <img src={itImg} alt={it.name} style={{ width: '30px', height: '30px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(212, 175, 55, 0.25)' }} />
+                            <img src={itImg} alt={it.name} style={{ width: '22px', height: '22px', borderRadius: '4px', objectFit: 'cover' }} />
                           ) : (
-                            <div style={{ width: '30px', height: '30px', borderRadius: '4px', background: '#25201E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>📦</div>
+                            <div style={{ width: '22px', height: '22px', borderRadius: '4px', background: '#25201E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem' }}>📦</div>
                           )}
                           <button
                             type="button"
@@ -1131,26 +1038,25 @@ export const CheckoutModal = () => {
                               color: '#FFFFFF',
                               textDecoration: 'underline',
                               textDecorationColor: 'rgba(212, 175, 55, 0.45)',
-                              textUnderlineOffset: '2px',
                               cursor: 'pointer',
                               textAlign: 'left',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              fontSize: '0.8rem',
+                              fontSize: '0.75rem',
                               fontWeight: 600,
                               maxWidth: '220px',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
                             }}
-                            title="Ver detalles de este producto"
+                            title="Ver detalles"
                           >
                             <span>{it.quantity}x {it.name}</span>
-                            <ExternalLink size={11} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                            <ExternalLink size={10} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
                           </button>
                         </div>
-                        <span style={{ color: 'var(--accent-gold-light)', fontWeight: 700, fontSize: '0.82rem', flexShrink: 0 }}>
+                        <span style={{ color: 'var(--accent-gold-light)', fontWeight: 700, fontSize: '0.75rem', flexShrink: 0 }}>
                           S/ {((it.price || 0) * (it.quantity || 1)).toFixed(2)}
                         </span>
                       </div>
@@ -1164,67 +1070,61 @@ export const CheckoutModal = () => {
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.75rem',
-                  marginTop: '0.75rem',
-                  padding: '0.75rem 1rem',
+                  gap: '0.55rem',
+                  marginTop: '0.45rem',
+                  padding: '0.4rem 0.65rem',
                   background: 'rgba(16, 185, 129, 0.12)',
-                  borderRadius: 'var(--radius-sm)',
+                  borderRadius: 'var(--radius-xs)',
                   border: '1px solid rgba(16, 185, 129, 0.4)'
                 }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', flexShrink: 0 }}>
-                    <CheckCircle size={20} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.76rem', color: '#10B981', fontWeight: 800 }}>
-                      ✓ Pago Acreditado Automáticamente
-                    </div>
-                    <div style={{ fontSize: '0.74rem', color: '#ECE8E1' }}>
-                      ID Transacción Oficial: <strong>#{completedOrder.mercadopagoPaymentId}</strong>
-                    </div>
+                  <CheckCircle size={15} style={{ color: '#10B981', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0, fontSize: '0.72rem' }}>
+                    <span style={{ color: '#10B981', fontWeight: 800 }}>✓ Pago Acreditado Automáticamente</span>
+                    <span style={{ color: '#ECE8E1', marginLeft: '0.35rem' }}>ID #{completedOrder.mercadopagoPaymentId}</span>
                   </div>
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-gold-light)', marginTop: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.95rem', fontWeight: 800, color: 'var(--accent-gold-light)', marginTop: '0.5rem' }}>
                 <span>Monto Total:</span>
                 <span>S/ {completedOrder.total.toFixed(2)}</span>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.85rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.6rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => handleDownloadReceipt(completedOrder)}
                 className="btn-luxury-gold"
-                style={{ fontSize: '0.85rem', padding: '0.75rem 1.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                style={{ fontSize: '0.78rem', padding: '0.55rem 1.15rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
               >
-                <Download size={16} />
-                <span>Descargar Recibo Oficial (PDF)</span>
+                <Download size={14} />
+                <span>Descargar Recibo (PDF)</span>
               </button>
 
               <button
                 onClick={() => openWhatsAppConfirmation(completedOrder)}
                 style={{
-                  fontSize: '0.85rem',
-                  padding: '0.75rem 1.6rem',
+                  fontSize: '0.78rem',
+                  padding: '0.55rem 1.15rem',
                   borderRadius: 'var(--radius-full)',
                   background: '#25D366',
                   color: '#FFFFFF',
                   fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 4px 15px rgba(37, 211, 102, 0.35)',
+                  gap: '0.35rem',
+                  boxShadow: '0 3px 12px rgba(37, 211, 102, 0.35)',
                   cursor: 'pointer'
                 }}
               >
-                <MessageCircle size={16} />
+                <MessageCircle size={14} />
                 <span>Enviar a WhatsApp</span>
               </button>
 
               <button
                 onClick={handleConfirmAbandon}
                 className="btn-luxury-outline"
-                style={{ fontSize: '0.85rem', padding: '0.75rem 1.6rem' }}
+                style={{ fontSize: '0.78rem', padding: '0.55rem 1.15rem' }}
               >
                 <span>Continuar en la Tienda</span>
               </button>

@@ -183,5 +183,28 @@ CREATE POLICY "Public insert payment_transactions" ON public.payment_transaction
 DROP POLICY IF EXISTS "Public update payment_transactions" ON public.payment_transactions;
 CREATE POLICY "Public update payment_transactions" ON public.payment_transactions FOR UPDATE USING (true);
 DROP POLICY IF EXISTS "Public delete payment_transactions" ON public.payment_transactions;
-CREATE POLICY "Public delete payment_transactions" ON public.payment_transactions FOR DELETE USING (true);
+-- 9. TABLA: USUARIOS REGISTRADOS / CLIENTES CLUB VIP (registered_users)
+CREATE TABLE IF NOT EXISTS public.registered_users (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  phone TEXT,
+  password_hash TEXT,
+  role TEXT DEFAULT 'vip', -- 'member' | 'vip'
+  discount_percent NUMERIC DEFAULT 10,
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  registered_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
+CREATE INDEX IF NOT EXISTS idx_registered_users_email ON public.registered_users(email);
+
+ALTER TABLE public.registered_users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read registered_users" ON public.registered_users;
+CREATE POLICY "Public read registered_users" ON public.registered_users FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public insert registered_users" ON public.registered_users;
+CREATE POLICY "Public insert registered_users" ON public.registered_users FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public update registered_users" ON public.registered_users;
+CREATE POLICY "Public update registered_users" ON public.registered_users FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Public delete registered_users" ON public.registered_users;
+CREATE POLICY "Public delete registered_users" ON public.registered_users FOR DELETE USING (true);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
-import { ShoppingCart, Scissors, Store, HeartHandshake, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Scissors, Store, HeartHandshake, ArrowLeft, User, Sparkles } from 'lucide-react';
 
 export const Navbar = () => {
   const {
@@ -10,7 +10,9 @@ export const Navbar = () => {
     setIsCartOpen,
     isAdminView,
     setIsAdminView,
-    settings
+    settings,
+    currentUser,
+    setIsUserAuthOpen
   } = useStore();
 
   const handleTabClick = (tabKey) => {
@@ -159,9 +161,46 @@ export const Navbar = () => {
                 <span>Salir del Admin</span>
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => setIsCartOpen(true)}
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsUserAuthOpen(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    background: currentUser ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                    border: currentUser ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    color: currentUser ? 'var(--accent-gold-light)' : '#ECE8E1',
+                    padding: '0.5rem 0.95rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    letterSpacing: '0.02em'
+                  }}
+                  title={currentUser ? `Miembro Club VIP: ${currentUser.name}` : "Registrarse o Iniciar Sesión en Club VIP"}
+                >
+                  {currentUser ? (
+                    <>
+                      <Sparkles size={13} style={{ color: 'var(--accent-gold)' }} />
+                      <span>{currentUser.name.split(' ')[0]}</span>
+                      <span style={{ fontSize: '0.68rem', background: 'rgba(212, 175, 55, 0.25)', padding: '0.1rem 0.35rem', borderRadius: '10px' }}>
+                        -{currentUser.discountPercent || settings.memberDiscountPercent || 10}%
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <User size={13} style={{ color: 'var(--accent-gold)' }} />
+                      <span>Club VIP (-{settings.memberDiscountPercent || 10}%)</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCartOpen(true)}
                 className="desktop-cart-btn"
                 style={{
                   position: 'relative',
@@ -200,6 +239,7 @@ export const Navbar = () => {
                   </span>
                 )}
               </button>
+            </>
             )}
           </div>
         </div>
