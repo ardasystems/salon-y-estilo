@@ -232,6 +232,29 @@ export const StoreProvider = ({ children }) => {
     }
   }, [currentUser?.id]);
 
+  // Soporte de enlace directo a producto (?producto=ID_O_NOMBRE) para abrir en otra pestaña
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const prodQuery = params.get('producto') || params.get('p') || params.get('product');
+      if (prodQuery && products.length > 0) {
+        const decoded = decodeURIComponent(prodQuery).trim().toLowerCase();
+        const found = products.find(p => 
+          (p.id && p.id.toLowerCase() === decoded) || 
+          (p.name && p.name.toLowerCase() === decoded) ||
+          (p.name && p.name.toLowerCase().includes(decoded))
+        );
+        if (found) {
+          setActiveMainTab('productos');
+          setIsAdminView(false);
+          setQuickViewProduct(found);
+        }
+      }
+    } catch (e) {
+      console.warn("Error opening product from URL param:", e);
+    }
+  }, [products]);
+
   useEffect(() => {
     localStorage.setItem('salonestilo_comparison_cases', JSON.stringify(comparisonCases));
   }, [comparisonCases]);
@@ -512,6 +535,26 @@ export const StoreProvider = ({ children }) => {
 
   const clearCart = () => {
     setCart([]);
+    try {
+      localStorage.removeItem('salonestilo_cart');
+      localStorage.setItem('salonestilo_cart', JSON.stringify([]));
+      if (currentUser?.id) {
+        localStorage.removeItem(`salonestilo_cart_user_${currentUser.id}`);
+        localStorage.setItem(`salonestilo_cart_user_${currentUser.id}`, JSON.stringify([]));
+        setCurrentUser(prev => prev ? { ...prev, cart: [] } : null);
+        supabase
+          .from('registered_users')
+          .update({
+            data: { ...currentUser, cart: [] },
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentUser.id)
+          .then(() => {})
+          .catch(() => {});
+      }
+    } catch (e) {
+      console.warn("Error clearing cart storage:", e);
+    }
   };
 
   const cartRawSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);

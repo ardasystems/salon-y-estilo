@@ -161,9 +161,21 @@ export const CartDrawer = () => {
                 </div>
 
                 <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.2rem', lineHeight: 1.3 }}>
-                    {item.name}
-                  </h4>
+                  <a
+                    href={`/?producto=${encodeURIComponent(item.id || item.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'none' }}
+                    title="Ver detalle del producto en una nueva pestaña"
+                  >
+                    <h4
+                      style={{ fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.2rem', lineHeight: 1.3, cursor: 'pointer', transition: 'color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-gold)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#FFFFFF'}
+                    >
+                      {item.name}
+                    </h4>
+                  </a>
                   {item.selectedShade && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}>
                       <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.selectedShadeHex }} />

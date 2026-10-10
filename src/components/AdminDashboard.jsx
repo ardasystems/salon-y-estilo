@@ -5,7 +5,7 @@ import {
   DollarSign, TrendingUp, Phone, BookOpen, X, Upload, Image as ImageIcon, 
   Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode,
   Download, Database, ShieldCheck, CreditCard, CheckCircle, Users, UserCheck,
-  Search, Filter
+  Search, Filter, ExternalLink
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 import { uploadToSalonAssets } from '../lib/supabase';
@@ -1352,11 +1352,37 @@ export const AdminDashboard = () => {
                     <div>
                       <div style={{ fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.35rem' }}>Items:</div>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: 'var(--text-muted)' }}>
-                        {order.items.map((it, idx) => (
-                          <li key={idx} style={{ marginBottom: '0.2rem' }}>
-                            {it.quantity}x {it.name} — S/ {(it.price * it.quantity).toFixed(2)}
-                          </li>
-                        ))}
+                        {order.items.map((it, idx) => {
+                          const targetParam = encodeURIComponent(it.id || it.name || '');
+                          return (
+                            <li key={idx} style={{ marginBottom: '0.35rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                              <a
+                                href={`/?producto=${targetParam}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  color: 'var(--accent-gold-light)',
+                                  textDecoration: 'none',
+                                  fontWeight: 600,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                  transition: 'color 0.2s',
+                                  cursor: 'pointer'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                                title="Abrir detalle del producto en una nueva pestaña"
+                              >
+                                <span>{it.quantity}x {it.name}</span>
+                                <ExternalLink size={12} style={{ opacity: 0.8, flexShrink: 0 }} />
+                              </a>
+                              <span style={{ color: '#D4D4D4', fontWeight: 600, flexShrink: 0 }}>
+                                S/ {(it.price * it.quantity).toFixed(2)}
+                              </span>
+                            </li>
+                          );
+                        })}
                       </ul>
                       <div style={{ marginTop: '0.5rem', fontWeight: 700, fontSize: '1.1rem', color: 'var(--accent-gold-light)' }}>
                         Total: S/ {order.total.toFixed(2)}

@@ -105,13 +105,19 @@ export const CheckoutModal = () => {
       const params = new URLSearchParams(window.location.search);
       const paymentStatus = params.get('payment');
       const provider = params.get('provider');
-      const paymentId = params.get('payment_id') || params.get('data.id') || params.get('id');
+      const collectionStatus = params.get('collection_status');
+      const statusParam = params.get('status');
+      const paymentId = params.get('payment_id') || params.get('data.id') || params.get('id') || params.get('collection_id');
       const orderId = params.get('order_id') || params.get('external_reference');
 
-      if (provider === 'mercadopago' && paymentStatus) {
+      const isSuccess = paymentStatus === 'success' || collectionStatus === 'approved' || statusParam === 'approved';
+      const isFailure = paymentStatus === 'failure' || collectionStatus === 'rejected' || statusParam === 'rejected';
+      const isPending = paymentStatus === 'pending' || collectionStatus === 'in_process' || statusParam === 'in_process' || collectionStatus === 'pending';
+
+      if (isSuccess || isFailure || isPending || (provider === 'mercadopago' && paymentStatus)) {
         setIsCheckoutOpen(true);
 
-        if (paymentStatus === 'success') {
+        if (isSuccess) {
           setStep('success');
           triggerConfetti();
           clearCart(); // El pago fue exitoso y confirmado: se vacía el carrito ordenadamente
@@ -120,7 +126,7 @@ export const CheckoutModal = () => {
           let targetOrder = saved?.completedOrder || (orderId ? {
             id: orderId,
             customer: saved?.customer || customer,
-            items: cart,
+            items: saved?.completedOrder?.items || cart,
             subtotal: cartSubtotal,
             shippingMethod: selectedShipping,
             total: orderTotal,
@@ -151,6 +157,7 @@ export const CheckoutModal = () => {
                     targetOrder.mercadopagoPaymentId = paymentId;
                     setCompletedOrder({ ...targetOrder });
                   }
+                  clearCart();
                 }
               })
               .catch(err => console.error("Error verificando retorno MP:", err))
@@ -159,11 +166,11 @@ export const CheckoutModal = () => {
 
           // Limpiar parámetros de la URL para evitar reprocesamientos si se recarga la página
           window.history.replaceState({}, document.title, window.location.pathname);
-        } else if (paymentStatus === 'failure') {
+        } else if (isFailure) {
           showToast("El pago no pudo completarse", "error");
           setPaymentError("El proceso no se completó o fue rechazado. Puedes intentar nuevamente con Yape o con otra tarjeta.");
           window.history.replaceState({}, document.title, window.location.pathname);
-        } else if (paymentStatus === 'pending') {
+        } else if (isPending) {
           showToast("Tu pago en Mercado Pago está en proceso de validación bancaria", "info");
           window.history.replaceState({}, document.title, window.location.pathname);
         }
