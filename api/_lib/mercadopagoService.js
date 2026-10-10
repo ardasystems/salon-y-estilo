@@ -183,16 +183,20 @@ export async function createPreferenceHandler({
 
   // Preparar items de la compra con soporte de precio VIP con descuento
   const preferenceItems = (items || []).map((item, idx) => {
-    const rawPrice = Number(item.price) || 0;
-    const unitPrice = item.unitPrice !== undefined ? Number(item.unitPrice) : rawPrice;
+    // Si CheckoutModal ya envió el precio unitario descontado (unitPrice o price)
+    const sentPrice = Number(item.unitPrice !== undefined ? item.unitPrice : item.price) || 0;
+    const origPrice = Number(item.originalPrice) || sentPrice;
     const discountPct = Number(item.memberDiscountPercent || 0);
 
-    let effectivePrice = unitPrice;
-    if (unitPrice >= rawPrice && discountPct > 0 && item.isVipDiscounted) {
-      effectivePrice = Number((rawPrice * (1 - discountPct / 100)).toFixed(2));
+    let effectivePrice = sentPrice;
+
+    // Solo calcular descuento si el precio enviado aún NO tenía el descuento aplicado
+    // (es decir, viene con el precio regular completo e isVipDiscounted es true)
+    if (item.isVipDiscounted && discountPct > 0 && origPrice > 0 && Math.abs(sentPrice - origPrice) < 0.01) {
+      effectivePrice = Number((origPrice * (1 - discountPct / 100)).toFixed(2));
     }
 
-    const isVipApplied = Boolean(item.isVipDiscounted || (discountPct > 0 && effectivePrice < rawPrice));
+    const isVipApplied = Boolean(item.isVipDiscounted || (discountPct > 0 && effectivePrice < origPrice));
     const titlePrefix = isVipApplied ? "💎 [Club VIP] " : "";
     const fullTitle = `${titlePrefix}${item.name || "Producto Salón & Estilo"}${item.selectedShade ? ` (${item.selectedShade})` : ""}`;
 

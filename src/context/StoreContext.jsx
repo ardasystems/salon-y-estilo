@@ -522,7 +522,9 @@ export const StoreProvider = ({ children }) => {
         const catalogProd = products.find(p => p.id === item.id);
         const discountPct = Number(item.memberDiscountPercent ?? catalogProd?.memberDiscountPercent ?? 0);
         if (discountPct > 0) {
-          return sum + ((item.price * item.quantity * discountPct) / 100);
+          const effectiveUnit = Number((item.price * (1 - discountPct / 100)).toFixed(2));
+          const unitDiscount = Number((item.price - effectiveUnit).toFixed(2));
+          return sum + (unitDiscount * item.quantity);
         }
         return sum;
       }, 0)
