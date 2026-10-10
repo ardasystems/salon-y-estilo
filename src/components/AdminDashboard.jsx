@@ -30,6 +30,7 @@ export const AdminDashboard = () => {
     registeredUsers,
     updateUserDiscount,
     deleteRegisteredUser,
+    adminResetUserPassword,
     setIsAdminView,
     showToast
   } = useStore();
@@ -1921,30 +1922,60 @@ export const AdminDashboard = () => {
                             {u.ordersCount || 0}
                           </td>
                           <td style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (confirm(`¿Eliminar al usuario ${u.name} de los registros?`)) {
-                                  deleteRegisteredUser(u.id);
-                                }
-                              }}
-                              style={{
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                color: '#EF4444',
-                                borderRadius: 'var(--radius-xs)',
-                                padding: '0.35rem 0.6rem',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                fontSize: '0.74rem'
-                              }}
-                              title="Eliminar usuario"
-                            >
-                              <Trash2 size={13} />
-                              <span>Borrar</span>
-                            </button>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newPass = prompt(`Ingresa la nueva contraseña para el cliente "${u.name}":`, 'salon2026');
+                                  if (newPass && newPass.trim().length >= 4) {
+                                    adminResetUserPassword(u.id, newPass.trim());
+                                  } else if (newPass !== null) {
+                                    alert('La contraseña debe tener al menos 4 caracteres.');
+                                  }
+                                }}
+                                style={{
+                                  background: 'rgba(212, 175, 55, 0.12)',
+                                  border: '1px solid rgba(212, 175, 55, 0.35)',
+                                  color: 'var(--accent-gold-light)',
+                                  borderRadius: 'var(--radius-xs)',
+                                  padding: '0.35rem 0.6rem',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  fontSize: '0.74rem'
+                                }}
+                                title="Cambiar o restablecer contraseña del cliente"
+                              >
+                                <KeyRound size={13} />
+                                <span>Clave</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`¿Eliminar al usuario ${u.name} de los registros?`)) {
+                                    deleteRegisteredUser(u.id);
+                                  }
+                                }}
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  color: '#EF4444',
+                                  borderRadius: 'var(--radius-xs)',
+                                  padding: '0.35rem 0.6rem',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  fontSize: '0.74rem'
+                                }}
+                                title="Eliminar usuario"
+                              >
+                                <Trash2 size={13} />
+                                <span>Borrar</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

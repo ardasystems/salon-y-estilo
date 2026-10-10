@@ -815,6 +815,15 @@ export const StoreProvider = ({ children }) => {
       throw new Error("No existe una cuenta registrada con este correo. Regístrate gratis.");
     }
 
+    // Strict password verification
+    const savedHash = user.password_hash || user.data?.password_hash;
+    if (savedHash) {
+      const inputHash = password ? btoa(password) : '';
+      if (!password || inputHash !== savedHash) {
+        throw new Error("Contraseña incorrecta. Por favor verifica tu contraseña o usa la opción de recuperación.");
+      }
+    }
+
     setCurrentUser(user);
 
     // Merge saved user cart from storage / profile
@@ -840,6 +849,82 @@ export const StoreProvider = ({ children }) => {
 
     showToast(`¡Hola de nuevo, ${user.name.split(' ')[0]}! Carrito conservado y Club VIP activo.`);
     return user;
+  };
+
+  const resetUserPassword = async ({ email, phone, newPassword }) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPhone = (phone || '').replace(/\D/g, '');
+
+    const user = registeredUsers.find(u => (u.email || '').toLowerCase() === cleanEmail);
+    if (!user) {
+      throw new Error("No encontramos ninguna cuenta registrada con este correo.");
+    }
+
+    const userPhone = (user.phone || '').replace(/\D/g, '');
+    if (userPhone && cleanPhone && userPhone !== cleanPhone) {
+      throw new Error("El número celular ingresado no coincide con el registrado en esta cuenta.");
+    }
+
+    if (!newPassword || newPassword.length < 4) {
+      throw new Error("La nueva contraseña debe tener al menos 4 caracteres.");
+    }
+
+    const newHash = btoa(newPassword);
+    const updatedUser = {
+      ...user,
+      password_hash: newHash,
+      data: {
+        ...(user.data || {}),
+        password_hash: newHash
+      }
+    };
+
+    setRegisteredUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u));
+    if (currentUser?.id === user.id) {
+      setCurrentUser(updatedUser);
+    }
+
+    showToast("¡Contraseña restablecida con éxito! Ya puedes iniciar sesión con tu nueva clave.");
+
+    try {
+      await supabase.from('registered_users').update({
+        password_hash: newHash,
+        data: updatedUser.data,
+        updated_at: new Date().toISOString()
+      }).eq('id', user.id);
+    } catch (err) {
+      console.warn("Error updating password in Supabase:", err);
+    }
+
+    return updatedUser;
+  };
+
+  const adminResetUserPassword = async (userId, newPassword) => {
+    const user = registeredUsers.find(u => u.id === userId);
+    if (!user) throw new Error("Usuario no encontrado");
+
+    const newHash = btoa(newPassword);
+    const updatedUser = {
+      ...user,
+      password_hash: newHash,
+      data: {
+        ...(user.data || {}),
+        password_hash: newHash
+      }
+    };
+
+    setRegisteredUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
+    showToast(`Contraseña de ${user.name} restablecida a: ${newPassword}`);
+
+    try {
+      await supabase.from('registered_users').update({
+        password_hash: newHash,
+        data: updatedUser.data,
+        updated_at: new Date().toISOString()
+      }).eq('id', userId);
+    } catch (err) {
+      console.warn("Error resetting password from admin:", err);
+    }
   };
 
   const logoutUser = () => {
@@ -991,6 +1076,8 @@ export const StoreProvider = ({ children }) => {
       registerUser,
       loginUser,
       logoutUser,
+      resetUserPassword,
+      adminResetUserPassword,
       updateUserDiscount,
       deleteRegisteredUser,
       isUserAuthOpen,
