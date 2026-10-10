@@ -791,35 +791,39 @@ export const SalonSection = () => {
                 marginBottom: '0.5rem'
               }}>
                 <ShieldCheck size={15} />
-                <span>Salud Capilar & Honestidad Profesional</span>
+                <span>{settings.healthSectionTag || "Salud Capilar & Honestidad Profesional"}</span>
               </div>
               <h3 style={{ fontSize: '1.75rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)', marginBottom: '0.65rem', lineHeight: 1.2 }}>
-                Tu cabello es único: consulta siempre con los expertos
+                {settings.healthSectionTitle || "Tu cabello es único: consulta siempre con los expertos"}
               </h3>
               <p style={{ fontSize: '0.88rem', color: '#D4D4D4', lineHeight: 1.55, marginBottom: '1.2rem' }}>
-                Cada fibra tiene una historia y resistencia diferente. Realizamos un diagnóstico presencial y test de mecha personalizado antes de cualquier cambio para garantizar tu seguridad y un acabado impecable.
+                {settings.healthSectionDescription || "Cada fibra tiene una historia y resistencia diferente. Realizamos un diagnóstico presencial y test de mecha personalizado antes de cualquier cambio para garantizar tu seguridad y un acabado impecable."}
               </p>
 
               <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.4rem', flexWrap: 'wrap', fontSize: '0.78rem', color: '#CCCCCC' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#1F1A18', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', border: '1px solid rgba(229, 192, 123, 0.25)' }}>
-                  <CheckCircle size={13} style={{ color: 'var(--accent-gold)' }} />
-                  Test de mecha sin costo
-                </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#1F1A18', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', border: '1px solid rgba(229, 192, 123, 0.25)' }}>
-                  <CheckCircle size={13} style={{ color: 'var(--accent-gold)' }} />
-                  Atención personalizada 1 a 1
-                </span>
+                {(settings.healthSectionBadge1 || "Test de mecha sin costo") && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#1F1A18', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', border: '1px solid rgba(229, 192, 123, 0.25)' }}>
+                    <CheckCircle size={13} style={{ color: 'var(--accent-gold)' }} />
+                    {settings.healthSectionBadge1 || "Test de mecha sin costo"}
+                  </span>
+                )}
+                {(settings.healthSectionBadge2 || "Atención personalizada 1 a 1") && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#1F1A18', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-full)', border: '1px solid rgba(229, 192, 123, 0.25)' }}>
+                    <CheckCircle size={13} style={{ color: 'var(--accent-gold)' }} />
+                    {settings.healthSectionBadge2 || "Atención personalizada 1 a 1"}
+                  </span>
+                )}
               </div>
 
               <a
-                href={`https://wa.me/${settings.whatsappContact}?text=Hola%20Miluska,%20deseo%20consultar%20con%20los%20expertos%20de%20Sal%C3%B3n%26Estilo%20para%20un%20diagnóstico%20y%20asesoría%20de%20mi%20cabello.`}
+                href={`https://wa.me/${settings.whatsappContact}?text=${encodeURIComponent(settings.healthSectionWhatsappMsg || "Hola Miluska, deseo consultar con los expertos de Salón&Estilo para un diagnóstico y asesoría de mi cabello.")}`}
                 target="_blank"
                 rel="noreferrer"
                 className="btn-luxury-gold"
                 style={{ textDecoration: 'none', padding: '0.75rem 1.6rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
               >
                 <Phone size={14} />
-                <span>Consultar con los Expertos en WhatsApp</span>
+                <span>{settings.healthSectionButtonText || "Consultar con los Expertos en WhatsApp"}</span>
               </a>
             </div>
 
@@ -835,8 +839,8 @@ export const SalonSection = () => {
                 width: '100%'
               }}>
                 <img
-                  src="https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=700&q=80"
-                  alt="Miluska Vidaurre Salón & Estilo Asesoría Profesional"
+                  src={settings.healthSectionImage || "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=700&q=80"}
+                  alt={settings.healthSectionAuthor || "Miluska Vidaurre Salón & Estilo Asesoría Profesional"}
                   style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }}
                 />
                 <div style={{
@@ -851,10 +855,10 @@ export const SalonSection = () => {
                   right: '1rem'
                 }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Miluska Vidaurre • Estilista Principal
+                    {settings.healthSectionAuthor || "Miluska Vidaurre • Estilista Principal"}
                   </div>
                   <div style={{ fontSize: '0.84rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)', marginTop: '0.15rem' }}>
-                    «La belleza real comienza cuidando tu salud capilar».
+                    {settings.healthSectionQuote || "«La belleza real comienza cuidando tu salud capilar»."}
                   </div>
                 </div>
               </div>

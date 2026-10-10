@@ -385,7 +385,19 @@ export const INITIAL_SETTINGS = {
       badge: "Económico"
     }
   ],
-  memberDiscountBenefitText: "Promociones y descuentos exclusivos en productos seleccionados"
+  memberDiscountBenefitText: "Promociones y descuentos exclusivos en productos seleccionados",
+
+  // 9. SECCIÓN DESTACADA: SALUD CAPILAR & HONESTIDAD PROFESIONAL
+  healthSectionTag: "Salud Capilar & Honestidad Profesional",
+  healthSectionTitle: "Tu cabello es único: consulta siempre con los expertos",
+  healthSectionDescription: "Cada fibra tiene una historia y resistencia diferente. Realizamos un diagnóstico presencial y test de mecha personalizado antes de cualquier cambio para garantizar tu seguridad y un acabado impecable.",
+  healthSectionBadge1: "Test de mecha sin costo",
+  healthSectionBadge2: "Atención personalizada 1 a 1",
+  healthSectionButtonText: "Consultar con los Expertos en WhatsApp",
+  healthSectionWhatsappMsg: "Hola Miluska, deseo consultar con los expertos de Salón&Estilo para un diagnóstico y asesoría de mi cabello.",
+  healthSectionImage: "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=700&q=80",
+  healthSectionAuthor: "Miluska Vidaurre • Estilista Principal",
+  healthSectionQuote: "«La belleza real comienza cuidando tu salud capilar»."
 };
 
 export const INITIAL_ORDERS = [

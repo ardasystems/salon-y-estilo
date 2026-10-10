@@ -165,6 +165,21 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleHealthImageUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      try {
+        showToast("Subiendo imagen de salud capilar...", "info");
+        const compressed = await compressImage(file, 800, 600, 0.85);
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'health');
+        setSettingsForm(prev => ({ ...prev, healthSectionImage: uploadedUrl || compressed }));
+        showToast("Imagen de Salud Capilar cargada con éxito");
+      } catch (err) {
+        showToast("Error al procesar imagen de salud capilar", "error");
+      }
+    }
+  };
+
 
   const handleBeforeImageUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
@@ -2163,6 +2178,185 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* 9. Sección Destacada: Salud Capilar & Honestidad Profesional */}
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ShieldCheck size={17} style={{ color: 'var(--accent-gold)' }} />
+                    <span>9. Bloque Destacado: «Salud Capilar & Honestidad Profesional» (Página Salón)</span>
+                  </h4>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', background: 'rgba(212, 175, 55, 0.1)', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)' }}>
+                    Editable en Vivo
+                  </span>
+                </div>
+
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '1.1rem', lineHeight: 1.5 }}>
+                  Personaliza los textos, frases, beneficios, imagen y enlace de WhatsApp del bloque de asesoría capilar visible en la pestaña "El Salón".
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.85rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Etiqueta / Badge Superior
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.healthSectionTag || ''}
+                        placeholder="Ej. Salud Capilar & Honestidad Profesional"
+                        onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionTag: e.target.value })}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Título Principal
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.healthSectionTitle || ''}
+                        placeholder="Ej. Tu cabello es único: consulta siempre con los expertos"
+                        onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionTitle: e.target.value })}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                      Descripción Detallada
+                    </label>
+                    <textarea
+                      rows="3"
+                      value={settingsForm.healthSectionDescription || ''}
+                      placeholder="Explicación del diagnóstico presencial y test de mecha..."
+                      onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionDescription: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', resize: 'vertical' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Beneficio / Badge 1 (con check)
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.healthSectionBadge1 || ''}
+                        placeholder="Ej. Test de mecha sin costo"
+                        onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionBadge1: e.target.value })}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Beneficio / Badge 2 (con check)
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.healthSectionBadge2 || ''}
+                        placeholder="Ej. Atención personalizada 1 a 1"
+                        onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionBadge2: e.target.value })}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.85rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Texto del Botón de WhatsApp
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.healthSectionButtonText || ''}
+                        placeholder="Ej. Consultar con los Expertos en WhatsApp"
+                        onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionButtonText: e.target.value })}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Mensaje Predefinido para WhatsApp
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.healthSectionWhatsappMsg || ''}
+                        placeholder="Mensaje que aparecerá al abrir WhatsApp..."
+                        onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionWhatsappMsg: e.target.value })}
+                        style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tarjeta lateral: Foto, Estilista y Frase */}
+                  <div style={{ background: 'rgba(0, 0, 0, 0.25)', border: '1px solid rgba(229, 192, 123, 0.2)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-gold-light)', marginBottom: '0.75rem' }}>
+                      Tarjeta Visual del Estilista (Lado Derecho)
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.85rem', marginBottom: '0.85rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                          Nombre / Cargo del Estilista
+                        </label>
+                        <input
+                          type="text"
+                          value={settingsForm.healthSectionAuthor || ''}
+                          placeholder="Ej. Miluska Vidaurre • Estilista Principal"
+                          onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionAuthor: e.target.value })}
+                          style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                          Frase / Cita de Autor
+                        </label>
+                        <input
+                          type="text"
+                          value={settingsForm.healthSectionQuote || ''}
+                          placeholder="Ej. «La belleza real comienza cuidando tu salud capilar»."
+                          onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionQuote: e.target.value })}
+                          style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                        Fotografía del Estilista / Salón (URL o Subir desde PC/Celular)
+                      </label>
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {settingsForm.healthSectionImage && (
+                          <img
+                            src={settingsForm.healthSectionImage}
+                            alt="Preview"
+                            style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: 'var(--radius-xs)', border: '1px solid var(--accent-gold)' }}
+                          />
+                        )}
+                        <input
+                          type="text"
+                          value={settingsForm.healthSectionImage || ''}
+                          placeholder="https://..."
+                          onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionImage: e.target.value })}
+                          style={{ flex: 1, minWidth: '200px', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                        />
+                        <label className="btn-luxury-outline" style={{ cursor: 'pointer', padding: '0.6rem 1rem', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Upload size={14} />
+                          <span>Subir Foto</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleHealthImageUpload}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div style={{ paddingTop: '1.25rem', borderTop: '1px solid rgba(212, 175, 55, 0.25)' }}>
                 <button type="submit" className="btn-luxury-gold admin-save-btn" style={{ padding: '0.85rem 2.4rem', fontSize: '0.84rem' }}>
                   Guardar Todos los Ajustes
@@ -2536,6 +2730,8 @@ export const AdminDashboard = () => {
                       onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                       style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
                     >
+                      <option value="Capilar">Capilar</option>
+                      <option value="Facial">Facial</option>
                       <option value="Skincare">Skincare</option>
                       <option value="Labios">Labios</option>
                       <option value="Rostro">Rostro</option>
