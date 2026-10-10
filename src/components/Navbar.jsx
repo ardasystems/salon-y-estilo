@@ -49,51 +49,69 @@ export const Navbar = () => {
           <div 
             onClick={() => handleTabClick('salon')} 
             className="navbar-brand-container"
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0 }}
+            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.65rem', flexShrink: 0, minWidth: 0 }}
           >
             {settings?.logoUrl ? (
               <img
                 src={settings.logoUrl}
                 alt={settings.storeName || "Salón & Estilo"}
+                className="navbar-brand-logo"
                 style={{
                   height: '38px',
                   width: settings?.logoShape === 'circle' ? '38px' : 'auto',
                   maxHeight: '38px',
                   borderRadius: settings?.logoShape === 'circle' ? '50%' : 'var(--radius-sm)',
                   objectFit: settings?.logoShape === 'circle' ? 'cover' : 'contain',
-                  border: '1px solid var(--accent-gold)'
+                  border: '1px solid var(--accent-gold)',
+                  flexShrink: 0
                 }}
               />
             ) : (
-              <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: settings?.logoShape === 'circle' ? '50%' : 'var(--radius-sm)',
-                background: 'linear-gradient(135deg, rgba(229, 192, 123, 0.35) 0%, rgba(255, 255, 255, 0.1) 100%)',
-                border: '1px solid var(--accent-gold)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent-gold)'
-              }}>
+              <div 
+                className="navbar-brand-logo"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: settings?.logoShape === 'circle' ? '50%' : 'var(--radius-sm)',
+                  background: 'linear-gradient(135deg, rgba(229, 192, 123, 0.35) 0%, rgba(255, 255, 255, 0.1) 100%)',
+                  border: '1px solid var(--accent-gold)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent-gold)',
+                  flexShrink: 0
+                }}
+              >
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem' }}>S</span>
               </div>
             )}
 
-            <div>
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ 
+                <span className="navbar-brand-title" style={{ 
                   fontFamily: 'var(--font-display)', 
                   fontSize: '1.25rem', 
                   fontWeight: 700, 
                   letterSpacing: '0.08em',
                   color: '#FFFFFF',
-                  lineHeight: 1.1
+                  lineHeight: 1.1,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}>
                   {settings?.storeName ? settings.storeName.toUpperCase() : "SALÓN & ESTILO"}
                 </span>
               </div>
-              <div style={{ fontSize: '0.65rem', color: '#B3B3B3', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }}>
+              <div className="navbar-brand-subtitle" style={{ 
+                fontSize: '0.65rem', 
+                color: '#B3B3B3', 
+                letterSpacing: '0.08em', 
+                textTransform: 'uppercase', 
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}>
                 {settings?.brandSubtitle || "Salón de Belleza Miluska Vidaurre"}
               </div>
             </div>
@@ -165,34 +183,38 @@ export const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => setIsUserAuthOpen(true)}
+                  className="navbar-user-btn"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.4rem',
+                    gap: '0.35rem',
                     background: currentUser ? 'rgba(212, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.06)',
                     border: currentUser ? '1px solid rgba(212, 175, 55, 0.5)' : '1px solid rgba(255, 255, 255, 0.15)',
                     color: currentUser ? 'var(--accent-gold-light)' : '#ECE8E1',
-                    padding: '0.5rem 0.95rem',
+                    padding: '0.45rem 0.85rem',
                     borderRadius: 'var(--radius-full)',
-                    fontSize: '0.8rem',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     transition: 'all 0.2s',
-                    letterSpacing: '0.02em'
+                    letterSpacing: '0.02em',
+                    flexShrink: 0
                   }}
                   title={currentUser ? `Miembro Club VIP: ${currentUser.name} (Descuentos en productos seleccionados)` : "Club VIP: Promociones y descuentos en productos seleccionados"}
                 >
                   {currentUser ? (
                     <>
-                      <Sparkles size={13} style={{ color: 'var(--accent-gold)' }} />
-                      <span>{currentUser.name.split(' ')[0]}</span>
-                      <span style={{ fontSize: '0.68rem', background: 'rgba(212, 175, 55, 0.25)', padding: '0.1rem 0.4rem', borderRadius: '10px', color: 'var(--accent-gold-light)', fontWeight: 800 }}>
-                        Club VIP
+                      <Sparkles size={13} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                      <span className="navbar-user-name" style={{ maxWidth: '85px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {currentUser.name.split(' ')[0]}
+                      </span>
+                      <span className="navbar-vip-pill" style={{ fontSize: '0.64rem', background: 'rgba(212, 175, 55, 0.25)', padding: '0.1rem 0.35rem', borderRadius: '8px', color: 'var(--accent-gold-light)', fontWeight: 800, flexShrink: 0 }}>
+                        VIP
                       </span>
                     </>
                   ) : (
                     <>
-                      <Sparkles size={13} style={{ color: 'var(--accent-gold)' }} />
+                      <Sparkles size={13} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
                       <span>Club VIP</span>
                     </>
                   )}
@@ -301,18 +323,39 @@ export const Navbar = () => {
         }
         @media (max-width: 768px) {
           .main-navbar-header {
-            padding-top: calc(0.85rem + env(safe-area-inset-top, 0px)) !important;
-            padding-bottom: 0.65rem !important;
+            padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+            padding-bottom: 0.5rem !important;
           }
           .navbar-inner-container {
-            padding: 0 1rem !important;
+            padding: 0 0.65rem !important;
           }
           .header-main-row {
-            justify-content: center !important;
+            justify-content: space-between !important;
+            gap: 0.4rem !important;
           }
           .navbar-brand-container {
-            margin: 0 auto !important;
-            justify-content: center !important;
+            margin: 0 !important;
+            justify-content: flex-start !important;
+            gap: 0.45rem !important;
+            max-width: calc(100% - 110px) !important;
+          }
+          .navbar-brand-logo {
+            width: 32px !important;
+            height: 32px !important;
+            max-height: 32px !important;
+            flex-shrink: 0 !important;
+          }
+          .navbar-brand-title {
+            font-size: 0.95rem !important;
+            letter-spacing: 0.05em !important;
+          }
+          .navbar-brand-subtitle {
+            font-size: 0.55rem !important;
+            letter-spacing: 0.05em !important;
+          }
+          .navbar-user-btn {
+            padding: 0.32rem 0.55rem !important;
+            font-size: 0.72rem !important;
           }
           .desktop-tabs-container {
             display: none !important;
@@ -322,7 +365,21 @@ export const Navbar = () => {
           }
           .mobile-tabs-bar {
             display: flex !important;
-            margin-top: 0.85rem !important;
+            margin-top: 0.65rem !important;
+          }
+        }
+        @media (max-width: 380px) {
+          .navbar-brand-container {
+            max-width: calc(100% - 95px) !important;
+          }
+          .navbar-brand-title {
+            font-size: 0.88rem !important;
+          }
+          .navbar-brand-subtitle {
+            display: none !important;
+          }
+          .navbar-vip-pill {
+            display: none !important;
           }
         }
       `}</style>
