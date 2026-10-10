@@ -63,7 +63,7 @@ export const AdminDashboard = () => {
     isNew: true,
     description: '',
     benefitsText: '',
-    imageUrl: ''
+    images: ['', '', '']
   });
 
   // Service Modal State
@@ -107,18 +107,42 @@ export const AdminDashboard = () => {
   }, [settings]);
 
   // Compression & Storage Handlers (Persists to Supabase Storage with base64 fallback)
-  const handleProductImageUpload = async (e) => {
+  const handleProductImageUpload = async (e, index = 0) => {
     const file = e.target.files && e.target.files[0];
     if (file) {
       try {
+        showToast(`Subiendo foto ${index + 1} de producto...`, "info");
         const compressed = await compressImage(file, 900, 900, 0.8);
         const uploadedUrl = await uploadToSalonAssets(compressed, 'products');
-        setProductForm(prev => ({ ...prev, imageUrl: uploadedUrl || compressed }));
-        showToast("Imagen de producto cargada con éxito");
+        const finalUrl = uploadedUrl || compressed;
+        setProductForm(prev => {
+          const newImages = [...(prev.images || ['', '', ''])];
+          while (newImages.length < 3) newImages.push('');
+          newImages[index] = finalUrl;
+          return { ...prev, images: newImages };
+        });
+        showToast(`Foto ${index + 1} de producto cargada con éxito`);
       } catch (err) {
-        showToast("Error al procesar imagen de producto", "error");
+        showToast(`Error al procesar foto ${index + 1}`, "error");
       }
     }
+  };
+
+  const handleProductImageUrlChange = (index, value) => {
+    setProductForm(prev => {
+      const newImages = [...(prev.images || ['', '', ''])];
+      while (newImages.length < 3) newImages.push('');
+      newImages[index] = value;
+      return { ...prev, images: newImages };
+    });
+  };
+
+  const handleRemoveProductImage = (index) => {
+    setProductForm(prev => {
+      const newImages = [...(prev.images || ['', '', ''])];
+      newImages[index] = '';
+      return { ...prev, images: newImages };
+    });
   };
 
   const handleServiceImageUpload = async (e) => {
@@ -248,7 +272,7 @@ export const AdminDashboard = () => {
     setProductForm({
       name: '',
       subtitle: '',
-      category: 'Skincare',
+      category: 'Capilar',
       keywordsText: 'belleza, cuidado, cabello, rostro, nutrición',
       price: '',
       originalPrice: '',
@@ -259,13 +283,24 @@ export const AdminDashboard = () => {
       isNew: true,
       description: '',
       benefitsText: 'Control de luminosidad y cuidado facial\nTextura ligera de rápida absorción\nIdeal para todo tipo de clima y piel',
-      imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80'
+      images: [
+        'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
+        '',
+        ''
+      ]
     });
     setProductModalOpen(true);
   };
 
   const handleOpenEditProduct = (product) => {
     setEditingProduct(product);
+    const existingImages = Array.isArray(product.images) && product.images.length > 0
+      ? [...product.images]
+      : (product.image ? [product.image] : []);
+    while (existingImages.length < 3) {
+      existingImages.push('');
+    }
+
     setProductForm({
       name: product.name,
       subtitle: product.subtitle || '',
@@ -280,7 +315,7 @@ export const AdminDashboard = () => {
       isNew: product.isNew || false,
       description: product.description,
       benefitsText: product.benefits ? product.benefits.join('\n') : '',
-      imageUrl: product.images && product.images.length > 0 ? product.images[0] : ''
+      images: existingImages.slice(0, 3)
     });
     setProductModalOpen(true);
   };
@@ -290,6 +325,13 @@ export const AdminDashboard = () => {
     const keywordsList = productForm.keywordsText
       ? productForm.keywordsText.split(',').map(k => k.trim()).filter(Boolean)
       : [];
+
+    const cleanImages = (productForm.images || [])
+      .map(img => (img || '').trim())
+      .filter(Boolean);
+    const finalImages = cleanImages.length > 0
+      ? cleanImages
+      : ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80'];
 
     const productPayload = {
       name: productForm.name,
@@ -305,7 +347,7 @@ export const AdminDashboard = () => {
       isNew: productForm.isNew,
       description: productForm.description,
       benefits: productForm.benefitsText.split('\n').filter(b => b.trim() !== ''),
-      images: [productForm.imageUrl]
+      images: finalImages
     };
 
     if (editingProduct) {
@@ -2832,76 +2874,141 @@ export const AdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* Compressed Image Section */}
+                {/* Product Images Gallery (Up to 3 photos) */}
                 <div style={{
                   background: '#0D0A09',
-                  padding: '1rem',
+                  padding: '1.1rem',
                   borderRadius: 'var(--radius-sm)',
                   border: '1px solid rgba(229, 192, 123, 0.3)'
                 }}>
-                  <label style={{ fontSize: '0.78rem', color: 'var(--accent-gold-light)', fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>
-                    Fotografía del Producto * (Se comprime automáticamente para no saturar memoria)
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                    <label style={{ fontSize: '0.82rem', color: 'var(--accent-gold-light)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <ImageIcon size={15} style={{ color: 'var(--accent-gold)' }} />
+                      <span>Galería del Producto (Hasta 3 Fotografías)</span>
+                    </label>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Foto 1 obligatoria • Fotos 2 y 3 opcionales
+                    </span>
+                  </div>
 
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <div style={{
-                      width: '74px',
-                      height: '74px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: '#1C1C1C',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
-                      {productForm.imageUrl ? (
-                        <img
-                          src={productForm.imageUrl}
-                          alt="Preview"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      ) : (
-                        <ImageIcon size={24} style={{ color: '#666' }} />
-                      )}
-                    </div>
+                  <p style={{ fontSize: '0.74rem', color: '#9CA3AF', marginBottom: '0.9rem', lineHeight: 1.4 }}>
+                    Sube hasta 3 ángulos o fotos de textura/aplicación del producto. Los clientes podrán deslizar la galería en el catálogo y ver el carrusel completo de imágenes.
+                  </p>
 
-                    <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <div>
-                        <label style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.45rem',
-                          background: 'rgba(229, 192, 123, 0.15)',
-                          border: '1px solid var(--accent-gold)',
-                          color: 'var(--accent-gold-light)',
-                          padding: '0.45rem 0.95rem',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.76rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}>
-                          <Upload size={14} />
-                          <span>Subir foto comprimida (PC/Celular)</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleProductImageUpload}
-                            style={{ display: 'none' }}
-                          />
-                        </label>
-                      </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {[
+                      { index: 0, label: 'Foto 1 (Principal en portada) *' },
+                      { index: 1, label: 'Foto 2 (Ángulo secundario / Textura)' },
+                      { index: 2, label: 'Foto 3 (Detalle / Modo de uso)' }
+                    ].map(({ index, label }) => {
+                      const imgUrl = (productForm.images && productForm.images[index]) || '';
+                      return (
+                        <div
+                          key={index}
+                          style={{
+                            background: '#14100E',
+                            border: imgUrl ? '1px solid rgba(229, 192, 123, 0.4)' : '1px dashed rgba(255, 255, 255, 0.15)',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0.75rem',
+                            display: 'flex',
+                            gap: '0.85rem',
+                            alignItems: 'center',
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          <div style={{
+                            width: '68px',
+                            height: '68px',
+                            borderRadius: 'var(--radius-xs)',
+                            background: '#1E1917',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            position: 'relative'
+                          }}>
+                            {imgUrl ? (
+                              <img
+                                src={imgUrl}
+                                alt={`Foto ${index + 1}`}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div style={{ textAlign: 'center', color: '#6B7280', fontSize: '0.65rem' }}>
+                                <ImageIcon size={20} style={{ margin: '0 auto 0.1rem', opacity: 0.5 }} />
+                                <span>Vacío</span>
+                              </div>
+                            )}
+                          </div>
 
-                      <input
-                        type="text"
-                        placeholder="O escribe/pega la URL de la imagen (https://...)"
-                        value={productForm.imageUrl}
-                        onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                        style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-xs)', fontSize: '0.8rem' }}
-                      />
-                    </div>
+                          <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: imgUrl ? 'var(--accent-gold)' : '#D1D5DB' }}>
+                                {label}
+                              </span>
+                              {imgUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveProductImage(index)}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#EF4444',
+                                    fontSize: '0.7rem',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.2rem',
+                                    padding: '0.1rem 0.3rem'
+                                  }}
+                                  title="Quitar foto"
+                                >
+                                  <X size={12} />
+                                  <span>Quitar</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <label style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                background: 'rgba(229, 192, 123, 0.15)',
+                                border: '1px solid var(--accent-gold)',
+                                color: 'var(--accent-gold-light)',
+                                padding: '0.35rem 0.75rem',
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '0.74rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                <Upload size={13} />
+                                <span>Subir Foto {index + 1}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleProductImageUpload(e, index)}
+                                  style={{ display: 'none' }}
+                                />
+                              </label>
+
+                              <input
+                                type="text"
+                                placeholder={`O escribe/pega URL de la foto ${index + 1} (https://...)`}
+                                value={imgUrl}
+                                onChange={(e) => handleProductImageUrlChange(index, e.target.value)}
+                                style={{ flex: 1, minWidth: '180px', padding: '0.45rem 0.65rem', borderRadius: 'var(--radius-xs)', fontSize: '0.78rem' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 

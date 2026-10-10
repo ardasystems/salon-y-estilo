@@ -88,6 +88,7 @@ export const ProductCard = ({ product }) => {
         }}
         title="Toca la foto para ampliar y ver detalles del producto"
       >
+        {/* Main Product Image */}
         <img
           src={product.images && product.images.length > 0 ? product.images[0] : ''}
           alt={product.name}
@@ -99,16 +100,67 @@ export const ProductCard = ({ product }) => {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            transition: 'transform 0.5s ease',
+            transition: 'opacity 0.45s ease, transform 0.5s ease',
+            opacity: isHovered && product.images && product.images.length > 1 && product.images[1] ? 0 : 1,
             transform: isHovered ? 'scale(1.06)' : 'scale(1)'
           }}
         />
+
+        {/* Secondary Angle / Texture Image on Hover */}
+        {product.images && product.images.length > 1 && product.images[1] && (
+          <img
+            src={product.images[1]}
+            alt={`${product.name} ángulo secundario`}
+            loading="lazy"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'opacity 0.45s ease, transform 0.5s ease',
+              opacity: isHovered ? 1 : 0,
+              transform: isHovered ? 'scale(1.06)' : 'scale(1)'
+            }}
+          />
+        )}
 
         <div style={{
           position: 'absolute',
           inset: 0,
           background: 'linear-gradient(to top, rgba(20, 20, 20, 0.95) 0%, transparent 40%)'
         }} />
+
+        {/* Multi-Photo Indicator Dots */}
+        {product.images && product.images.length > 1 && (
+          <div style={{
+            position: 'absolute',
+            bottom: '0.75rem',
+            left: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            zIndex: 3,
+            background: 'rgba(0, 0, 0, 0.55)',
+            padding: '0.2rem 0.45rem',
+            borderRadius: 'var(--radius-full)',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
+          }}>
+            {product.images.map((_, dotIdx) => (
+              <span
+                key={dotIdx}
+                style={{
+                  width: '5px',
+                  height: '5px',
+                  borderRadius: '50%',
+                  background: (isHovered && dotIdx === 1) || (!isHovered && dotIdx === 0) ? 'var(--accent-gold)' : 'rgba(255, 255, 255, 0.45)',
+                  transition: 'background 0.3s ease'
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Quick View Pill / Button */}
         <button
