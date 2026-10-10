@@ -29,7 +29,6 @@ export const AdminDashboard = () => {
     updateSettings,
     complaints,
     registeredUsers,
-    updateUserDiscount,
     deleteRegisteredUser,
     adminResetUserPassword,
     setIsAdminView,
@@ -2307,7 +2306,7 @@ export const AdminDashboard = () => {
                   Usuarios Registrados & Club VIP ({registeredUsers.length})
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Seguimiento de compradores registrados, nivel de fidelización y personalización de descuentos.
+                  Seguimiento de compradores registrados y nivel de fidelización en la boutique.
                 </p>
               </div>
 
@@ -2343,7 +2342,6 @@ export const AdminDashboard = () => {
                       <th style={{ padding: '0.9rem 1rem' }}>Cliente</th>
                       <th style={{ padding: '0.9rem 1rem' }}>Contacto Directo</th>
                       <th style={{ padding: '0.9rem 1rem' }}>Nivel</th>
-                      <th style={{ padding: '0.9rem 1rem' }}>% Descuento</th>
                       <th style={{ padding: '0.9rem 1rem' }}>Fecha Registro</th>
                       <th style={{ padding: '0.9rem 1rem' }}>Compras</th>
                       <th style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>Acciones</th>
@@ -2413,29 +2411,6 @@ export const AdminDashboard = () => {
                               <Sparkles size={11} />
                               <span>{u.role === 'vip' ? 'Club VIP' : 'Miembro'}</span>
                             </span>
-                          </td>
-                          <td style={{ padding: '0.85rem 1rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                              <input
-                                type="number"
-                                min="0"
-                                max="80"
-                                defaultValue={u.discountPercent !== undefined ? u.discountPercent : 10}
-                                onBlur={(e) => updateUserDiscount(u.id, e.target.value)}
-                                style={{
-                                  width: '56px',
-                                  padding: '0.35rem',
-                                  borderRadius: 'var(--radius-xs)',
-                                  textAlign: 'center',
-                                  fontSize: '0.82rem',
-                                  fontWeight: 700,
-                                  background: '#1F1714',
-                                  border: '1px solid rgba(212, 175, 55, 0.35)',
-                                  color: '#FFFFFF'
-                                }}
-                              />
-                              <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>%</span>
-                            </div>
                           </td>
                           <td style={{ padding: '0.85rem 1rem', color: '#9CA3AF', fontSize: '0.76rem' }}>
                             {u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Reciente'}
