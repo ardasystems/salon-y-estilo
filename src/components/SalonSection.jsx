@@ -181,7 +181,7 @@ export const SalonSection = () => {
                 marginBottom: '2.2rem',
                 maxWidth: '540px'
               }}>
-                Un espacio íntimo y exclusivo de alta gama en Chiclayo. Especialistas en colorimetría personalizada, transformaciones balayage, alisados orgánicos libres de formol y maquillaje social.
+                Un espacio íntimo y exclusivo en Chiclayo. Especialistas en colorimetría personalizada, transformaciones balayage, alisados orgánicos libres de formol y maquillaje social.
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -732,7 +732,7 @@ export const SalonSection = () => {
                   Privacidad & Confort Exclusivo
                 </h3>
                 <p style={{ fontSize: '0.88rem', color: '#D4D4D4', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                  Ambiente relajante alejado del bullicio de la ciudad, con atención exclusiva uno a uno, música selecta y café de cortesía.
+                  Ambiente relajante con atención exclusiva uno a uno, música selecta y café de cortesía.
                 </p>
 
                 <div style={{ borderTop: '1px solid rgba(229, 192, 123, 0.18)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.78rem', color: '#CCCCCC' }}>
