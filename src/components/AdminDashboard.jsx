@@ -2827,6 +2827,8 @@ export const AdminDashboard = () => {
                       style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
                     >
                       <option value="Capilar">Capilar</option>
+                      <option value="Peluquería">Peluquería</option>
+                      <option value="Maquillaje">Maquillaje</option>
                       <option value="Facial">Facial</option>
                       <option value="Skincare">Skincare</option>
                       <option value="Labios">Labios</option>
@@ -3200,7 +3202,7 @@ export const AdminDashboard = () => {
                     <input
                       type="text"
                       required
-                      placeholder="Colorimetría, Alisados..."
+                      placeholder="Colorimetría, Alisados, Peluquería, Maquillaje..."
                       value={serviceForm.category}
                       onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
                       style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}

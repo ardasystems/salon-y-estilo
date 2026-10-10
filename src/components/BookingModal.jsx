@@ -271,7 +271,7 @@ export const BookingModal = () => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#B3B3B3', marginBottom: '0.3rem' }}>
                   <Sun size={12} style={{ color: 'var(--accent-gold)' }} />
-                  <span>Turno Mañana (Luz natural óptima para color)</span>
+                  <span>Turno Mañana</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
                   {MORNING_SLOTS.map(slot => {
@@ -308,7 +308,7 @@ export const BookingModal = () => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.72rem', color: '#B3B3B3', marginBottom: '0.3rem' }}>
                   <Moon size={12} style={{ color: 'var(--accent-rose)' }} />
-                  <span>Turno Tarde / Atardecer en el balneario</span>
+                  <span>Turno Tarde</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
                   {AFTERNOON_SLOTS.map(slot => {
