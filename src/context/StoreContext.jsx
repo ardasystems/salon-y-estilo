@@ -212,11 +212,16 @@ export const StoreProvider = ({ children }) => {
         // Back up cart in registered_users cloud record
         supabase
           .from('registered_users')
-          .update({
+          .upsert({
+            id: currentUser.id,
+            name: currentUser.name || 'Cliente VIP',
+            email: currentUser.email || '',
+            phone: currentUser.phone || '',
+            role: currentUser.role || 'vip',
+            discount_percent: currentUser.discountPercent !== undefined ? currentUser.discountPercent : 10,
             data: { ...currentUser, cart },
             updated_at: new Date().toISOString()
           })
-          .eq('id', currentUser.id)
           .then(() => {})
           .catch(() => {});
       }
