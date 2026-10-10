@@ -1788,10 +1788,91 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* 4. Social Media Links */}
+              {/* 4. Mercado Pago Official Gateway Configuration */}
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                  <span>4. Redes Sociales Oficiales</span>
+                  <CreditCard size={16} style={{ color: '#009EE3' }} />
+                  <span>4. Pasarela de Pagos Mercado Pago (Conmutador de Ambiente)</span>
+                </h4>
+                <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
+                  Cambia con un solo clic entre cobrar dinero real en Soles o hacer pruebas con tarjetas ficticias.
+                </p>
+
+                <div style={{ background: '#110D0B', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(0, 158, 227, 0.35)', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <span>Entorno Activo de Cobros:</span>
+                        <span style={{
+                          fontSize: '0.74rem',
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: 'var(--radius-full)',
+                          fontWeight: 800,
+                          background: settingsForm.mercadopagoMode === 'sandbox' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                          color: settingsForm.mercadopagoMode === 'sandbox' ? '#FBBF24' : '#34D399',
+                          border: settingsForm.mercadopagoMode === 'sandbox' ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid rgba(16, 185, 129, 0.5)'
+                        }}>
+                          {settingsForm.mercadopagoMode === 'sandbox' ? '🟡 MODO PRUEBAS (SANDBOX)' : '🟢 MODO PRODUCCIÓN (COBROS REALES)'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                        {settingsForm.mercadopagoMode === 'sandbox'
+                          ? 'En Sandbox se simulan pagos sin cobrar dinero real. Puedes usar tarjetas de prueba oficiales.'
+                          : 'En Producción las clientas pagan con saldo real mediante Yape, Tarjetas de Crédito/Débito y Efectivo.'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'inline-flex', background: '#090706', padding: '0.3rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSettingsForm({ ...settingsForm, mercadopagoMode: 'production' })}
+                        style={{
+                          padding: '0.45rem 0.9rem',
+                          borderRadius: 'var(--radius-xs)',
+                          border: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          background: settingsForm.mercadopagoMode !== 'sandbox' ? '#10B981' : 'transparent',
+                          color: settingsForm.mercadopagoMode !== 'sandbox' ? '#0A261A' : '#9CA3AF',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        🟢 Producción (Real)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSettingsForm({ ...settingsForm, mercadopagoMode: 'sandbox' })}
+                        style={{
+                          padding: '0.45rem 0.9rem',
+                          borderRadius: 'var(--radius-xs)',
+                          border: 'none',
+                          fontWeight: 700,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          background: settingsForm.mercadopagoMode === 'sandbox' ? '#F59E0B' : 'transparent',
+                          color: settingsForm.mercadopagoMode === 'sandbox' ? '#241400' : '#9CA3AF',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        🟡 Sandbox (Pruebas)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '0.74rem', color: '#D4D4D4', background: '#0D0A09', padding: '0.75rem', borderRadius: 'var(--radius-xs)', border: '1px dashed rgba(212, 175, 55, 0.25)' }}>
+                    <div><strong>Regla de Cobro:</strong> Monto mínimo de transacción establecido en <strong>S/ 3.00 PEN</strong>.</div>
+                    <div style={{ marginTop: '0.2rem', color: 'var(--text-muted)' }}>
+                      Credenciales de Producción: Public Key (<strong>{settingsForm.mercadopagoProdPublicKey ? settingsForm.mercadopagoProdPublicKey.slice(0, 16) + '...' : 'Configurada'}</strong>) • Token Access (<strong>{settingsForm.mercadopagoProdAccessToken ? settingsForm.mercadopagoProdAccessToken.slice(0, 16) + '...' : 'Configurado'}</strong>)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Social Media Links */}
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  <span>5. Redes Sociales Oficiales</span>
                 </h4>
                 <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                   Si dejas un campo en blanco, su icono se ocultará automáticamente en toda la web.

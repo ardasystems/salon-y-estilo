@@ -337,6 +337,14 @@ export const CheckoutModal = () => {
       return;
     }
 
+    // Regla Oficial Mercado Pago Perú (Trampa 8): Monto mínimo S/ 3.00 PEN
+    if (orderTotal < 3.0) {
+      setPaymentError("El monto mínimo para procesar una compra segura con pasarela Mercado Pago es de S/ 3.00 PEN. Añade un producto a tu bolsa para continuar.");
+      showToast("El monto mínimo de compra es de S/ 3.00 PEN", "error");
+      setIsProcessingPayment(false);
+      return;
+    }
+
     setIsProcessingPayment(true);
     setPaymentError(null);
     setValidationErrors({});
@@ -388,7 +396,7 @@ export const CheckoutModal = () => {
         receiptDownloaded: false
       }));
 
-      // 2. Solicitar creación de preferencia en Mercado Pago con precios finales descontados
+      // 2. Solicitar creación de preferencia en Mercado Pago con precios finales descontados y modo configurado
       const response = await fetch('/api/payments/mercadopago/preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -398,7 +406,8 @@ export const CheckoutModal = () => {
           shippingMethod: selectedShipping,
           customer,
           orderTotal,
-          paymentOption: selectedPaymentOption
+          paymentOption: selectedPaymentOption,
+          paymentMode: settings?.mercadopagoMode || 'production'
         })
       });
 

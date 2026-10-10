@@ -351,8 +351,12 @@ export const INITIAL_SETTINGS = {
   instagramUrl: "https://www.instagram.com/miluskavidaurre/",
   youtubeUrl: "https://www.youtube.com/@miluskavidaurre",
   mercadopagoEnabled: true,
-  mercadopagoPublicKey: "",
-  mercadopagoEnvironment: "sandbox", // 'sandbox' | 'production'
+  mercadopagoMode: "production", // 'production' | 'sandbox'
+  mercadopagoEnvironment: "production",
+  mercadopagoProdPublicKey: "APP_USR-13a221c8-9c7d-4951-b6f9-2117ad9c0fe2",
+  mercadopagoProdAccessToken: "APP_USR-8245507252071832-100820-761e878046dc5e1f91d0a8a4d24dbbfb-3748175215",
+  mercadopagoSandboxPublicKey: "APP_USR-c8761713-be48-461d-90a7-49e87b9248b0",
+  mercadopagoSandboxAccessToken: "APP_USR-1698660474440895-100820-343f7ab0d40bb94c7a5aa68e730cbe91-3751350252",
 
   productsBannerText: "📦 ENVÍOS A NIVEL NACIONAL (Shalom a todo el Perú) • Express < 2h en Chiclayo y alrededores • Citas Salón: 920 731 163",
   shippingOptions: [

@@ -14,8 +14,8 @@ function getSupabaseClient() {
 /**
  * Get configured Mercado Pago Client
  */
-export function getMercadoPagoClient() {
-  const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+export function getMercadoPagoClient(overrideToken = null) {
+  const accessToken = overrideToken || process.env.MERCADOPAGO_ACCESS_TOKEN || "APP_USR-8245507252071832-100820-761e878046dc5e1f91d0a8a4d24dbbfb-3748175215";
   if (!accessToken) {
     throw new Error("MERCADOPAGO_ACCESS_TOKEN no está configurado en las variables de entorno");
   }
@@ -164,15 +164,24 @@ export async function createPreferenceHandler({
   customer,
   orderTotal,
   paymentOption = 'all',
+  paymentMode,
   siteUrl
 }) {
-  const client = getMercadoPagoClient();
+  // Determinar entorno activo: Sandbox vs Producción
+  const mode = (paymentMode || process.env.MERCADOPAGO_ENVIRONMENT || 'production').toLowerCase();
+  const isSandbox = mode === 'sandbox' || mode === 'test';
+
+  const prodToken = process.env.MERCADOPAGO_ACCESS_TOKEN || "APP_USR-8245507252071832-100820-761e878046dc5e1f91d0a8a4d24dbbfb-3748175215";
+  const sandboxToken = process.env.MERCADOPAGO_ACCESS_TOKEN_TEST || "APP_USR-1698660474440895-100820-343f7ab0d40bb94c7a5aa68e730cbe91-3751350252";
+  const activeToken = isSandbox ? sandboxToken : prodToken;
+
+  const client = getMercadoPagoClient(activeToken);
   const preference = new Preference(client);
 
-  // Validar monto mínimo de transacción (Trampa 7)
+  // Validar monto mínimo de transacción (Trampa 8 de la Guía: no menos de S/ 3.00 PEN)
   const totalAmount = Number(orderTotal) || 0;
-  if (totalAmount < 2.0) {
-    throw new Error("El monto total de la orden debe ser superior a S/ 2.00 PEN");
+  if (totalAmount < 3.0) {
+    throw new Error("El monto total de la orden debe ser de al menos S/ 3.00 PEN para procesar pagos seguros con Mercado Pago");
   }
 
   // Desglosar nombre y apellido para antifraude (Trampa 4)
@@ -261,9 +270,9 @@ export async function createPreferenceHandler({
   // En modo de prueba o desarrollo, OMITE COMPLETAMENTE el campo payer (no enviar payer.email).
   // Esto evita el choque de entidades ("Una de las partes con la que intentas hacer el pago es de prueba")
   // y permite abrir directamente en ventana de incógnito sin pedir login, ingresando la tarjeta oficial de prueba 4242 4242 4242 4242.
-  const envMode = (process.env.MERCADOPAGO_ENVIRONMENT || process.env.PAYMENT_MODE || 'sandbox').toLowerCase();
-  const isTestToken = (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-');
-  const isDevOrTest = isLocalhost || envMode !== 'production' || isTestToken || process.env.NODE_ENV !== 'production';
+  const envMode = isSandbox ? 'sandbox' : 'production';
+  const isTestToken = activeToken.startsWith('TEST-');
+  const isDevOrTest = isSandbox || isTestToken;
 
   const collectorEmail = (process.env.COLLECTOR_EMAIL || 'arda.systems.iot@gmail.com').toLowerCase();
   const customerEmail = (customer?.email || '').trim().toLowerCase();
