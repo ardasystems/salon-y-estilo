@@ -333,10 +333,30 @@ export const CheckoutModal = () => {
     setValidationErrors({});
 
     try {
-      // 1. Registrar la orden preliminar en el estado y Supabase
+      // Preparar items con los descuentos VIP calculados para usuarios registrados
+      const checkoutItems = cart.map(item => {
+        const discountPct = (currentUser && Number(item.memberDiscountPercent || 0) > 0)
+          ? Number(item.memberDiscountPercent)
+          : 0;
+
+        const effectivePrice = discountPct > 0
+          ? Number((item.price * (1 - discountPct / 100)).toFixed(2))
+          : Number(item.price);
+
+        return {
+          ...item,
+          originalPrice: item.price,
+          memberDiscountPercent: discountPct,
+          price: effectivePrice,
+          unitPrice: effectivePrice,
+          isVipDiscounted: discountPct > 0
+        };
+      });
+
+      // 1. Registrar la orden preliminar en el estado y Supabase con los precios con descuento
       const orderData = {
         customer,
-        items: cart,
+        items: checkoutItems,
         subtotal: cartSubtotal,
         shippingMethod: selectedShipping,
         total: orderTotal,
@@ -359,13 +379,13 @@ export const CheckoutModal = () => {
         receiptDownloaded: false
       }));
 
-      // 2. Solicitar creación de preferencia
+      // 2. Solicitar creación de preferencia en Mercado Pago con precios finales descontados
       const response = await fetch('/api/payments/mercadopago/preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId: newOrder.id,
-          items: cart,
+          items: checkoutItems,
           shippingMethod: selectedShipping,
           customer,
           orderTotal,
@@ -797,6 +817,14 @@ export const CheckoutModal = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', maxHeight: '135px', overflowY: 'auto', paddingRight: '0.2rem' }}>
                     {cart.map((item, idx) => {
                       const itemImg = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : (item.image || '');
+                      const discountPct = (currentUser && Number(item.memberDiscountPercent || 0) > 0)
+                        ? Number(item.memberDiscountPercent)
+                        : 0;
+                      const unitPrice = discountPct > 0
+                        ? Number((item.price * (1 - discountPct / 100)).toFixed(2))
+                        : Number(item.price);
+                      const lineTotal = unitPrice * (item.quantity || 1);
+
                       return (
                         <div
                           key={`${item.id}-${idx}`}
@@ -841,9 +869,16 @@ export const CheckoutModal = () => {
                               <span>{item.quantity}x {item.name}</span>
                             </button>
                           </div>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-gold-light)', flexShrink: 0 }}>
-                            S/ {((item.price || 0) * (item.quantity || 1)).toFixed(2)}
-                          </span>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'block' }}>
+                              S/ {lineTotal.toFixed(2)}
+                            </span>
+                            {discountPct > 0 && (
+                              <span style={{ fontSize: '0.62rem', color: '#10B981', fontWeight: 700 }}>
+                                VIP -{discountPct}%
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}

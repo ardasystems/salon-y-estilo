@@ -181,16 +181,31 @@ export async function createPreferenceHandler({
   const firstName = nameParts[0] || "Cliente";
   const lastName = nameParts.slice(1).join(" ") || "Salón & Estilo";
 
-  // Preparar items de la compra
-  const preferenceItems = (items || []).map((item, idx) => ({
-    id: String(item.id || `item-${idx + 1}`),
-    title: String(item.name || "Producto Salón & Estilo") + (item.selectedShade ? ` (${item.selectedShade})` : ""),
-    description: "Cosmética capilar y belleza profesional - Salón & Estilo Miluska Vidaurre",
-    category_id: "beauty",
-    quantity: Number(item.quantity) || 1,
-    currency_id: "PEN", // Trampa 5: Moneda local peruana
-    unit_price: Number(item.price) || 0
-  }));
+  // Preparar items de la compra con soporte de precio VIP con descuento
+  const preferenceItems = (items || []).map((item, idx) => {
+    const rawPrice = Number(item.price) || 0;
+    const unitPrice = item.unitPrice !== undefined ? Number(item.unitPrice) : rawPrice;
+    const discountPct = Number(item.memberDiscountPercent || 0);
+
+    let effectivePrice = unitPrice;
+    if (unitPrice >= rawPrice && discountPct > 0 && item.isVipDiscounted) {
+      effectivePrice = Number((rawPrice * (1 - discountPct / 100)).toFixed(2));
+    }
+
+    const isVipApplied = Boolean(item.isVipDiscounted || (discountPct > 0 && effectivePrice < rawPrice));
+    const titlePrefix = isVipApplied ? "💎 [Club VIP] " : "";
+    const fullTitle = `${titlePrefix}${item.name || "Producto Salón & Estilo"}${item.selectedShade ? ` (${item.selectedShade})` : ""}`;
+
+    return {
+      id: String(item.id || `item-${idx + 1}`),
+      title: fullTitle.slice(0, 120),
+      description: "Cosmética capilar y belleza profesional - Salón & Estilo Miluska Vidaurre",
+      category_id: "beauty",
+      quantity: Number(item.quantity) || 1,
+      currency_id: "PEN", // Trampa 5: Moneda local peruana
+      unit_price: Number(effectivePrice.toFixed(2))
+    };
+  });
 
   // Añadir costo de despacho si aplica
   if (shippingMethod && Number(shippingMethod.price) > 0) {
@@ -201,8 +216,17 @@ export async function createPreferenceHandler({
       category_id: "shipping",
       quantity: 1,
       currency_id: "PEN",
-      unit_price: Number(shippingMethod.price)
+      unit_price: Number(Number(shippingMethod.price).toFixed(2))
     });
+  }
+
+  // Conciliación de centavos con orderTotal si existe
+  if (totalAmount > 0 && preferenceItems.length > 0) {
+    const currentSum = Number(preferenceItems.reduce((acc, it) => acc + (it.unit_price * it.quantity), 0).toFixed(2));
+    const delta = Number((totalAmount - currentSum).toFixed(2));
+    if (Math.abs(delta) > 0 && Math.abs(delta) <= 0.05) {
+      preferenceItems[0].unit_price = Number((preferenceItems[0].unit_price + delta).toFixed(2));
+    }
   }
 
   // Base URL segura para retorno (Mercado Pago requiere HTTPS en back_urls con auto_return)
