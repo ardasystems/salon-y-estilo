@@ -174,6 +174,27 @@ export const StoreProvider = ({ children }) => {
     localStorage.setItem('salonestilo_settings', JSON.stringify(settings));
   }, [settings]);
 
+  // Sincronizar dinámicamente el favicon de la pestaña con el logo de la tienda
+  useEffect(() => {
+    try {
+      if (settings?.logoUrl) {
+        let link = document.getElementById('app-favicon') || document.querySelector("link[rel*='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          link.id = 'app-favicon';
+          document.head.appendChild(link);
+        }
+        link.href = settings.logoUrl;
+        link.type = settings.logoUrl.endsWith('.svg') 
+          ? 'image/svg+xml' 
+          : (settings.logoUrl.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/png');
+      }
+    } catch (e) {
+      console.warn("Error updating dynamic favicon:", e);
+    }
+  }, [settings?.logoUrl]);
+
   useEffect(() => {
     localStorage.setItem('salonestilo_orders', JSON.stringify(orders));
   }, [orders]);
