@@ -916,12 +916,10 @@ export const CheckoutModal = () => {
                   flexWrap: 'wrap',
                   gap: '0.35rem'
                 }}>
-                  <span style={{ fontSize: '0.68rem', color: '#9CA3AF', fontWeight: 600 }}>Aceptamos:</span>
+                  <span style={{ fontSize: '0.68rem', color: '#9CA3AF', fontWeight: 600 }}>Procesado seguro por:</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <span style={{ fontSize: '0.66rem', background: '#872391', color: '#FFF', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 800 }}>YAPE</span>
+                    <span style={{ fontSize: '0.66rem', background: '#00B1EA', color: '#FFF', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 800 }}>MERCADO PAGO</span>
                     <span style={{ fontSize: '0.66rem', background: '#1E293B', color: '#93C5FD', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>TARJETAS</span>
-                    <span style={{ fontSize: '0.66rem', background: '#FFCC00', color: '#000', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 800 }}>EFECTIVO CIP</span>
-                    <span style={{ fontSize: '0.66rem', background: '#064E3B', color: '#6EE7B7', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>BANCA WEB</span>
                   </div>
                 </div>
 

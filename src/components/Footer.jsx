@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { BookOpen, MapPin, Phone, Sparkles, Lock, ExternalLink } from 'lucide-react';
-import { YapeBadge, CardsBadge, PagoEfectivoBadge } from './PaymentIcons';
+import { CardsBadge } from './PaymentIcons';
+import { PrivacyModal, TermsModal } from './LegalModals';
 
 export const Footer = () => {
   const { setIsLibroOpen, settings, setIsAdminAuthOpen } = useStore();
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   return (
     <footer style={{
@@ -200,16 +203,15 @@ export const Footer = () => {
           {/* Medios de Pago Peruanos */}
           <div>
             <h4 style={{ fontSize: '0.88rem', color: '#FFFFFF', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1.25rem', fontWeight: 600 }}>
-              Pagos en Soles
+              Pago Seguro
             </h4>
             <p style={{ fontSize: '0.82rem', marginBottom: '1rem', lineHeight: 1.5, color: '#CCCCCC' }}>
-              Aceptamos pagos 100% automatizados con confirmación instantánea:
+              Transacciones 100% encriptadas y respaldadas por Mercado Pago Perú.
             </p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-              <YapeBadge size="sm" />
               <CardsBadge size="sm" />
-              <PagoEfectivoBadge size="sm" />
+              <div style={{ background: '#00B1EA', padding: '0.25rem 0.6rem', borderRadius: '4px', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>MERCADO PAGO</div>
             </div>
           </div>
 
@@ -328,8 +330,8 @@ export const Footer = () => {
             © {new Date().getFullYear()} Salón & Estilo. Todos los derechos reservados. Chiclayo, Perú.
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <span>Privacidad</span>
-            <span>Términos</span>
+            <button onClick={() => setIsPrivacyOpen(true)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, font: 'inherit' }}>Privacidad</button>
+            <button onClick={() => setIsTermsOpen(true)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, font: 'inherit' }}>Términos</button>
             {/* Discreet Admin Login Button at footer */}
             <button
               type="button"
@@ -355,6 +357,9 @@ export const Footer = () => {
           </div>
         </div>
       </div>
+      
+      <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
+      <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} />
     </footer>
   );
 };
