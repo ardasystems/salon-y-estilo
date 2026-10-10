@@ -87,25 +87,27 @@ export const CartDrawer = () => {
           </button>
         </div>
 
-        {/* Free shipping bar */}
-        <div style={{ padding: '1rem 1.5rem', background: '#0A0A0A', borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.55rem' }}>
-            <span style={{ fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Zap size={14} style={{ color: 'var(--accent-gold)' }} />
-              {remainingForFree === 0 
-                ? '¡Envío Express Bonificado en Chiclayo y alrededores!' 
-                : `Añade S/ ${remainingForFree.toFixed(2)} más para Envío Gratis local`}
-            </span>
+        {/* Free shipping bar (Solo visible si hay productos en el carrito) */}
+        {cart.length > 0 && (
+          <div style={{ padding: '1rem 1.5rem', background: '#0A0A0A', borderBottom: '1px solid rgba(255, 255, 255, 0.12)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.55rem' }}>
+              <span style={{ fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Zap size={14} style={{ color: 'var(--accent-gold)' }} />
+                {remainingForFree === 0 
+                  ? '¡Envío Express Bonificado en Chiclayo y alrededores!' 
+                  : `Añade S/ ${remainingForFree.toFixed(2)} más para Envío Gratis local`}
+              </span>
+            </div>
+            <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+              <div style={{
+                width: `${progressToFree}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #E89B9E 0%, var(--accent-gold) 100%)',
+                transition: 'width 0.4s ease'
+              }} />
+            </div>
           </div>
-          <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-            <div style={{
-              width: `${progressToFree}%`,
-              height: '100%',
-              background: 'linear-gradient(90deg, #E89B9E 0%, var(--accent-gold) 100%)',
-              transition: 'width 0.4s ease'
-            }} />
-          </div>
-        </div>
+        )}
 
         {/* Items List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

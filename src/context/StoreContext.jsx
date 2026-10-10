@@ -651,7 +651,10 @@ export const StoreProvider = ({ children }) => {
       createdAt: new Date().toISOString()
     };
     setOrders(prev => [fullOrder, ...prev]);
-    clearCart();
+    // Solo vaciar el carrito si la orden ya está confirmada como pagada
+    if (fullOrder.paymentStatus === 'pagado' || fullOrder.paymentStatus === 'approved') {
+      clearCart();
+    }
 
     try {
       await supabase.from('orders').insert({

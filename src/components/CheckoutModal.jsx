@@ -31,6 +31,7 @@ export const CheckoutModal = () => {
     currentUser,
     settings,
     createOrder,
+    clearCart,
     showToast,
     setActiveMainTab,
     setQuickViewProduct
@@ -113,6 +114,7 @@ export const CheckoutModal = () => {
         if (paymentStatus === 'success') {
           setStep('success');
           triggerConfetti();
+          clearCart(); // El pago fue exitoso y confirmado: se vacía el carrito ordenadamente
 
           const saved = getSavedCheckout();
           let targetOrder = saved?.completedOrder || (orderId ? {

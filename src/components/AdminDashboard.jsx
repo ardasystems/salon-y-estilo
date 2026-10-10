@@ -4,7 +4,8 @@ import {
   Package, ShoppingCart, Settings, Plus, Edit2, Trash2, 
   DollarSign, TrendingUp, Phone, BookOpen, X, Upload, Image as ImageIcon, 
   Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode,
-  Download, Database, ShieldCheck, CreditCard, CheckCircle, Users, UserCheck
+  Download, Database, ShieldCheck, CreditCard, CheckCircle, Users, UserCheck,
+  Search, Filter
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 import { uploadToSalonAssets } from '../lib/supabase';
@@ -37,6 +38,13 @@ export const AdminDashboard = () => {
 
   const [activeTab, setActiveTab] = useState('products');
   const [userSearch, setUserSearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('all');
+  const [serviceSearch, setServiceSearch] = useState('');
+  const [serviceCategoryFilter, setServiceCategoryFilter] = useState('all');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [complaintSearch, setComplaintSearch] = useState('');
   
   // Product Modal State
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -591,44 +599,133 @@ export const AdminDashboard = () => {
         </div>
 
         {/* TAB 1: PRODUCTS */}
-        {activeTab === 'products' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Productos en Catálogo</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Crea, modifica fotos comprimidas, precios en Soles o actualiza stock.</p>
-              </div>
-              <button
-                onClick={handleOpenAddProduct}
-                className="btn-luxury-gold"
-                style={{ fontSize: '0.8rem', padding: '0.75rem 1.5rem' }}
-              >
-                <Plus size={16} />
-                <span>Nuevo Producto</span>
-              </button>
-            </div>
+        {activeTab === 'products' && (() => {
+          const filteredProducts = products.filter(p => {
+            const matchesCat = productCategoryFilter === 'all' || p.category === productCategoryFilter;
+            if (!matchesCat) return false;
+            if (!productSearch.trim()) return true;
+            const q = productSearch.toLowerCase();
+            return (
+              (p.name || '').toLowerCase().includes(q) ||
+              (p.category || '').toLowerCase().includes(q) ||
+              (p.subtitle || '').toLowerCase().includes(q) ||
+              (p.description || '').toLowerCase().includes(q) ||
+              (p.id || '').toLowerCase().includes(q) ||
+              (Array.isArray(p.keywords) && p.keywords.some(k => (k || '').toLowerCase().includes(q)))
+            );
+          });
 
-            <div style={{
-              background: '#161210',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid rgba(212, 175, 55, 0.2)',
-              overflow: 'hidden',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
-            }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-                  <thead>
-                    <tr style={{ background: '#0D0A09', borderBottom: '1px solid rgba(212, 175, 55, 0.15)', color: 'var(--accent-gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      <th style={{ padding: '1rem' }}>Producto</th>
-                      <th style={{ padding: '1rem' }}>Categoría</th>
-                      <th style={{ padding: '1rem' }}>Precio</th>
-                      <th style={{ padding: '1rem' }}>Stock</th>
-                      <th style={{ padding: '1rem' }}>Estado</th>
-                      <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map(p => (
+          return (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Productos en Catálogo</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Crea, modifica fotos comprimidas, precios en Soles o actualiza stock.</p>
+                </div>
+                <button
+                  onClick={handleOpenAddProduct}
+                  className="btn-luxury-gold"
+                  style={{ fontSize: '0.8rem', padding: '0.75rem 1.5rem' }}
+                >
+                  <Plus size={16} />
+                  <span>Nuevo Producto</span>
+                </button>
+              </div>
+
+              {/* Barra de Búsqueda y Filtro de Productos */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                marginBottom: '1rem',
+                background: '#161210',
+                padding: '0.65rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(212, 175, 55, 0.25)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: '240px' }}>
+                  <Search size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar producto por nombre, categoría, ID o ingrediente..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#FFFFFF',
+                      fontSize: '0.84rem',
+                      outline: 'none'
+                    }}
+                  />
+                  {productSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setProductSearch('')}
+                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: '0.2rem' }}
+                      title="Limpiar búsqueda"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Filter size={14} style={{ color: 'var(--accent-gold)' }} />
+                  <select
+                    value={productCategoryFilter}
+                    onChange={(e) => setProductCategoryFilter(e.target.value)}
+                    style={{
+                      background: '#0D0A09',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      color: '#FFFFFF',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '0.4rem 0.65rem',
+                      fontSize: '0.78rem'
+                    }}
+                  >
+                    <option value="all">Todas las Categorías ({products.length})</option>
+                    {Array.from(new Set(products.map(p => p.category).filter(Boolean))).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold-light)', fontWeight: 600 }}>
+                    {filteredProducts.length} {filteredProducts.length === 1 ? 'producto' : 'productos'}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{
+                background: '#161210',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(212, 175, 55, 0.2)',
+                overflow: 'hidden',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
+              }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                    <thead>
+                      <tr style={{ background: '#0D0A09', borderBottom: '1px solid rgba(212, 175, 55, 0.15)', color: 'var(--accent-gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        <th style={{ padding: '1rem' }}>Producto</th>
+                        <th style={{ padding: '1rem' }}>Categoría</th>
+                        <th style={{ padding: '1rem' }}>Precio</th>
+                        <th style={{ padding: '1rem' }}>Stock</th>
+                        <th style={{ padding: '1rem' }}>Estado</th>
+                        <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProducts.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                            No se encontraron productos coincidentes con "{productSearch}".
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredProducts.map(p => (
                       <tr key={p.id} style={{ borderBottom: '1px solid rgba(212, 175, 55, 0.1)' }}>
                         <td style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                           <img
@@ -716,53 +813,142 @@ export const AdminDashboard = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    ))
+                  )}
+                </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* TAB 2: SERVICES (NEW: FULL SERVICES CRUD) */}
-        {activeTab === 'services' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Carta de Servicios del Salón</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Administra los servicios de estilismo, colorimetría, alisados y tratamientos del salón.</p>
-              </div>
-              <button
-                onClick={handleOpenAddService}
-                className="btn-luxury-gold"
-                style={{ fontSize: '0.8rem', padding: '0.75rem 1.5rem' }}
-              >
-                <Plus size={16} />
-                <span>Nuevo Servicio</span>
-              </button>
-            </div>
+        {activeTab === 'services' && (() => {
+          const filteredServices = services.filter(s => {
+            const matchesCat = serviceCategoryFilter === 'all' || s.category === serviceCategoryFilter;
+            if (!matchesCat) return false;
+            if (!serviceSearch.trim()) return true;
+            const q = serviceSearch.toLowerCase();
+            return (
+              (s.name || '').toLowerCase().includes(q) ||
+              (s.category || '').toLowerCase().includes(q) ||
+              (s.description || '').toLowerCase().includes(q) ||
+              (s.id || '').toLowerCase().includes(q)
+            );
+          });
 
-            <div style={{
-              background: '#161210',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid rgba(212, 175, 55, 0.2)',
-              overflow: 'hidden',
-              boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
-            }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-                  <thead>
-                    <tr style={{ background: '#0D0A09', borderBottom: '1px solid rgba(212, 175, 55, 0.15)', color: 'var(--accent-gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                      <th style={{ padding: '1rem' }}>Servicio</th>
-                      <th style={{ padding: '1rem' }}>Categoría</th>
-                      <th style={{ padding: '1rem' }}>Duración</th>
-                      <th style={{ padding: '1rem' }}>Inversión</th>
-                      <th style={{ padding: '1rem' }}>Detalles</th>
-                      <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {services.map(s => (
+          return (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Carta de Servicios del Salón</h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Administra los servicios de estilismo, colorimetría, alisados y tratamientos del salón.</p>
+                </div>
+                <button
+                  onClick={handleOpenAddService}
+                  className="btn-luxury-gold"
+                  style={{ fontSize: '0.8rem', padding: '0.75rem 1.5rem' }}
+                >
+                  <Plus size={16} />
+                  <span>Nuevo Servicio</span>
+                </button>
+              </div>
+
+              {/* Barra de Búsqueda y Filtro de Servicios */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                marginBottom: '1rem',
+                background: '#161210',
+                padding: '0.65rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(212, 175, 55, 0.25)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: '240px' }}>
+                  <Search size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar servicio por nombre, categoría, ID o detalles..."
+                    value={serviceSearch}
+                    onChange={(e) => setServiceSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#FFFFFF',
+                      fontSize: '0.84rem',
+                      outline: 'none'
+                    }}
+                  />
+                  {serviceSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setServiceSearch('')}
+                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: '0.2rem' }}
+                      title="Limpiar búsqueda"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Filter size={14} style={{ color: 'var(--accent-gold)' }} />
+                  <select
+                    value={serviceCategoryFilter}
+                    onChange={(e) => setServiceCategoryFilter(e.target.value)}
+                    style={{
+                      background: '#0D0A09',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      color: '#FFFFFF',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '0.4rem 0.65rem',
+                      fontSize: '0.78rem'
+                    }}
+                  >
+                    <option value="all">Todas las Categorías ({services.length})</option>
+                    {Array.from(new Set(services.map(s => s.category).filter(Boolean))).map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold-light)', fontWeight: 600 }}>
+                    {filteredServices.length} {filteredServices.length === 1 ? 'servicio' : 'servicios'}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{
+                background: '#161210',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(212, 175, 55, 0.2)',
+                overflow: 'hidden',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
+              }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                    <thead>
+                      <tr style={{ background: '#0D0A09', borderBottom: '1px solid rgba(212, 175, 55, 0.15)', color: 'var(--accent-gold)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        <th style={{ padding: '1rem' }}>Servicio</th>
+                        <th style={{ padding: '1rem' }}>Categoría</th>
+                        <th style={{ padding: '1rem' }}>Duración</th>
+                        <th style={{ padding: '1rem' }}>Inversión</th>
+                        <th style={{ padding: '1rem' }}>Detalles</th>
+                        <th style={{ padding: '1rem', textAlign: 'right' }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredServices.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                            No se encontraron servicios coincidentes con "{serviceSearch}".
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredServices.map(s => (
                       <tr key={s.id} style={{ borderBottom: '1px solid rgba(212, 175, 55, 0.1)' }}>
                         <td style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                           <img
@@ -817,13 +1003,15 @@ export const AdminDashboard = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
+                    ))
+                  )}
+                </tbody>
                 </table>
               </div>
             </div>
           </div>
-        )}
+        );
+      })()}
 
         {/* TAB: BEFORE & AFTER COMPARISON (INTERACTIVE SLIDER) */}
         {activeTab === 'comparison' && (
@@ -967,17 +1155,116 @@ export const AdminDashboard = () => {
         )}
 
         {/* TAB 3: ORDERS */}
-        {activeTab === 'orders' && (
-          <div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Órdenes de Compra</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Revisa los pedidos de Chiclayo y provincias con su confirmación automática de pago.
-              </p>
-            </div>
+        {activeTab === 'orders' && (() => {
+          const filteredOrders = orders.filter(order => {
+            const matchesStatus = orderStatusFilter === 'all' || order.paymentStatus === orderStatusFilter;
+            if (!matchesStatus) return false;
+            if (!orderSearch.trim()) return true;
+            const q = orderSearch.toLowerCase();
+            return (
+              (order.id || '').toLowerCase().includes(q) ||
+              (order.customer?.name || '').toLowerCase().includes(q) ||
+              (order.customer?.dni || '').toLowerCase().includes(q) ||
+              (order.customer?.phone || '').toLowerCase().includes(q) ||
+              (order.customer?.email || '').toLowerCase().includes(q) ||
+              (order.customer?.city || '').toLowerCase().includes(q) ||
+              (order.customer?.address || '').toLowerCase().includes(q) ||
+              (order.mercadopagoPaymentId || '').toLowerCase().includes(q) ||
+              (order.paymentOption || '').toLowerCase().includes(q) ||
+              (order.paymentMethod || '').toLowerCase().includes(q) ||
+              (order.items && order.items.some(it => (it.name || '').toLowerCase().includes(q)))
+            );
+          });
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {orders.map(order => (
+          return (
+            <div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Órdenes de Compra</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Revisa los pedidos de Chiclayo y provincias con su confirmación automática de pago.
+                </p>
+              </div>
+
+              {/* Barra de Búsqueda y Filtro de Órdenes */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                marginBottom: '1rem',
+                background: '#161210',
+                padding: '0.65rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(212, 175, 55, 0.25)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: '240px' }}>
+                  <Search size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar por # de orden, cliente, DNI, teléfono, ciudad o producto..."
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#FFFFFF',
+                      fontSize: '0.84rem',
+                      outline: 'none'
+                    }}
+                  />
+                  {orderSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setOrderSearch('')}
+                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: '0.2rem' }}
+                      title="Limpiar búsqueda"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Filter size={14} style={{ color: 'var(--accent-gold)' }} />
+                    <select
+                      value={orderStatusFilter}
+                      onChange={(e) => setOrderStatusFilter(e.target.value)}
+                      style={{
+                        padding: '0.35rem 0.65rem',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        background: '#0D0A09',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        color: '#FFFFFF',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="all">Todos los Estados</option>
+                      <option value="pendiente">Pendientes</option>
+                      <option value="pagado">Pagados</option>
+                      <option value="en_camino">En Camino</option>
+                      <option value="entregado">Entregados</option>
+                      <option value="cancelado">Cancelados</option>
+                    </select>
+                  </div>
+
+                  <span style={{ fontSize: '0.76rem', color: 'var(--accent-gold)', fontWeight: 600 }}>
+                    {filteredOrders.length} {filteredOrders.length === 1 ? 'orden' : 'órdenes'}
+                  </span>
+                </div>
+              </div>
+
+              {filteredOrders.length === 0 ? (
+                <div style={{ background: '#161210', padding: '3rem', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--text-muted)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                  <p>No se encontraron órdenes que coincidan con la búsqueda o filtro.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {filteredOrders.map(order => (
                 <div
                   key={order.id}
                   style={{
@@ -1129,9 +1416,11 @@ export const AdminDashboard = () => {
                   </div>
                 </div>
               ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* TAB 4: SETTINGS (LOGO, SLOGAN, PASSWORD, CONTACTS, SHIPPING) */}
         {activeTab === 'settings' && (
@@ -1987,37 +2276,100 @@ export const AdminDashboard = () => {
         )}
 
         {/* TAB 5: COMPLAINTS */}
-        {activeTab === 'complaints' && (
-          <div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Libro de Reclamaciones Virtual</h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Atención formal según INDECOPI.
-              </p>
-            </div>
+        {activeTab === 'complaints' && (() => {
+          const filteredComplaints = complaints.filter(c => {
+            if (!complaintSearch.trim()) return true;
+            const q = complaintSearch.toLowerCase();
+            return (
+              (c.correlative || '').toLowerCase().includes(q) ||
+              (c.fullName || '').toLowerCase().includes(q) ||
+              (c.dni || '').toLowerCase().includes(q) ||
+              (c.email || '').toLowerCase().includes(q) ||
+              (c.phone || '').toLowerCase().includes(q) ||
+              (c.description || '').toLowerCase().includes(q) ||
+              (c.consumerRequest || '').toLowerCase().includes(q) ||
+              (c.type || '').toLowerCase().includes(q)
+            );
+          });
 
-            {complaints.length === 0 ? (
-              <div style={{ background: '#161210', padding: '3rem', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--text-muted)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                <BookOpen size={40} style={{ opacity: 0.5, marginBottom: '0.75rem', color: 'var(--accent-gold)' }} />
-                <p>No hay reclamaciones registradas actualmente.</p>
+          return (
+            <div>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>Libro de Reclamaciones Virtual</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Atención formal según INDECOPI.
+                </p>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {complaints.map((c, i) => (
-                  <div key={i} style={{ background: '#161210', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--accent-gold)' }}>{c.correlative} • {c.type}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(c.filedAt).toLocaleString('es-PE')}</span>
+
+              {/* Barra de Búsqueda de Reclamaciones */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                marginBottom: '1rem',
+                background: '#161210',
+                padding: '0.65rem 1rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(212, 175, 55, 0.25)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: '240px' }}>
+                  <Search size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                  <input
+                    type="text"
+                    placeholder="Buscar por correlativo LRV, consumidor, DNI, o reclamo..."
+                    value={complaintSearch}
+                    onChange={(e) => setComplaintSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#FFFFFF',
+                      fontSize: '0.84rem',
+                      outline: 'none'
+                    }}
+                  />
+                  {complaintSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setComplaintSearch('')}
+                      style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: '0.2rem' }}
+                      title="Limpiar búsqueda"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                <span style={{ fontSize: '0.76rem', color: 'var(--accent-gold)', fontWeight: 600 }}>
+                  {filteredComplaints.length} {filteredComplaints.length === 1 ? 'registro' : 'registros'}
+                </span>
+              </div>
+
+              {filteredComplaints.length === 0 ? (
+                <div style={{ background: '#161210', padding: '3rem', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--text-muted)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                  <BookOpen size={40} style={{ opacity: 0.5, marginBottom: '0.75rem', color: 'var(--accent-gold)' }} />
+                  <p>No se encontraron reclamaciones registradas que coincidan con la búsqueda.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {filteredComplaints.map((c, i) => (
+                    <div key={i} style={{ background: '#161210', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--accent-gold)' }}>{c.correlative} • {c.type}</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(c.filedAt).toLocaleString('es-PE')}</span>
+                      </div>
+                      <div style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}><strong style={{ color: '#FFF' }}>Consumidor:</strong> {c.fullName} (DNI: {c.dni})</div>
+                      <div style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}><strong style={{ color: '#FFF' }}>Detalle:</strong> {c.description}</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--accent-gold-light)' }}><strong style={{ color: '#FFF' }}>Pedido:</strong> {c.consumerRequest}</div>
                     </div>
-                    <div style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}><strong style={{ color: '#FFF' }}>Consumidor:</strong> {c.fullName} (DNI: {c.dni})</div>
-                    <div style={{ fontSize: '0.85rem', marginBottom: '0.35rem' }}><strong style={{ color: '#FFF' }}>Detalle:</strong> {c.description}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--accent-gold-light)' }}><strong style={{ color: '#FFF' }}>Pedido:</strong> {c.consumerRequest}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* MODAL 1: ADD / EDIT PRODUCT (WITH AUTO IMAGE COMPRESSION) */}
         {productModalOpen && (
