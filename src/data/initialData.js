@@ -341,7 +341,7 @@ export const INITIAL_SETTINGS = {
   adminPassword: "salon&estilo2620",
   originCity: "Chiclayo",
   originRegion: "Chiclayo, Lambayeque - Perú",
-  salonAddress: "Av. Rivera del Mar / Calle San Martín, Chiclayo",
+  salonAddress: "Chiclayo & Pimentel",
   whatsappContact: "51920731163",
   yapePhone: "920 731 163",
   yapeOwner: "Miluska Vidaurre - Salón & Estilo",

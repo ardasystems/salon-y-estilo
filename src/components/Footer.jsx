@@ -39,7 +39,7 @@ export const Footer = () => {
             </span>
 
             <p style={{ fontSize: '0.84rem', color: '#B3B3B3', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              Estilismo exclusivo de alta gama, transformaciones balayage, alisados y cosmética importada seleccionada por Miluska Vidaurre.
+              Estilismo exclusivo, transformaciones balayage, alisados y cosmética importada seleccionada por Miluska Vidaurre.
             </p>
 
             {/* Social Media Channels (Facebook, TikTok, Instagram, YouTube, WhatsApp) */}
@@ -184,15 +184,15 @@ export const Footer = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.84rem' }}>
               <div style={{ display: 'flex', gap: '0.65rem' }}>
                 <MapPin size={17} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '0.1rem' }} />
-                <span>Salón: Chiclayo & Zona de Atención (Lambayeque).</span>
+                <span>Salón: {settings.salonAddress || "Chiclayo & Pimentel"}</span>
               </div>
               <div style={{ display: 'flex', gap: '0.65rem' }}>
                 <Phone size={17} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '0.1rem' }} />
-                <span>Atención: Martes a Domingo: 9:00 am - 8:30 pm (Previa Cita)</span>
+                <span>Atención: Lunes a Sábado (Previa Cita)</span>
               </div>
               <div style={{ display: 'flex', gap: '0.65rem' }}>
                 <Sparkles size={17} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '0.1rem' }} />
-                <span>Motorizado Express en &lt; 2h en Chiclayo y alrededores | Shalom a nivel nacional.</span>
+                <span>Motorizado Express en Chiclayo y Pimentel</span>
               </div>
             </div>
           </div>
