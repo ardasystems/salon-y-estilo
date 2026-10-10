@@ -828,31 +828,61 @@ export const SalonSection = () => {
             </div>
 
             {/* Right aesthetic visual */}
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div style={{
                 position: 'relative',
                 borderRadius: 'var(--radius-md)',
                 overflow: 'hidden',
                 border: '1px solid rgba(229, 192, 123, 0.35)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
-                maxWidth: '360px',
-                width: '100%'
+                boxShadow: '0 12px 35px rgba(0,0,0,0.85)',
+                maxWidth: settings.healthSectionImageAspect === 'portrait' ? '330px' : settings.healthSectionImageAspect === 'landscape' ? '460px' : '390px',
+                width: '100%',
+                background: '#0D0A09',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
-                <img
-                  src={settings.healthSectionImage || "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=700&q=80"}
-                  alt={settings.healthSectionAuthor || "Miluska Vidaurre Salón & Estilo Asesoría Profesional"}
-                  style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }}
-                />
+                <div style={{
+                  width: '100%',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  aspectRatio: settings.healthSectionImageAspect === 'portrait'
+                    ? '3/4'
+                    : settings.healthSectionImageAspect === 'landscape'
+                      ? '16/10'
+                      : settings.healthSectionImageAspect === 'square'
+                        ? '1/1'
+                        : 'auto'
+                }}>
+                  <img
+                    src={settings.healthSectionImage || "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=700&q=80"}
+                    alt={settings.healthSectionAuthor || "Miluska Vidaurre Salón & Estilo Asesoría Profesional"}
+                    style={{
+                      width: '100%',
+                      height: (settings.healthSectionImageAspect && settings.healthSectionImageAspect !== 'auto') ? '100%' : 'auto',
+                      maxHeight: '440px',
+                      objectFit: (settings.healthSectionImageAspect && settings.healthSectionImageAspect !== 'auto') ? 'cover' : 'contain',
+                      display: 'block',
+                      transform: `scale(${(Number(settings.healthSectionImageZoom) || 100) / 100})`,
+                      transformOrigin: settings.healthSectionImagePos || 'center',
+                      transition: 'transform 0.25s ease'
+                    }}
+                  />
+                </div>
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(to top, rgba(13, 10, 9, 0.9) 0%, transparent 60%)'
+                  pointerEvents: 'none',
+                  background: 'linear-gradient(to top, rgba(13, 10, 9, 0.94) 0%, rgba(13, 10, 9, 0.45) 35%, transparent 70%)'
                 }} />
                 <div style={{
                   position: 'absolute',
                   bottom: '1rem',
                   left: '1rem',
-                  right: '1rem'
+                  right: '1rem',
+                  zIndex: 2
                 }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--accent-gold)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {settings.healthSectionAuthor || "Miluska Vidaurre • Estilista Principal"}

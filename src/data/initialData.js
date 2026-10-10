@@ -396,6 +396,9 @@ export const INITIAL_SETTINGS = {
   healthSectionButtonText: "Consultar con los Expertos en WhatsApp",
   healthSectionWhatsappMsg: "Hola Miluska, deseo consultar con los expertos de Salón&Estilo para un diagnóstico y asesoría de mi cabello.",
   healthSectionImage: "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=700&q=80",
+  healthSectionImageAspect: "auto",
+  healthSectionImageZoom: 100,
+  healthSectionImagePos: "center",
   healthSectionAuthor: "Miluska Vidaurre • Estilista Principal",
   healthSectionQuote: "«La belleza real comienza cuidando tu salud capilar»."
 };

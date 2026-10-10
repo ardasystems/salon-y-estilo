@@ -193,7 +193,7 @@ export const AdminDashboard = () => {
     if (file) {
       try {
         showToast("Subiendo imagen de salud capilar...", "info");
-        const compressed = await compressImage(file, 800, 600, 0.85);
+        const compressed = await compressImage(file, 1200, 1200, 0.85);
         const uploadedUrl = await uploadToSalonAssets(compressed, 'health');
         setSettingsForm(prev => ({ ...prev, healthSectionImage: uploadedUrl || compressed }));
         showToast("Imagen de Salud Capilar cargada con éxito");
@@ -2283,6 +2283,195 @@ export const AdminDashboard = () => {
                           />
                         </label>
                       </div>
+                    </div>
+
+                    {/* Controles de Encuadre, Silueta y Zoom para la Foto */}
+                    <div style={{ marginTop: '1rem', paddingTop: '0.85rem', borderTop: '1px dashed rgba(229, 192, 123, 0.25)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', alignItems: 'start' }}>
+                        
+                        {/* Selector de Silueta / Formato del Cuadro */}
+                        <div>
+                          <label style={{ fontSize: '0.74rem', color: 'var(--accent-gold-light)', fontWeight: 700, display: 'block', marginBottom: '0.4rem' }}>
+                            🖼️ Formato / Ajuste del Cuadro
+                          </label>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => setSettingsForm({ ...settingsForm, healthSectionImageAspect: 'auto' })}
+                              style={{
+                                padding: '0.45rem 0.6rem',
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '0.73rem',
+                                fontWeight: 600,
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderColor: (settingsForm.healthSectionImageAspect === 'auto' || !settingsForm.healthSectionImageAspect) ? 'var(--accent-gold)' : 'rgba(255,255,255,0.15)',
+                                background: (settingsForm.healthSectionImageAspect === 'auto' || !settingsForm.healthSectionImageAspect) ? 'rgba(212, 175, 55, 0.2)' : '#161210',
+                                color: (settingsForm.healthSectionImageAspect === 'auto' || !settingsForm.healthSectionImageAspect) ? 'var(--accent-gold-light)' : 'var(--text-muted)'
+                              }}
+                            >
+                              🔄 Adaptativo (Recomendado)
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setSettingsForm({ ...settingsForm, healthSectionImageAspect: 'portrait' })}
+                              style={{
+                                padding: '0.45rem 0.6rem',
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '0.73rem',
+                                fontWeight: 600,
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderColor: settingsForm.healthSectionImageAspect === 'portrait' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.15)',
+                                background: settingsForm.healthSectionImageAspect === 'portrait' ? 'rgba(212, 175, 55, 0.2)' : '#161210',
+                                color: settingsForm.healthSectionImageAspect === 'portrait' ? 'var(--accent-gold-light)' : 'var(--text-muted)'
+                              }}
+                            >
+                              📱 Vertical (Retrato 3:4)
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setSettingsForm({ ...settingsForm, healthSectionImageAspect: 'landscape' })}
+                              style={{
+                                padding: '0.45rem 0.6rem',
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '0.73rem',
+                                fontWeight: 600,
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderColor: settingsForm.healthSectionImageAspect === 'landscape' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.15)',
+                                background: settingsForm.healthSectionImageAspect === 'landscape' ? 'rgba(212, 175, 55, 0.2)' : '#161210',
+                                color: settingsForm.healthSectionImageAspect === 'landscape' ? 'var(--accent-gold-light)' : 'var(--text-muted)'
+                              }}
+                            >
+                              🖥️ Horizontal (Panorámica 16:10)
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setSettingsForm({ ...settingsForm, healthSectionImageAspect: 'square' })}
+                              style={{
+                                padding: '0.45rem 0.6rem',
+                                borderRadius: 'var(--radius-xs)',
+                                fontSize: '0.73rem',
+                                fontWeight: 600,
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                border: '1px solid',
+                                borderColor: settingsForm.healthSectionImageAspect === 'square' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.15)',
+                                background: settingsForm.healthSectionImageAspect === 'square' ? 'rgba(212, 175, 55, 0.2)' : '#161210',
+                                color: settingsForm.healthSectionImageAspect === 'square' ? 'var(--accent-gold-light)' : 'var(--text-muted)'
+                              }}
+                            >
+                              ⏹️ Cuadrada (1:1)
+                            </button>
+                          </div>
+                          <span style={{ fontSize: '0.69rem', color: '#9CA3AF', display: 'block', marginTop: '0.35rem' }}>
+                            Con <em>Adaptativo</em> el cuadro abraza la silueta real de cualquier foto que cargues.
+                          </span>
+                        </div>
+
+                        {/* Zoom / Acercamiento & Enfoque */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                            <label style={{ fontSize: '0.74rem', color: 'var(--accent-gold-light)', fontWeight: 700 }}>
+                              🔍 Acercar / Zoom ({settingsForm.healthSectionImageZoom || 100}%)
+                            </label>
+                            {(settingsForm.healthSectionImageZoom && settingsForm.healthSectionImageZoom !== 100) && (
+                              <button
+                                type="button"
+                                onClick={() => setSettingsForm({ ...settingsForm, healthSectionImageZoom: 100 })}
+                                style={{ background: 'transparent', border: 'none', color: 'var(--accent-gold)', fontSize: '0.68rem', cursor: 'pointer', textDecoration: 'underline' }}
+                              >
+                                Restablecer (100%)
+                              </button>
+                            )}
+                          </div>
+
+                          <input
+                            type="range"
+                            min="100"
+                            max="160"
+                            step="5"
+                            value={settingsForm.healthSectionImageZoom || 100}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, healthSectionImageZoom: Number(e.target.value) })}
+                            style={{ width: '100%', accentColor: 'var(--accent-gold)', cursor: 'pointer' }}
+                          />
+
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.6rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Punto de Enfoque:</span>
+                            <div style={{ display: 'inline-flex', gap: '0.3rem' }}>
+                              {[
+                                { id: 'top', label: '⬆️ Arriba' },
+                                { id: 'center', label: '⏺️ Centro' },
+                                { id: 'bottom', label: '⬇️ Abajo' }
+                              ].map(pos => (
+                                <button
+                                  key={pos.id}
+                                  type="button"
+                                  onClick={() => setSettingsForm({ ...settingsForm, healthSectionImagePos: pos.id })}
+                                  style={{
+                                    padding: '0.2rem 0.5rem',
+                                    borderRadius: 'var(--radius-xs)',
+                                    fontSize: '0.68rem',
+                                    border: '1px solid',
+                                    borderColor: (settingsForm.healthSectionImagePos || 'center') === pos.id ? 'var(--accent-gold)' : 'rgba(255,255,255,0.1)',
+                                    background: (settingsForm.healthSectionImagePos || 'center') === pos.id ? 'var(--accent-gold)' : 'transparent',
+                                    color: (settingsForm.healthSectionImagePos || 'center') === pos.id ? '#0D0A09' : '#D4D4D4',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  {pos.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Live Mini Preview */}
+                      {settingsForm.healthSectionImage && (
+                        <div style={{ marginTop: '0.9rem', padding: '0.75rem', background: '#090706', borderRadius: 'var(--radius-xs)', border: '1px solid rgba(229, 192, 123, 0.25)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', fontWeight: 700 }}>
+                            👁️ Previsualización en Vivo:
+                          </span>
+                          <div style={{
+                            position: 'relative',
+                            width: settingsForm.healthSectionImageAspect === 'portrait' ? '120px' : settingsForm.healthSectionImageAspect === 'landscape' ? '180px' : '140px',
+                            maxHeight: '160px',
+                            borderRadius: 'var(--radius-xs)',
+                            overflow: 'hidden',
+                            border: '1px solid var(--accent-gold)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+                            background: '#0D0A09'
+                          }}>
+                            <img
+                              src={settingsForm.healthSectionImage}
+                              alt="Live Preview"
+                              style={{
+                                width: '100%',
+                                height: (settingsForm.healthSectionImageAspect && settingsForm.healthSectionImageAspect !== 'auto') ? '100px' : 'auto',
+                                maxHeight: '140px',
+                                objectFit: (settingsForm.healthSectionImageAspect && settingsForm.healthSectionImageAspect !== 'auto') ? 'cover' : 'contain',
+                                display: 'block',
+                                transform: `scale(${(Number(settingsForm.healthSectionImageZoom) || 100) / 100})`,
+                                transformOrigin: settingsForm.healthSectionImagePos || 'center'
+                              }}
+                            />
+                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%)', pointerEvents: 'none' }} />
+                            <div style={{ position: 'absolute', bottom: '0.3rem', left: '0.4rem', right: '0.4rem', fontSize: '0.62rem', color: '#FFF', lineHeight: 1.1, zIndex: 1 }}>
+                              <strong style={{ color: 'var(--accent-gold)', fontSize: '0.58rem', display: 'block' }}>{settingsForm.healthSectionAuthor || 'Estilista'}</strong>
+                              <span style={{ fontSize: '0.58rem', opacity: 0.9 }}>{settingsForm.healthSectionQuote || ''}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
