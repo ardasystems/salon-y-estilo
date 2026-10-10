@@ -182,9 +182,55 @@ export const StoreProvider = ({ children }) => {
     localStorage.setItem('salonestilo_complaints', JSON.stringify(complaints));
   }, [complaints]);
 
+  // Persistent Cart: local storage + registered user association
   useEffect(() => {
-    localStorage.setItem('salonestilo_cart', JSON.stringify(cart));
-  }, [cart]);
+    try {
+      localStorage.setItem('salonestilo_cart', JSON.stringify(cart));
+      if (currentUser?.id) {
+        localStorage.setItem(`salonestilo_cart_user_${currentUser.id}`, JSON.stringify(cart));
+        // Back up cart in registered_users cloud record
+        supabase
+          .from('registered_users')
+          .update({
+            data: { ...currentUser, cart },
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentUser.id)
+          .then(() => {})
+          .catch(() => {});
+      }
+    } catch (e) {
+      console.warn("Error saving cart", e);
+    }
+  }, [cart, currentUser]);
+
+  // Restore registered user's cart on startup or account switch
+  useEffect(() => {
+    if (currentUser?.id) {
+      try {
+        const userSavedStr = localStorage.getItem(`salonestilo_cart_user_${currentUser.id}`);
+        const userSavedCart = userSavedStr ? JSON.parse(userSavedStr) : (currentUser.cart || []);
+        
+        if (Array.isArray(userSavedCart) && userSavedCart.length > 0) {
+          setCart(prev => {
+            if (!prev || prev.length === 0) return userSavedCart;
+            const merged = [...prev];
+            userSavedCart.forEach(savedItem => {
+              const idx = merged.findIndex(i => i.id === savedItem.id && i.selectedShade === savedItem.selectedShade);
+              if (idx > -1) {
+                merged[idx].quantity = Math.max(merged[idx].quantity, savedItem.quantity);
+              } else {
+                merged.push(savedItem);
+              }
+            });
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.warn("Error restoring user cart:", err);
+      }
+    }
+  }, [currentUser?.id]);
 
   useEffect(() => {
     localStorage.setItem('salonestilo_comparison_cases', JSON.stringify(comparisonCases));
@@ -719,7 +765,7 @@ export const StoreProvider = ({ children }) => {
       throw new Error("Este correo ya está registrado en el Club VIP. Inicia sesión con tu cuenta.");
     }
 
-    const discount = Number(settings.memberDiscountPercent) || 10;
+    const discount = Number(settings.memberDiscountPercent) || 0;
     const newUser = {
       id: `usr-${Date.now().toString().slice(-6)}`,
       name: name.trim(),
@@ -729,12 +775,18 @@ export const StoreProvider = ({ children }) => {
       role: 'vip',
       discountPercent: discount,
       registeredAt: new Date().toISOString(),
-      ordersCount: 0
+      ordersCount: 0,
+      cart: cart || []
     };
 
     setRegisteredUsers(prev => [newUser, ...prev]);
     setCurrentUser(newUser);
-    showToast(`¡Bienvenida(o) ${newUser.name.split(' ')[0]}! Accedes a ${discount}% de descuento VIP.`);
+
+    try {
+      localStorage.setItem(`salonestilo_cart_user_${newUser.id}`, JSON.stringify(cart || []));
+    } catch {}
+
+    showToast(`¡Bienvenida(o) ${newUser.name.split(' ')[0]}! Membresía Club VIP activa con descuentos exclusivos.`);
 
     try {
       await supabase.from('registered_users').insert({
@@ -764,7 +816,29 @@ export const StoreProvider = ({ children }) => {
     }
 
     setCurrentUser(user);
-    showToast(`¡Hola de nuevo, ${user.name.split(' ')[0]}! Descuento Club VIP activo.`);
+
+    // Merge saved user cart from storage / profile
+    try {
+      const savedStr = localStorage.getItem(`salonestilo_cart_user_${user.id}`);
+      const savedUserCart = savedStr ? JSON.parse(savedStr) : (user.cart || []);
+      if (Array.isArray(savedUserCart) && savedUserCart.length > 0) {
+        setCart(prev => {
+          if (!prev || prev.length === 0) return savedUserCart;
+          const merged = [...prev];
+          savedUserCart.forEach(savedItem => {
+            const idx = merged.findIndex(i => i.id === savedItem.id && i.selectedShade === savedItem.selectedShade);
+            if (idx > -1) {
+              merged[idx].quantity = Math.max(merged[idx].quantity, savedItem.quantity);
+            } else {
+              merged.push(savedItem);
+            }
+          });
+          return merged;
+        });
+      }
+    } catch {}
+
+    showToast(`¡Hola de nuevo, ${user.name.split(' ')[0]}! Carrito conservado y Club VIP activo.`);
     return user;
   };
 

@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { ShoppingCart, Eye, Star } from 'lucide-react';
 
 export const ProductCard = ({ product }) => {
-  const { addToCart, setQuickViewProduct, currentUser, setIsUserAuthOpen } = useStore();
+  const { addToCart, setQuickViewProduct, currentUser, setIsUserAuthOpen, setIsCartOpen } = useStore();
   const productDiscountPct = Number(product.memberDiscountPercent || 0);
   const isMemberDiscountActive = Boolean(currentUser && productDiscountPct > 0);
   const discountedPrice = isMemberDiscountActive
@@ -286,7 +286,10 @@ export const ProductCard = ({ product }) => {
 
           {/* Add to Carrito button */}
           <button
-            onClick={() => addToCart(product, 1, selectedShade)}
+            onClick={() => {
+              addToCart(product, 1, selectedShade);
+              setIsCartOpen(true);
+            }}
             disabled={isOutOfStock}
             className="product-card-btn"
             style={{

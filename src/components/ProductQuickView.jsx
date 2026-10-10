@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { X, Star, ShoppingCart, Truck, Sparkles } from 'lucide-react';
 
 export const ProductQuickView = () => {
-  const { quickViewProduct, setQuickViewProduct, addToCart, currentUser, setIsUserAuthOpen } = useStore();
+  const { quickViewProduct, setQuickViewProduct, addToCart, currentUser, setIsUserAuthOpen, setIsCartOpen } = useStore();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedShade, setSelectedShade] = useState(
@@ -21,6 +21,7 @@ export const ProductQuickView = () => {
   const handleAdd = () => {
     addToCart(quickViewProduct, quantity, selectedShade);
     setQuickViewProduct(null);
+    setIsCartOpen(true);
   };
 
   const images = quickViewProduct.images && quickViewProduct.images.length > 0 

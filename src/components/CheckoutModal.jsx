@@ -4,7 +4,8 @@ import confetti from 'canvas-confetti';
 import { 
   X, CheckCircle, ArrowRight, ShieldCheck, Copy, 
   QrCode, ExternalLink, Printer, Check, Zap, Truck, Store, Download, MapPin,
-  FileText, MessageCircle, AlertCircle, CreditCard, Building2, Smartphone
+  FileText, MessageCircle, AlertCircle, CreditCard, Building2, Smartphone,
+  Sparkles, User
 } from 'lucide-react';
 import { generateReceiptPDF } from '../utils/receiptGenerator';
 

@@ -23,6 +23,16 @@ export const UserAuthModal = () => {
   });
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordReadOnly, setPasswordReadOnly] = useState(true);
+
+  // Clear password and lock field to avoid browser prefilled autofill
+  React.useEffect(() => {
+    if (isUserAuthOpen) {
+      setFormData(prev => ({ ...prev, password: '' }));
+      setErrorMsg('');
+      setPasswordReadOnly(true);
+    }
+  }, [isUserAuthOpen, activeTab]);
 
   if (!isUserAuthOpen) return null;
 
@@ -295,7 +305,7 @@ export const UserAuthModal = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <form onSubmit={handleSubmit} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {activeTab === 'register' && (
                 <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
@@ -383,6 +393,11 @@ export const UserAuthModal = () => {
                 <div style={{ position: 'relative' }}>
                   <input
                     type="password"
+                    id="user-auth-password"
+                    name="vip_account_auth_field"
+                    readOnly={passwordReadOnly}
+                    onFocus={() => setPasswordReadOnly(false)}
+                    autoComplete="new-password"
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -415,7 +430,7 @@ export const UserAuthModal = () => {
                 }}>
                   <Sparkles size={16} style={{ flexShrink: 0, color: 'var(--accent-gold)' }} />
                   <span>
-                    El registro es 100% gratuito y opcional. Activa inmediatamente tu <strong>{discountPercent}% de descuento Club VIP</strong> en compras cosméticas.
+                    El registro es 100% gratuito y opcional. Accede inmediatamente a promociones y descuentos exclusivos en productos seleccionados.
                   </span>
                 </div>
               )}
@@ -433,7 +448,7 @@ export const UserAuthModal = () => {
                   opacity: isLoading ? 0.7 : 1
                 }}
               >
-                {isLoading ? 'Procesando...' : (activeTab === 'register' ? `Crear Cuenta y Activar ${discountPercent}% OFF` : 'Ingresar a mi Cuenta')}
+                {isLoading ? 'Procesando...' : (activeTab === 'register' ? 'Crear Cuenta Club VIP' : 'Ingresar a mi Cuenta')}
               </button>
             </form>
           </div>
