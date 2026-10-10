@@ -181,7 +181,7 @@ export const SalonSection = () => {
                 marginBottom: '2.2rem',
                 maxWidth: '540px'
               }}>
-                Un espacio íntimo y exclusivo en Chiclayo. Especialistas en colorimetría personalizada, transformaciones balayage, alisados orgánicos libres de formol y maquillaje social.
+                {settings.tagline || "Un espacio íntimo y exclusivo en Chiclayo. Especialistas en colorimetría personalizada, transformaciones balayage, alisados orgánicos libres de formol y maquillaje social."}
               </p>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>

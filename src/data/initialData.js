@@ -335,7 +335,7 @@ export const INITIAL_COMPARISON_CASES = [
 export const INITIAL_SETTINGS = {
   storeName: "Salón & Estilo",
   brandSubtitle: "Salón de Belleza Miluska Vidaurre",
-  tagline: "Estilismo Exclusivo de Alta Gama, Servicios de Salón & Cosmética Seleccionada",
+  tagline: "Un espacio íntimo y exclusivo en Chiclayo. Especialistas en colorimetría personalizada, transformaciones balayage, alisados orgánicos libres de formol y maquillaje social.",
   logoUrl: "", // Optional custom logo image URL, fallback to elegant monogram
   logoShape: "square", // 'square' | 'circle'
   adminPassword: "salon&estilo2620",

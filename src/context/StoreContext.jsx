@@ -174,21 +174,65 @@ export const StoreProvider = ({ children }) => {
     localStorage.setItem('salonestilo_settings', JSON.stringify(settings));
   }, [settings]);
 
-  // Sincronizar dinámicamente el favicon de la pestaña con el logo de la tienda
+  // Sincronizar dinámicamente el favicon de la pestaña con el logo de la tienda (Siempre perfectamente circular y nítido)
   useEffect(() => {
     try {
+      let link = document.getElementById('app-favicon') || document.querySelector("link[rel*='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.id = 'app-favicon';
+        document.head.appendChild(link);
+      }
+
       if (settings?.logoUrl) {
-        let link = document.getElementById('app-favicon') || document.querySelector("link[rel*='icon']");
-        if (!link) {
-          link = document.createElement('link');
-          link.rel = 'icon';
-          link.id = 'app-favicon';
-          document.head.appendChild(link);
-        }
-        link.href = settings.logoUrl;
-        link.type = settings.logoUrl.endsWith('.svg') 
-          ? 'image/svg+xml' 
-          : (settings.logoUrl.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/png');
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const size = 64;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, size, size);
+
+              // Recorte circular perfecto con fondo transparente
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+              ctx.closePath();
+              ctx.clip();
+
+              // Centrado y recorte simétrico 1:1 (Evita cualquier distorsión o aspecto aplastado)
+              const nw = img.naturalWidth || img.width || size;
+              const nh = img.naturalHeight || img.height || size;
+              const minDim = Math.min(nw, nh);
+              const sx = (nw - minDim) / 2;
+              const sy = (nh - minDim) / 2;
+              ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+              ctx.restore();
+
+              // Bisel / Aro dorado de lujo alrededor del logo circular
+              ctx.beginPath();
+              ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+              ctx.strokeStyle = '#D4AF37';
+              ctx.lineWidth = 3;
+              ctx.stroke();
+
+              link.href = canvas.toDataURL('image/png');
+              link.type = 'image/png';
+            }
+          } catch {
+            // Fallback si canvas está restringido por CORS
+            link.href = settings.logoUrl;
+          }
+        };
+        img.onerror = () => {
+          link.href = settings.logoUrl;
+        };
+        img.src = settings.logoUrl;
       }
     } catch (e) {
       console.warn("Error updating dynamic favicon:", e);

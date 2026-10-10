@@ -1521,7 +1521,7 @@ export const AdminDashboard = () => {
               <div>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
                   <Sparkles size={16} style={{ color: 'var(--accent-gold)' }} />
-                  <span>1. Identidad de Marca, Logotipo & Eslogan</span>
+                  <span>1. Identidad de Marca, Logotipo & Contacto</span>
                 </h4>
 
                 {/* Logo Upload / URL */}
@@ -1670,14 +1670,36 @@ export const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Lema / Tagline Ampliado</label>
-                  <input
-                    type="text"
-                    value={settingsForm.tagline || 'Estilismo Exclusivo de Alta Gama, Servicios de Salón & Cosmética Seleccionada'}
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Lema / Tagline Ampliado (Descripción en Cabecera)</label>
+                  <textarea
+                    rows={2}
+                    value={settingsForm.tagline !== undefined ? settingsForm.tagline : 'Un espacio íntimo y exclusivo en Chiclayo. Especialistas en colorimetría personalizada, transformaciones balayage, alisados orgánicos libres de formol y maquillaje social.'}
                     onChange={(e) => setSettingsForm({ ...settingsForm, tagline: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', resize: 'vertical' }}
                   />
+                </div>
+
+                {/* WhatsApp & Salon Address */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>WhatsApp Comercial / Citas (51...)</label>
+                    <input
+                      type="text"
+                      value={settingsForm.whatsappContact || '51920731163'}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, whatsappContact: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Dirección / Sede Salón</label>
+                    <input
+                      type="text"
+                      value={settingsForm.salonAddress || ''}
+                      onChange={(e) => setSettingsForm({ ...settingsForm, salonAddress: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1713,143 +1735,11 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* 3. Contact & Digital Payments */}
-              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.85rem' }}>
-                  <Phone size={16} style={{ color: 'var(--accent-gold)' }} />
-                  <span>3. Celulares de Contacto & Pagos Digitales</span>
-                </h4>
-                
-                {/* WhatsApp & Salon Address */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
-                  <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>WhatsApp Comercial / Citas (51...)</label>
-                    <input
-                      type="text"
-                      value={settingsForm.whatsappContact || '51920731163'}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, whatsappContact: e.target.value })}
-                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Dirección / Sede Salón</label>
-                    <input
-                      type="text"
-                      value={settingsForm.salonAddress || ''}
-                      onChange={(e) => setSettingsForm({ ...settingsForm, salonAddress: e.target.value })}
-                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                    />
-                  </div>
-                </div>
-
-                {/* YAPE CONFIGURATION (PHONE, OWNER & QR IMAGE) */}
-                <div style={{ background: '#110D0B', padding: '1.1rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(139, 44, 158, 0.3)', marginBottom: '1.25rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#E9A6F5', fontWeight: 700, fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                    <QrCode size={16} />
-                    <span>Configuración de Pagos Yape</span>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', marginBottom: '1rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Número de Celular Yape</label>
-                      <input
-                        type="text"
-                        value={settingsForm.yapePhone || '920 731 163'}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, yapePhone: e.target.value })}
-                        style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>Titular de la Cuenta Yape</label>
-                      <input
-                        type="text"
-                        value={settingsForm.yapeOwner || ''}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, yapeOwner: e.target.value })}
-                        style={{ width: '100%', padding: '0.55rem', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '0.74rem', color: '#FFFFFF', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
-                      Imagen del Código QR Yape (Para escanear en Checkout)
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-                      <div style={{
-                        width: '58px',
-                        height: '58px',
-                        borderRadius: 'var(--radius-sm)',
-                        background: '#FFF',
-                        border: '1.5px solid var(--yape-purple)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                        flexShrink: 0
-                      }}>
-                        {settingsForm.yapeQrImage ? (
-                          <img src={settingsForm.yapeQrImage} alt="QR Yape" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        ) : (
-                          <QrCode size={28} style={{ color: 'var(--yape-purple)' }} />
-                        )}
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <label style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
-                            background: 'rgba(139, 44, 158, 0.2)',
-                            border: '1px solid rgba(139, 44, 158, 0.5)',
-                            color: '#E9A6F5',
-                            padding: '0.4rem 0.8rem',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.74rem',
-                            fontWeight: 600,
-                            cursor: 'pointer'
-                          }}>
-                            <Upload size={13} />
-                            <span>Subir QR Yape</span>
-                            <input type="file" accept="image/*" onChange={handleYapeQrUpload} style={{ display: 'none' }} />
-                          </label>
-
-                          {settingsForm.yapeQrImage && (
-                            <button
-                              type="button"
-                              onClick={() => setSettingsForm({ ...settingsForm, yapeQrImage: '' })}
-                              style={{
-                                padding: '0.4rem 0.75rem',
-                                borderRadius: 'var(--radius-sm)',
-                                background: '#261715',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                color: '#D4D4D4',
-                                fontSize: '0.72rem'
-                              }}
-                            >
-                              Restablecer a QR Vectorial
-                            </button>
-                          )}
-                        </div>
-
-                        <input
-                          type="text"
-                          placeholder="O pega aquí la URL de la imagen de tu QR Yape"
-                          value={settingsForm.yapeQrImage || ''}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, yapeQrImage: e.target.value })}
-                          style={{ width: '100%', padding: '0.45rem 0.7rem', borderRadius: 'var(--radius-xs)', fontSize: '0.78rem' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4. Mercado Pago Official Gateway Configuration */}
+              {/* 3. Mercado Pago Gateway Configuration */}
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
                   <CreditCard size={16} style={{ color: '#009EE3' }} />
-                  <span>4. Pasarela de Pagos Mercado Pago (Conmutador de Ambiente)</span>
+                  <span>3. Pasarela de Pagos Mercado Pago (Conmutador de Ambiente)</span>
                 </h4>
                 <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
                   Cambia con un solo clic entre cobrar dinero real en Soles o hacer pruebas con tarjetas ficticias.
@@ -1926,10 +1816,10 @@ export const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* 5. Social Media Links */}
+              {/* 4. Social Media Links */}
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '1.25rem' }}>
                 <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-                  <span>5. Redes Sociales Oficiales</span>
+                  <span>4. Redes Sociales Oficiales</span>
                 </h4>
                 <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                   Si dejas un campo en blanco, su icono se ocultará automáticamente en toda la web.
