@@ -511,7 +511,7 @@ export const SalonSection = () => {
               La Experiencia Salón & Estilo
             </span>
             <h2 style={{ fontSize: '2.6rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)', marginBottom: '0.75rem' }}>
-              Estilismo Personalizado de Alta Gama
+              Estilismo Personalizado
             </h2>
             <p style={{ fontSize: '0.94rem', color: '#D4D4D4', lineHeight: 1.6 }}>
               Diseñamos cada color y corte analizando tu fisionomía, tono de piel y estilo de vida, con productos de grado profesional que protegen la salud de tu cabello.
