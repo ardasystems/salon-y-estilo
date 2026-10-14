@@ -759,6 +759,27 @@ export async function activateSubscriptionIdempotent(
 | **Tarjeta Vencida** | `4023 3611 1111 1115` | `123` | `rejected` (expired_card) |
 | **Error en Código de Seguridad** | `4023 3611 1111 1116` | `999` | `rejected` (invalid_security_code) |
 
+### 👥 Cuentas de Prueba Oficiales (Sandbox Perú)
+
+Para evitar el error de choque de entornos (*"Una de las partes con la que intentas hacer el pago es de prueba"*), utiliza estas credenciales de prueba generadas por la API de Mercado Pago:
+
+| Rol | Correo Electrónico | Contraseña / Detalle |
+| :--- | :--- | :--- |
+| **Comprador de Prueba (Test Buyer)** | `test_user_6584099940687323618@testuser.com` | `YYqDBzHUJp` (Nickname: `TESTUSER6584099940687323618`) |
+| **Vendedor de Prueba (Collector)** | `test_user_7152118213362738773@testuser.com` | Dueño de la credencial `MERCADOPAGO_ACCESS_TOKEN_TEST` |
+
+> [!NOTE]
+> **Generar nuevos usuarios de prueba con la API:**
+> Si otra aplicación requiere un comprador de prueba propio para su token, ejecute en terminal:
+> ```bash
+> curl -X POST \
+>   -H "Content-Type: application/json" \
+>   -H "Authorization: Bearer TU_TEST_ACCESS_TOKEN" \
+>   "https://api.mercadopago.com/users/test_user" \
+>   -d '{"site_id":"MPE"}'
+> ```
+> *(Cambiar `MPE` por `MLM` para México, `MCO` para Colombia, `MLA` para Argentina).*
+
 ---
 
 ## 13. SUPER-PROMPT DIRECTIVO PARA TRANSFERIR A OTRA IA
