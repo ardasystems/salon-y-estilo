@@ -564,27 +564,70 @@ export const StoreProvider = ({ children }) => {
   // ==========================================
   // Cart (Local Session)
   // ==========================================
-  const addToCart = (product, quantity = 1, shade = null) => {
+  const addToCart = (product, quantity = 1, variantSelection = null) => {
+    // variantSelection can be:
+    // 1) An object { shade, size }
+    // 2) A direct shade object { name, hex } (retrocompatibilidad)
+    let shade = null;
+    let size = null;
+    if (variantSelection) {
+      if (variantSelection.name && variantSelection.hex !== undefined) {
+        shade = variantSelection;
+      } else {
+        shade = variantSelection.shade || null;
+        size = variantSelection.size || null;
+      }
+    }
+
+    const itemPrice = (size && size.price !== undefined && size.price !== null && !isNaN(Number(size.price)))
+      ? Number(size.price)
+      : Number(product.price);
+
+    const itemStock = (size && size.stock !== undefined && size.stock !== null && size.stock !== '' && !isNaN(Number(size.stock)))
+      ? Number(size.stock)
+      : Number(product.stock || 0);
+
+    const shadeKey = shade?.name || '';
+    const sizeKey = size?.name || '';
+
     setCart(prev => {
-      const existingIndex = prev.findIndex(item => item.id === product.id && item.selectedShade === shade?.name);
+      const existingIndex = prev.findIndex(item =>
+        item.id === product.id &&
+        (item.selectedShade || '') === shadeKey &&
+        (item.selectedSize || '') === sizeKey
+      );
+
       if (existingIndex > -1) {
         const updated = [...prev];
         updated[existingIndex].quantity += quantity;
         return updated;
       }
+
       return [...prev, {
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: itemPrice,
+        basePrice: Number(product.price),
         memberDiscountPercent: Number(product.memberDiscountPercent || 0),
-        image: product.images ? product.images[0] : '',
+        image: product.images && product.images.length > 0 ? product.images[0] : (product.image || ''),
         quantity,
         selectedShade: shade ? shade.name : null,
         selectedShadeHex: shade ? shade.hex : null,
-        stock: product.stock
+        selectedSize: size ? size.name : null,
+        stock: itemStock
       }];
     });
-    showToast(`"${product.name}" añadido a tu bolsa`);
+
+    const variantLabel = [
+      shade ? `Tono: ${shade.name}` : null,
+      size ? `Tam: ${size.name}` : null
+    ].filter(Boolean).join(' • ');
+
+    const toastMsg = variantLabel
+      ? `"${product.name}" (${variantLabel}) añadido a tu bolsa`
+      : `"${product.name}" añadido a tu bolsa`;
+
+    showToast(toastMsg);
   };
 
   const removeFromCart = (index) => {

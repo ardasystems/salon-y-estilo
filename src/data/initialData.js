@@ -26,6 +26,10 @@ export const INITIAL_PRODUCTS = [
       "Sin alcohol ni fragancias sintéticas"
     ],
     volume: "30 ml",
+    sizes: [
+      { name: "30 ml", price: 36.90, stock: 24 },
+      { name: "50 ml", price: 49.90, stock: 12 }
+    ],
     usage: "Aplicar 3 a 4 gotas sobre el rostro limpio antes de la crema hidratante, mañana y noche."
   },
   {
@@ -144,6 +148,10 @@ export const INITIAL_PRODUCTS = [
       "Reef safe y sin parabenos"
     ],
     volume: "50 ml",
+    sizes: [
+      { name: "50 ml", price: 39.90, stock: 30 },
+      { name: "100 ml (Maxi)", price: 68.00, stock: 15 }
+    ],
     usage: "Aplica dos líneas sobre tus dedos y distribuye uniformemente 15 minutos antes de la exposición solar."
   },
   {

@@ -139,7 +139,7 @@ export const CartDrawer = () => {
           ) : (
             cart.map((item, index) => (
               <div
-                key={`${item.id}-${item.selectedShade || 'default'}-${index}`}
+                key={`${item.id}-${item.selectedShade || ''}-${item.selectedSize || ''}-${index}`}
                 style={{
                   display: 'flex',
                   gap: '1rem',
@@ -176,10 +176,36 @@ export const CartDrawer = () => {
                       {item.name}
                     </h4>
                   </a>
-                  {item.selectedShade && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}>
-                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: item.selectedShadeHex }} />
-                      <span style={{ fontSize: '0.75rem', color: '#B3B3B3' }}>{item.selectedShade}</span>
+                  
+                  {/* Badges de Variante (Tono y/o Presentación) */}
+                  {(item.selectedShade || item.selectedSize) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                      {item.selectedShade && (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(229, 192, 123, 0.3)',
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: '4px'
+                        }}>
+                          <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: item.selectedShadeHex || '#D98E82', border: '1px solid rgba(255,255,255,0.3)', display: 'inline-block' }} />
+                          <span style={{ fontSize: '0.72rem', color: '#F7E7C4', fontWeight: 600 }}>{item.selectedShade}</span>
+                        </div>
+                      )}
+                      {item.selectedSize && (
+                        <div style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          background: 'rgba(147, 197, 253, 0.12)',
+                          border: '1px solid rgba(147, 197, 253, 0.35)',
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: '4px'
+                        }}>
+                          <span style={{ fontSize: '0.72rem', color: '#93C5FD', fontWeight: 600 }}>{item.selectedSize}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                   <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--accent-gold)' }}>

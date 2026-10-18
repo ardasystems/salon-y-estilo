@@ -5,7 +5,7 @@ import {
   DollarSign, TrendingUp, Phone, BookOpen, X, Upload, Image as ImageIcon, 
   Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode,
   Download, Database, ShieldCheck, CreditCard, CheckCircle, Users, UserCheck,
-  Search, Filter, ExternalLink
+  Search, Filter, ExternalLink, Palette, Layers
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 import { uploadToSalonAssets } from '../lib/supabase';
@@ -62,7 +62,9 @@ export const AdminDashboard = () => {
     isNew: true,
     description: '',
     benefitsText: '',
-    images: ['', '', '']
+    images: ['', '', ''],
+    shades: [],
+    sizes: []
   });
 
   // Service Modal State
@@ -286,7 +288,9 @@ export const AdminDashboard = () => {
         'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
         '',
         ''
-      ]
+      ],
+      shades: [],
+      sizes: []
     });
     setProductModalOpen(true);
   };
@@ -299,6 +303,21 @@ export const AdminDashboard = () => {
     while (existingImages.length < 3) {
       existingImages.push('');
     }
+
+    const existingShades = Array.isArray(product.shades)
+      ? product.shades.map(s => ({
+          name: typeof s === 'string' ? s : (s.name || ''),
+          hex: (s && s.hex) ? s.hex : '#D98E82'
+        }))
+      : [];
+
+    const existingSizes = Array.isArray(product.sizes)
+      ? product.sizes.map(sz => ({
+          name: typeof sz === 'string' ? sz : (sz.name || ''),
+          price: (sz && sz.price !== undefined && sz.price !== null) ? sz.price.toString() : '',
+          stock: (sz && sz.stock !== undefined && sz.stock !== null) ? sz.stock.toString() : ''
+        }))
+      : [];
 
     setProductForm({
       name: product.name,
@@ -314,9 +333,60 @@ export const AdminDashboard = () => {
       isNew: product.isNew || false,
       description: product.description,
       benefitsText: product.benefits ? product.benefits.join('\n') : '',
-      images: existingImages.slice(0, 3)
+      images: existingImages.slice(0, 3),
+      shades: existingShades,
+      sizes: existingSizes
     });
     setProductModalOpen(true);
+  };
+
+  // Helper handlers for product variants
+  const handleAddShade = () => {
+    setProductForm(prev => ({
+      ...prev,
+      shades: [...(prev.shades || []), { name: '', hex: '#C76D6D' }]
+    }));
+  };
+
+  const handleUpdateShade = (index, field, value) => {
+    setProductForm(prev => {
+      const updated = [...(prev.shades || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, shades: updated };
+    });
+  };
+
+  const handleRemoveShade = (index) => {
+    setProductForm(prev => ({
+      ...prev,
+      shades: (prev.shades || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddSize = () => {
+    setProductForm(prev => ({
+      ...prev,
+      sizes: [...(prev.sizes || []), {
+        name: '',
+        price: prev.price || '',
+        stock: prev.stock || ''
+      }]
+    }));
+  };
+
+  const handleUpdateSize = (index, field, value) => {
+    setProductForm(prev => {
+      const updated = [...(prev.sizes || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, sizes: updated };
+    });
+  };
+
+  const handleRemoveSize = (index) => {
+    setProductForm(prev => ({
+      ...prev,
+      sizes: (prev.sizes || []).filter((_, i) => i !== index)
+    }));
   };
 
   const handleSaveProduct = (e) => {
@@ -332,21 +402,50 @@ export const AdminDashboard = () => {
       ? cleanImages
       : ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80'];
 
+    const basePriceNum = parseFloat(productForm.price) || 0;
+    const baseStockNum = parseInt(productForm.stock, 10) || 0;
+
+    const cleanShades = (productForm.shades || [])
+      .map(s => ({
+        name: (s.name || '').trim(),
+        hex: (s.hex || '#D98E82').trim()
+      }))
+      .filter(s => s.name.length > 0);
+
+    const cleanSizes = (productForm.sizes || [])
+      .map(sz => {
+        const sName = (sz.name || '').trim();
+        const sPrice = sz.price !== '' && !isNaN(parseFloat(sz.price))
+          ? parseFloat(sz.price)
+          : basePriceNum;
+        const sStock = sz.stock !== '' && !isNaN(parseInt(sz.stock, 10))
+          ? parseInt(sz.stock, 10)
+          : baseStockNum;
+        return {
+          name: sName,
+          price: sPrice,
+          stock: sStock
+        };
+      })
+      .filter(sz => sz.name.length > 0);
+
     const productPayload = {
       name: productForm.name,
       subtitle: productForm.subtitle,
       category: productForm.category,
       keywords: keywordsList,
-      price: parseFloat(productForm.price) || 0,
+      price: basePriceNum,
       originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : null,
       memberDiscountPercent: productForm.memberDiscountPercent ? Math.min(100, Math.max(0, parseFloat(productForm.memberDiscountPercent))) : 0,
-      stock: parseInt(productForm.stock, 10) || 0,
+      stock: baseStockNum,
       volume: productForm.volume,
       isBestseller: productForm.isBestseller,
       isNew: productForm.isNew,
       description: productForm.description,
       benefits: productForm.benefitsText.split('\n').filter(b => b.trim() !== ''),
-      images: finalImages
+      images: finalImages,
+      shades: cleanShades,
+      sizes: cleanSizes
     };
 
     if (editingProduct) {
@@ -792,6 +891,20 @@ export const AdminDashboard = () => {
                           <div>
                             <div style={{ fontWeight: 600, color: '#FFFFFF' }}>{p.name}</div>
                             <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{p.volume || 'Cosmético'}</div>
+                            {((p.shades && p.shades.length > 0) || (p.sizes && p.sizes.length > 0)) && (
+                              <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.3rem', flexWrap: 'wrap' }}>
+                                {p.shades && p.shades.length > 0 && (
+                                  <span style={{ fontSize: '0.64rem', color: '#F7E7C4', background: 'rgba(229, 192, 123, 0.18)', border: '1px solid rgba(229, 192, 123, 0.35)', padding: '0.1rem 0.4rem', borderRadius: '3px', fontWeight: 600 }}>
+                                    🎨 {p.shades.length} {p.shades.length === 1 ? 'tono' : 'tonos'}
+                                  </span>
+                                )}
+                                {p.sizes && p.sizes.length > 0 && (
+                                  <span style={{ fontSize: '0.64rem', color: '#93C5FD', background: 'rgba(147, 197, 253, 0.18)', border: '1px solid rgba(147, 197, 253, 0.35)', padding: '0.1rem 0.4rem', borderRadius: '3px', fontWeight: 600 }}>
+                                    📏 {p.sizes.length} {p.sizes.length === 1 ? 'presentación' : 'presentaciones'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td style={{ padding: '1rem' }}>
@@ -1430,8 +1543,20 @@ export const AdminDashboard = () => {
                                 onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                                 title="Abrir detalle del producto en una nueva pestaña"
                               >
-                                <span>{it.quantity}x {it.name}</span>
-                                <ExternalLink size={12} style={{ opacity: 0.8, flexShrink: 0 }} />
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                  <span>{it.quantity}x {it.name}</span>
+                                  {it.selectedShade && (
+                                    <span style={{ fontSize: '0.64rem', color: '#F7E7C4', background: 'rgba(229, 192, 123, 0.2)', border: '1px solid rgba(229, 192, 123, 0.4)', padding: '0.05rem 0.35rem', borderRadius: '3px', fontWeight: 600 }}>
+                                      🎨 {it.selectedShade}
+                                    </span>
+                                  )}
+                                  {it.selectedSize && (
+                                    <span style={{ fontSize: '0.64rem', color: '#93C5FD', background: 'rgba(147, 197, 253, 0.2)', border: '1px solid rgba(147, 197, 253, 0.4)', padding: '0.05rem 0.35rem', borderRadius: '3px', fontWeight: 600 }}>
+                                      📏 {it.selectedSize}
+                                    </span>
+                                  )}
+                                  <ExternalLink size={12} style={{ opacity: 0.8, flexShrink: 0 }} />
+                                </div>
                               </a>
                               <span style={{ color: '#D4D4D4', fontWeight: 600, flexShrink: 0 }}>
                                 S/ {(it.price * it.quantity).toFixed(2)}
@@ -3065,6 +3190,299 @@ export const AdminDashboard = () => {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* PRODUCT VARIANTS SECTION: Tonos / Colores y Presentaciones / Tamaños */}
+                <div style={{
+                  background: '#0D0A09',
+                  padding: '1.2rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid rgba(229, 192, 123, 0.35)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.25rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <label style={{ fontSize: '0.86rem', color: 'var(--accent-gold-light)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <Palette size={16} style={{ color: 'var(--accent-gold)' }} />
+                      <span>Variantes del Cosmético (Tonos y Presentaciones)</span>
+                    </label>
+                    <span style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>
+                      Opcional • Tonos, presentaciones o ambos
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '0.74rem', color: '#B3B3B3', lineHeight: 1.45, margin: 0 }}>
+                    Configura tonos con círculos de color interactivos (ideal para labiales, rubores, esmaltes y tintes) y/o diferentes presentaciones o tamaños (30 ml, 50 ml, etc.) con precio o stock específico.
+                  </p>
+
+                  {/* SUBSECTION 1: Tonos / Colores */}
+                  <div style={{
+                    background: '#15110F',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: 'var(--radius-xs)',
+                    padding: '0.9rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span>🎨 Tonos / Colores disponibles</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                          ({(productForm.shades || []).length})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddShade}
+                        className="btn-luxury-gold"
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '0.3rem 0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <Plus size={13} />
+                        <span>Agregar Tono</span>
+                      </button>
+                    </div>
+
+                    {(productForm.shades || []).length === 0 ? (
+                      <div style={{ fontSize: '0.74rem', color: '#6B7280', fontStyle: 'italic', padding: '0.5rem 0' }}>
+                        Sin tonos configurados (el producto se venderá como tono único o fórmula estándar).
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                        {(productForm.shades || []).map((shade, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.65rem',
+                              background: '#1A1412',
+                              padding: '0.5rem 0.65rem',
+                              borderRadius: 'var(--radius-xs)',
+                              border: '1px solid rgba(229, 192, 123, 0.2)'
+                            }}
+                          >
+                            {/* Color preview circle with color input */}
+                            <label
+                              title="Haz clic para seleccionar el color visual"
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                backgroundColor: shade.hex || '#C76D6D',
+                                border: '2px solid rgba(255, 255, 255, 0.4)',
+                                cursor: 'pointer',
+                                display: 'inline-block',
+                                flexShrink: 0,
+                                position: 'relative',
+                                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
+                              }}
+                            >
+                              <input
+                                type="color"
+                                value={shade.hex || '#C76D6D'}
+                                onChange={(e) => handleUpdateShade(idx, 'hex', e.target.value)}
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  opacity: 0,
+                                  cursor: 'pointer',
+                                  width: '100%',
+                                  height: '100%'
+                                }}
+                              />
+                            </label>
+
+                            {/* Color Hex Input */}
+                            <input
+                              type="text"
+                              placeholder="#HEX"
+                              value={shade.hex || ''}
+                              onChange={(e) => handleUpdateShade(idx, 'hex', e.target.value)}
+                              style={{
+                                width: '85px',
+                                padding: '0.4rem 0.5rem',
+                                fontSize: '0.76rem',
+                                fontFamily: 'monospace',
+                                background: '#110D0C',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: 'var(--accent-gold-light)',
+                                borderRadius: '4px',
+                                textTransform: 'uppercase'
+                              }}
+                            />
+
+                            {/* Shade Name Input */}
+                            <input
+                              type="text"
+                              placeholder="Nombre del tono (ej. 01 Rosé Nude, Terracotta Chiclayo)"
+                              value={shade.name || ''}
+                              onChange={(e) => handleUpdateShade(idx, 'name', e.target.value)}
+                              style={{
+                                flex: 1,
+                                padding: '0.4rem 0.65rem',
+                                fontSize: '0.78rem',
+                                background: '#110D0C',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: '#FFFFFF',
+                                borderRadius: '4px'
+                              }}
+                            />
+
+                            {/* Remove button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveShade(idx)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#EF4444',
+                                cursor: 'pointer',
+                                padding: '0.35rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              title="Eliminar tono"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SUBSECTION 2: Tamaños / Presentaciones */}
+                  <div style={{
+                    background: '#15110F',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: 'var(--radius-xs)',
+                    padding: '0.9rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <span>📏 Presentaciones / Tamaños disponibles</span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+                          ({(productForm.sizes || []).length})
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddSize}
+                        className="btn-luxury-gold"
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '0.3rem 0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <Plus size={13} />
+                        <span>Agregar Tamaño</span>
+                      </button>
+                    </div>
+
+                    {(productForm.sizes || []).length === 0 ? (
+                      <div style={{ fontSize: '0.74rem', color: '#6B7280', fontStyle: 'italic', padding: '0.5rem 0' }}>
+                        Sin presentaciones múltiples (usará el volumen/gramaje general y el precio base).
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1fr 32px', gap: '0.5rem', fontSize: '0.68rem', color: '#9CA3AF', padding: '0 0.5rem' }}>
+                          <span>Nombre de presentación</span>
+                          <span>Precio S/. (opcional)</span>
+                          <span>Stock (opcional)</span>
+                          <span />
+                        </div>
+                        {(productForm.sizes || []).map((sizeItem, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '2fr 1.2fr 1fr 32px',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              background: '#1A1412',
+                              padding: '0.5rem 0.65rem',
+                              borderRadius: 'var(--radius-xs)',
+                              border: '1px solid rgba(147, 197, 253, 0.25)'
+                            }}
+                          >
+                            <input
+                              type="text"
+                              placeholder="Ej. 30 ml, 50 ml, Pack Dúo"
+                              value={sizeItem.name || ''}
+                              onChange={(e) => handleUpdateSize(idx, 'name', e.target.value)}
+                              style={{
+                                padding: '0.4rem 0.55rem',
+                                fontSize: '0.78rem',
+                                background: '#110D0C',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: '#FFFFFF',
+                                borderRadius: '4px'
+                              }}
+                            />
+
+                            <input
+                              type="number"
+                              step="0.01"
+                              placeholder={productForm.price ? `S/ ${productForm.price}` : "Precio S/."}
+                              value={sizeItem.price || ''}
+                              onChange={(e) => handleUpdateSize(idx, 'price', e.target.value)}
+                              style={{
+                                padding: '0.4rem 0.55rem',
+                                fontSize: '0.78rem',
+                                background: '#110D0C',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: 'var(--accent-gold-light)',
+                                borderRadius: '4px',
+                                fontWeight: 600
+                              }}
+                            />
+
+                            <input
+                              type="number"
+                              placeholder={productForm.stock ? `u. ${productForm.stock}` : "Stock"}
+                              value={sizeItem.stock || ''}
+                              onChange={(e) => handleUpdateSize(idx, 'stock', e.target.value)}
+                              style={{
+                                padding: '0.4rem 0.55rem',
+                                fontSize: '0.78rem',
+                                background: '#110D0C',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: '#FFFFFF',
+                                borderRadius: '4px'
+                              }}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSize(idx)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#EF4444',
+                                cursor: 'pointer',
+                                padding: '0.35rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              title="Eliminar tamaño"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 

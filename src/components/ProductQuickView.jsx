@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 import { X, Star, ShoppingCart, Truck, Sparkles } from 'lucide-react';
 
@@ -7,19 +7,41 @@ export const ProductQuickView = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [selectedShade, setSelectedShade] = useState(
-    quickViewProduct?.shades ? quickViewProduct.shades[0] : null
+    quickViewProduct?.shades && quickViewProduct.shades.length > 0 ? quickViewProduct.shades[0] : null
+  );
+  const [selectedSize, setSelectedSize] = useState(
+    quickViewProduct?.sizes && quickViewProduct.sizes.length > 0 ? quickViewProduct.sizes[0] : null
   );
 
+  useEffect(() => {
+    if (quickViewProduct) {
+      setSelectedShade(quickViewProduct.shades && quickViewProduct.shades.length > 0 ? quickViewProduct.shades[0] : null);
+      setSelectedSize(quickViewProduct.sizes && quickViewProduct.sizes.length > 0 ? quickViewProduct.sizes[0] : null);
+      setSelectedImageIndex(0);
+      setQuantity(1);
+    }
+  }, [quickViewProduct]);
+
   if (!quickViewProduct) return null;
+
+  const basePrice = (selectedSize && selectedSize.price !== undefined && selectedSize.price !== null)
+    ? Number(selectedSize.price)
+    : Number(quickViewProduct.price);
 
   const productDiscountPct = Number(quickViewProduct.memberDiscountPercent || 0);
   const isMemberDiscountActive = Boolean(currentUser && productDiscountPct > 0);
   const discountedPrice = isMemberDiscountActive
-    ? (quickViewProduct.price * (1 - productDiscountPct / 100))
-    : quickViewProduct.price;
+    ? (basePrice * (1 - productDiscountPct / 100))
+    : basePrice;
+
+  const currentStock = (selectedSize && selectedSize.stock !== undefined && selectedSize.stock !== null && selectedSize.stock !== '')
+    ? Number(selectedSize.stock)
+    : Number(quickViewProduct.stock || 0);
+
+  const isOutOfStock = currentStock <= 0;
 
   const handleAdd = () => {
-    addToCart(quickViewProduct, quantity, selectedShade);
+    addToCart(quickViewProduct, quantity, { shade: selectedShade, size: selectedSize });
     setQuickViewProduct(null);
     setIsCartOpen(true);
   };
@@ -180,9 +202,9 @@ export const ProductQuickView = () => {
             <span style={{ fontSize: '2rem', fontWeight: 800, color: isMemberDiscountActive ? 'var(--accent-gold-light)' : '#FFFFFF' }}>
               S/ {discountedPrice.toFixed(2)}
             </span>
-            {(isMemberDiscountActive || quickViewProduct.originalPrice) && (
+            {(isMemberDiscountActive || (quickViewProduct.originalPrice && quickViewProduct.originalPrice > basePrice)) && (
               <span style={{ fontSize: '1.05rem', color: '#888', textDecoration: 'line-through' }}>
-                S/ {(isMemberDiscountActive ? quickViewProduct.price : quickViewProduct.originalPrice).toFixed(2)}
+                S/ {(isMemberDiscountActive ? basePrice : quickViewProduct.originalPrice).toFixed(2)}
               </span>
             )}
             {isMemberDiscountActive ? (
@@ -216,7 +238,7 @@ export const ProductQuickView = () => {
               </button>
             ) : null}
             <span style={{ fontSize: '0.85rem', color: 'var(--accent-gold)', fontWeight: 700, marginLeft: 'auto' }}>
-              {quickViewProduct.volume}
+              {selectedSize ? selectedSize.name : quickViewProduct.volume}
             </span>
           </div>
 
@@ -231,11 +253,13 @@ export const ProductQuickView = () => {
               <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.6rem', color: '#FFFFFF' }}>
                 Tono: <span style={{ color: 'var(--accent-gold)' }}>{selectedShade?.name}</span>
               </div>
-              <div style={{ display: 'flex', gap: '0.6rem' }}>
+              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
                 {quickViewProduct.shades.map((shade, i) => (
                   <button
                     key={i}
+                    type="button"
                     onClick={() => setSelectedShade(shade)}
+                    title={shade.name}
                     style={{
                       width: '32px',
                       height: '32px',
@@ -244,10 +268,54 @@ export const ProductQuickView = () => {
                       border: selectedShade?.name === shade.name ? '2px solid var(--accent-gold)' : '1px solid rgba(255,255,255,0.3)',
                       boxShadow: selectedShade?.name === shade.name ? '0 0 12px rgba(229, 192, 123, 0.7)' : 'none',
                       transform: selectedShade?.name === shade.name ? 'scale(1.15)' : 'scale(1)',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      cursor: 'pointer'
                     }}
                   />
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sizes / Presentaciones Picker */}
+          {quickViewProduct.sizes && quickViewProduct.sizes.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.6rem', color: '#FFFFFF' }}>
+                Presentación / Tamaño: <span style={{ color: 'var(--accent-gold)' }}>{selectedSize?.name}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {quickViewProduct.sizes.map((sizeOption, i) => {
+                  const isSelected = selectedSize?.name === sizeOption.name;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setSelectedSize(sizeOption)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: isSelected ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                        border: isSelected ? '1px solid var(--accent-gold)' : '1px solid rgba(255, 255, 255, 0.15)',
+                        color: isSelected ? 'var(--accent-gold-light)' : '#E5E5E5',
+                        fontWeight: isSelected ? 700 : 500,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: isSelected ? '0 0 12px rgba(229, 192, 123, 0.25)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <span>{sizeOption.name}</span>
+                      {sizeOption.price && sizeOption.price !== quickViewProduct.price && (
+                        <span style={{ fontSize: '0.72rem', color: isSelected ? 'var(--accent-gold)' : '#9CA3AF' }}>
+                          (S/ {Number(sizeOption.price).toFixed(2)})
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -287,6 +355,7 @@ export const ProductQuickView = () => {
               background: '#0A0A0A'
             }}>
               <button
+                type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 style={{ width: '28px', height: '28px', fontSize: '1.05rem', fontWeight: 700, color: '#FFFFFF' }}
               >
@@ -294,6 +363,7 @@ export const ProductQuickView = () => {
               </button>
               <span style={{ padding: '0 0.85rem', fontSize: '0.92rem', fontWeight: 800, color: '#FFFFFF' }}>{quantity}</span>
               <button
+                type="button"
                 onClick={() => setQuantity(quantity + 1)}
                 style={{ width: '28px', height: '28px', fontSize: '1.05rem', fontWeight: 700, color: '#FFFFFF' }}
               >
@@ -302,12 +372,25 @@ export const ProductQuickView = () => {
             </div>
 
             <button
+              type="button"
               onClick={handleAdd}
+              disabled={isOutOfStock}
               className="btn-luxury-gold"
-              style={{ flex: 1, padding: '0.9rem 1.5rem', fontSize: '0.85rem', gap: '0.5rem' }}
+              style={{
+                flex: 1,
+                padding: '0.9rem 1.5rem',
+                fontSize: '0.85rem',
+                gap: '0.5rem',
+                opacity: isOutOfStock ? 0.5 : 1,
+                cursor: isOutOfStock ? 'not-allowed' : 'pointer'
+              }}
             >
               <ShoppingCart size={16} strokeWidth={2.4} />
-              <span>Añadir al Carrito • S/ {(quickViewProduct.price * quantity).toFixed(2)}</span>
+              <span>
+                {isOutOfStock
+                  ? 'Agotado temporalmente'
+                  : `Añadir al Carrito • S/ ${(discountedPrice * quantity).toFixed(2)}`}
+              </span>
             </button>
           </div>
 

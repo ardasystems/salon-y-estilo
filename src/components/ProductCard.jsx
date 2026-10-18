@@ -4,16 +4,28 @@ import { ShoppingCart, Eye, Star } from 'lucide-react';
 
 export const ProductCard = ({ product }) => {
   const { addToCart, setQuickViewProduct, currentUser, setIsUserAuthOpen, setIsCartOpen } = useStore();
+  const [selectedShade, setSelectedShade] = useState(product.shades ? product.shades[0] : null);
+  const [selectedSize, setSelectedSize] = useState(
+    product.sizes && product.sizes.length > 0 ? product.sizes[0] : null
+  );
+  const [isHovered, setIsHovered] = useState(false);
+
+  const basePrice = (selectedSize && selectedSize.price !== undefined && selectedSize.price !== null)
+    ? Number(selectedSize.price)
+    : Number(product.price);
+
   const productDiscountPct = Number(product.memberDiscountPercent || 0);
   const isMemberDiscountActive = Boolean(currentUser && productDiscountPct > 0);
   const discountedPrice = isMemberDiscountActive
-    ? (product.price * (1 - productDiscountPct / 100))
-    : product.price;
-  const [selectedShade, setSelectedShade] = useState(product.shades ? product.shades[0] : null);
-  const [isHovered, setIsHovered] = useState(false);
+    ? (basePrice * (1 - productDiscountPct / 100))
+    : basePrice;
 
-  const isLowStock = product.stock > 0 && product.stock <= 15;
-  const isOutOfStock = product.stock <= 0;
+  const currentStock = (selectedSize && selectedSize.stock !== undefined && selectedSize.stock !== null && selectedSize.stock !== '')
+    ? Number(selectedSize.stock)
+    : Number(product.stock || 0);
+
+  const isLowStock = currentStock > 0 && currentStock <= 15;
+  const isOutOfStock = currentStock <= 0;
 
   return (
     <div
@@ -251,21 +263,23 @@ export const ProductCard = ({ product }) => {
 
         {/* Color Shades Swatches */}
         {product.shades && product.shades.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
             {product.shades.map((shade, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => setSelectedShade(shade)}
                 title={shade.name}
                 style={{
-                  width: '16px',
-                  height: '16px',
+                  width: '18px',
+                  height: '18px',
                   borderRadius: '50%',
                   backgroundColor: shade.hex,
                   border: selectedShade?.name === shade.name ? '2px solid var(--accent-gold)' : '1px solid rgba(255,255,255,0.3)',
                   boxShadow: selectedShade?.name === shade.name ? '0 0 8px rgba(229, 192, 123, 0.6)' : 'none',
                   transform: selectedShade?.name === shade.name ? 'scale(1.2)' : 'scale(1)',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer'
                 }}
               />
             ))}
@@ -275,10 +289,44 @@ export const ProductCard = ({ product }) => {
           </div>
         )}
 
+        {/* Sizes / Presentaciones Chips */}
+        {product.sizes && product.sizes.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.66rem', color: '#9CA3AF', fontWeight: 600, marginRight: '0.1rem' }}>
+              Presentación:
+            </span>
+            {product.sizes.map((sizeOption, idx) => {
+              const isSelected = selectedSize?.name === sizeOption.name;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedSize(sizeOption)}
+                  title={`${sizeOption.name} - S/ ${Number(sizeOption.price || product.price).toFixed(2)}`}
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: isSelected ? 700 : 500,
+                    padding: '0.18rem 0.55rem',
+                    borderRadius: 'var(--radius-full)',
+                    background: isSelected ? 'rgba(229, 192, 123, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    border: isSelected ? '1px solid var(--accent-gold)' : '1px solid rgba(255, 255, 255, 0.15)',
+                    color: isSelected ? 'var(--accent-gold-light)' : '#D1D5DB',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: isSelected ? '0 0 8px rgba(229, 192, 123, 0.3)' : 'none'
+                  }}
+                >
+                  {sizeOption.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Stock warning */}
         {isLowStock && (
           <div style={{ fontSize: '0.72rem', color: '#FCD34D', marginBottom: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-            <span>⚡ Últimas {product.stock} u.</span>
+            <span>⚡ Últimas {currentStock} u.</span>
           </div>
         )}
 
@@ -298,9 +346,9 @@ export const ProductCard = ({ product }) => {
               <span className="product-card-price-main" style={{ fontSize: '1.2rem', fontWeight: 800, color: isMemberDiscountActive ? 'var(--accent-gold-light)' : '#FFFFFF', letterSpacing: '0.01em' }}>
                 S/ {discountedPrice.toFixed(2)}
               </span>
-              {(isMemberDiscountActive || (product.originalPrice && product.originalPrice > product.price)) && (
+              {(isMemberDiscountActive || (product.originalPrice && product.originalPrice > basePrice)) && (
                 <span style={{ fontSize: '0.75rem', color: '#888', textDecoration: 'line-through' }}>
-                  S/ {(isMemberDiscountActive ? product.price : product.originalPrice).toFixed(2)}
+                  S/ {(isMemberDiscountActive ? basePrice : product.originalPrice).toFixed(2)}
                 </span>
               )}
             </div>
@@ -339,7 +387,7 @@ export const ProductCard = ({ product }) => {
           {/* Add to Carrito button */}
           <button
             onClick={() => {
-              addToCart(product, 1, selectedShade);
+              addToCart(product, 1, { shade: selectedShade, size: selectedSize });
               setIsCartOpen(true);
             }}
             disabled={isOutOfStock}

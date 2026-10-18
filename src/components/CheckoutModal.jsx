@@ -253,7 +253,13 @@ export const CheckoutModal = () => {
     const order = orderToConfirm || completedOrder;
     if (!order) return;
 
-    const itemsList = order.items.map(i => `• ${i.quantity}x ${i.name} (S/ ${(i.price * i.quantity).toFixed(2)})`).join('\n');
+    const itemsList = order.items.map(i => {
+      const variantParts = [];
+      if (i.selectedShade) variantParts.push(`Tono: ${i.selectedShade}`);
+      if (i.selectedSize) variantParts.push(`Tam: ${i.selectedSize}`);
+      const variantStr = variantParts.length > 0 ? ` [${variantParts.join(' • ')}]` : '';
+      return `• ${i.quantity}x ${i.name}${variantStr} (S/ ${(i.price * i.quantity).toFixed(2)})`;
+    }).join('\n');
     const paymentLabel = {
       yape: 'YAPE (Automático)',
       card: 'TARJETA DÉBITO / CRÉDITO',
@@ -1104,6 +1110,16 @@ export const CheckoutModal = () => {
                             title="Ver detalles"
                           >
                             <span>{it.quantity}x {it.name}</span>
+                            {it.selectedShade && (
+                              <span style={{ fontSize: '0.66rem', color: '#F7E7C4', marginLeft: '0.15rem' }}>
+                                ({it.selectedShade})
+                              </span>
+                            )}
+                            {it.selectedSize && (
+                              <span style={{ fontSize: '0.66rem', color: '#93C5FD', marginLeft: '0.15rem' }}>
+                                [{it.selectedSize}]
+                              </span>
+                            )}
                             <ExternalLink size={10} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
                           </button>
                         </div>

@@ -145,9 +145,13 @@ export function generateReceiptPDF(order, settings = {}) {
     const price = Number(item.price) || 0;
     const lineTotal = qty * price;
     const name = item.name || 'Producto';
+    const variantParts = [];
+    if (item.selectedShade) variantParts.push(`Tono: ${item.selectedShade}`);
+    if (item.selectedSize) variantParts.push(`Tam: ${item.selectedSize}`);
+    const fullName = variantParts.length > 0 ? `${name} (${variantParts.join(' • ')})` : name;
 
     // Truncate name if too long
-    const displayName = name.length > 55 ? name.substring(0, 52) + '...' : name;
+    const displayName = fullName.length > 58 ? fullName.substring(0, 55) + '...' : fullName;
 
     doc.text(String(qty), 22, y + 4.5, { align: 'center' });
     doc.text(displayName, 36, y + 4.5);
