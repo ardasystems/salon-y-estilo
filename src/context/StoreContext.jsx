@@ -35,10 +35,15 @@ export const StoreProvider = ({ children }) => {
   });
 
   // Aprende Conmigo: Cursos & Capacitaciones
+  // Aprende Conmigo: Cursos & Capacitaciones
   const [courses, setCourses] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_courses');
-      return saved ? JSON.parse(saved) : INITIAL_COURSES;
+      const loaded = saved ? JSON.parse(saved) : INITIAL_COURSES;
+      return Array.isArray(loaded) ? loaded.map(c => ({
+        ...c,
+        mode: c.mode && /4\s*(a|o|-)\s*6|máx|alumnas/i.test(c.mode) ? 'Presencial • Grupos Reducidos (Cupos Limitados)' : c.mode
+      })) : INITIAL_COURSES;
     } catch {
       return INITIAL_COURSES;
     }
@@ -48,7 +53,18 @@ export const StoreProvider = ({ children }) => {
   const [academyPartnerships, setAcademyPartnerships] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_partnerships');
-      return saved ? JSON.parse(saved) : INITIAL_ACADEMY_PARTNERSHIPS;
+      const loaded = saved ? JSON.parse(saved) : INITIAL_ACADEMY_PARTNERSHIPS;
+      return Array.isArray(loaded) ? loaded.map(p => {
+        if (p.id === 'salon-aliado-01') {
+          return {
+            ...p,
+            name: "Salón & Estilo - Sede Principal Chiclayo",
+            description: "Nuestro propio espacio técnico profesional acondicionado para que cada alumna aprenda junto al equipo de formadores de Salón & Estilo con clientas reales y casos de salón.",
+            benefits: Array.isArray(p.benefits) ? p.benefits.map(b => /4\s*(a|o|-)\s*6|alumnas/i.test(b) ? "Entorno formativo personalizado en grupos reducidos (no masivos)" : b) : p.benefits
+          };
+        }
+        return p;
+      }) : INITIAL_ACADEMY_PARTNERSHIPS;
     } catch {
       return INITIAL_ACADEMY_PARTNERSHIPS;
     }
@@ -77,6 +93,12 @@ export const StoreProvider = ({ children }) => {
       }
       if (loaded.tagline && /autor|atelier/i.test(loaded.tagline)) {
         loaded.tagline = INITIAL_SETTINGS.tagline;
+      }
+      if (!loaded.academyHeroSubtitle || /4\s*(a|o|-)\s*6|máximo\s*4|alumnas/i.test(loaded.academyHeroSubtitle)) {
+        loaded.academyHeroSubtitle = INITIAL_SETTINGS.academyHeroSubtitle;
+      }
+      if (loaded.academyWhatsappMsg && /Miluska/i.test(loaded.academyWhatsappMsg)) {
+        loaded.academyWhatsappMsg = INITIAL_SETTINGS.academyWhatsappMsg;
       }
       return loaded;
     } catch {
@@ -400,10 +422,17 @@ export const StoreProvider = ({ children }) => {
           .maybeSingle();
 
         if (settingsRow && settingsRow.data && !sErr) {
+          const cloudData = { ...settingsRow.data };
+          if (!cloudData.academyHeroSubtitle || /4\s*(a|o|-)\s*6|máximo\s*4|alumnas/i.test(cloudData.academyHeroSubtitle)) {
+            cloudData.academyHeroSubtitle = INITIAL_SETTINGS.academyHeroSubtitle;
+          }
+          if (cloudData.academyWhatsappMsg && /Miluska/i.test(cloudData.academyWhatsappMsg)) {
+            cloudData.academyWhatsappMsg = INITIAL_SETTINGS.academyWhatsappMsg;
+          }
           setSettings(prev => ({
             ...INITIAL_SETTINGS,
             ...prev,
-            ...settingsRow.data
+            ...cloudData
           }));
         }
 

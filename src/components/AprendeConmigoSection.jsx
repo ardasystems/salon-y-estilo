@@ -140,7 +140,13 @@ export const AprendeConmigoSection = () => {
               maxWidth: '760px',
               margin: '0 auto 2.5rem auto'
             }}>
-              {settings.academyHeroSubtitle || "No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio aprendes haciendo en grupos reducidos y no masivos, con atención personalizada y cercana, práctica en modelos reales, certificado de Salón & Estilo y convenio oficial con CETPRO del Estado para tramitar tu título como Auxiliar Técnico a Nombre de la Nación."}
+              {(() => {
+                const text = settings?.academyHeroSubtitle || '';
+                if (!text || /4\s*(a|o|-)\s*6|máximo\s*4|alumnas/i.test(text)) {
+                  return "No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio aprendes haciendo en grupos reducidos y no masivos, con atención personalizada y cercana, práctica en modelos reales, certificado de Salón & Estilo y convenio oficial con CETPRO del Estado para tramitar tu título como Auxiliar Técnico a Nombre de la Nación.";
+                }
+                return text;
+              })()}
             </p>
 
             {/* Action Buttons */}
