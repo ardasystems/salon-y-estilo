@@ -209,3 +209,48 @@ DROP POLICY IF EXISTS "Public update registered_users" ON public.registered_user
 CREATE POLICY "Public update registered_users" ON public.registered_users FOR UPDATE USING (true);
 DROP POLICY IF EXISTS "Public delete registered_users" ON public.registered_users;
 CREATE POLICY "Public delete registered_users" ON public.registered_users FOR DELETE USING (true);
+
+-- 10. TABLA: CAPACITACIONES & CURSOS (academy_courses - APRENDE CONMIGO)
+CREATE TABLE IF NOT EXISTS public.academy_courses (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  category TEXT,
+  price NUMERIC DEFAULT 0,
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_academy_courses_category ON public.academy_courses(category);
+
+ALTER TABLE public.academy_courses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read academy_courses" ON public.academy_courses;
+CREATE POLICY "Public read academy_courses" ON public.academy_courses FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public insert academy_courses" ON public.academy_courses;
+CREATE POLICY "Public insert academy_courses" ON public.academy_courses FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public update academy_courses" ON public.academy_courses;
+CREATE POLICY "Public update academy_courses" ON public.academy_courses FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Public delete academy_courses" ON public.academy_courses;
+CREATE POLICY "Public delete academy_courses" ON public.academy_courses FOR DELETE USING (true);
+
+-- 11. TABLA: CONVENIOS CETPRO & SALONES DE BELLEZA ALIADOS (academy_partnerships)
+CREATE TABLE IF NOT EXISTS public.academy_partnerships (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT DEFAULT 'salon', -- 'cetpro' | 'salon'
+  data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_academy_partnerships_type ON public.academy_partnerships(type);
+
+ALTER TABLE public.academy_partnerships ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read academy_partnerships" ON public.academy_partnerships;
+CREATE POLICY "Public read academy_partnerships" ON public.academy_partnerships FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public insert academy_partnerships" ON public.academy_partnerships;
+CREATE POLICY "Public insert academy_partnerships" ON public.academy_partnerships FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Public update academy_partnerships" ON public.academy_partnerships;
+CREATE POLICY "Public update academy_partnerships" ON public.academy_partnerships FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Public delete academy_partnerships" ON public.academy_partnerships;
+CREATE POLICY "Public delete academy_partnerships" ON public.academy_partnerships FOR DELETE USING (true);

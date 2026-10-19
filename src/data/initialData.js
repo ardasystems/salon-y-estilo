@@ -408,7 +408,19 @@ export const INITIAL_SETTINGS = {
   healthSectionImageZoom: 100,
   healthSectionImagePos: "center",
   healthSectionAuthor: "Miluska Vidaurre • Estilista Principal",
-  healthSectionQuote: "«La belleza real comienza cuidando tu salud capilar»."
+  healthSectionQuote: "«La belleza real comienza cuidando tu salud capilar».",
+
+  // APRENDE CONMIGO - ÁREA DE CAPACITACIONES & EDUCACIÓN
+  academyEnabled: true,
+  academyHeroTag: "Aprende Conmigo • Capacitación Especializada",
+  academyHeroTitle: "Educación Real en Belleza: Técnica, Práctica & Convenios Oficiales",
+  academyHeroSubtitle: "No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio íntimo aprendes haciendo con grupos reducidos de máximo 4 a 6 alumnas, práctica en modelos reales, certificado de Salón & Estilo y convenio oficial con CETPRO del Estado para tramitar tu título como Auxiliar Técnico a Nombre de la Nación.",
+  academyWhatsappMsg: "Hola Miluska, deseo solicitar información detallada sobre las capacitaciones de Aprende Conmigo en Salón&Estilo.",
+  academyCetproName: "Convenio Educativo con CETPRO del Estado",
+  academyCetproBadge: "Título a Nombre de la Nación",
+  academyCetproDesc: "Nuestras alumnas convalidan sus horas de formación práctica para gestionar en el CETPRO estatal su certificación oficial como Auxiliar Técnico a Nombre de la Nación.",
+  academyInternshipBadge: "Prácticas en Salones Aliados",
+  academyInternshipDesc: "Convenios con centros de belleza y salones reconocidos de la región para horas de práctica con clientas reales y acelerar tu inserción laboral."
 };
 
 export const INITIAL_ORDERS = [
@@ -493,3 +505,208 @@ export const INITIAL_REGISTERED_USERS = [
     ordersCount: 0
   }
 ];
+
+// ============================================================================
+// APRENDE CONMIGO - CAPACITACIONES, CURSOS & CONVENIOS ESTRATÉGICOS
+// ============================================================================
+
+export const INITIAL_COURSES = [
+  {
+    id: "curso-001",
+    title: "Especialización Profesional en Colorimetría & Balayage Signature",
+    subtitle: "Domina fondos de decoloración, formulación de tintes y degradados sin marcas",
+    category: "Colorimetría Avanzada",
+    startDate: "Lunes 10 de Noviembre",
+    schedule: "Lunes y Miércoles: 3:00 PM a 7:00 PM",
+    duration: "4 semanas (32 horas prácticas)",
+    mode: "Presencial • Grupos Reducidos (Máx. 5 alumnas)",
+    price: 580.00,
+    discountPrice: 520.00,
+    maxSpots: 5,
+    availableSpots: 2,
+    status: "abierto", // 'abierto' | 'proximo' | 'agotado'
+    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80",
+    description: "Una formación intensiva diseñada para estilistas que desean elevar su técnica y para quienes quieren iniciarse con fundamentos sólidos. En lugar de fórmulas repetitivas, aprenderás a pensar como colorista: diagnosticar la resistencia de la hebra, calcular fondos con precisión milimétrica y dominar los montajes de Balayage más solicitados en Chiclayo (Morena Iluminada, Miel Caramelo y Babylights de alta densidad).",
+    syllabus: [
+      "Módulo 1: Química capilar, escala del pH y diagnóstico con test de mecha real.",
+      "Módulo 2: Círculo cromático, reflejos primarios/secundarios y neutralización de cobrizos indeseados.",
+      "Módulo 3: Técnicas de aclaración limpia, cuidado de la hebra con aditivos Plex y control de calor.",
+      "Módulo 4: Técnicas de Balayage Signature: Cardado, empapelado libre, difuminado de raíz y contorno facial.",
+      "Módulo 5: Matizadores gloss, emulsiones ácidas y sellado de cutículas de larga duración.",
+      "Módulo 6: Práctica completa sobre modelo real con supervisión directa 1 a 1.",
+      "Módulo 7: Fotografía de resultados con iluminación de salón y fijación de tarifas rentables."
+    ],
+    includes: [
+      "Manual físico de Colorimetría y fórmulas exclusivas de Salón & Estilo",
+      "Todos los productos y decolorantes para las prácticas en clase",
+      "Modelo asignada para la evaluación final en vivo",
+      "Certificado de Especialización emitido por Salón & Estilo",
+      "Convalidación de horas para trámite de Título como Auxiliar Técnico en CETPRO del Estado",
+      "Acceso preferente para prácticas supervisadas en salones de belleza aliados"
+    ],
+    requirements: "Ganas de aprender y puntualidad. No se requiere experiencia previa en coloración avanzada."
+  },
+  {
+    id: "curso-002",
+    title: "Masterclass de Alisados Orgánicos, Bótox Espejo & Salud Capilar",
+    subtitle: "Aprende a transformar cabellos con frizz en hebras ultra lacias con fórmulas 0% formol",
+    category: "Tratamientos & Alisados",
+    startDate: "Sábado 22 y Domingo 23 de Noviembre",
+    schedule: "Sábado y Domingo: 9:00 AM a 2:30 PM",
+    duration: "2 jornadas intensivas (11 horas)",
+    mode: "Presencial Intensivo • Taller 100% Práctico",
+    price: 380.00,
+    discountPrice: 340.00,
+    maxSpots: 6,
+    availableSpots: 3,
+    status: "abierto",
+    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=80",
+    description: "El clima húmedo de Chiclayo y la costa norte hace que los alisados sean uno de los servicios más rentables y demandados en el salón. En este taller intensivo dominarás los protocolos de alisado orgánico ácido, blindaje capilar y reposición de masa con Bótox Capilar. Aprenderás a planchar a la temperatura exacta según el estado del cabello para no quemar la fibra y lograr un lacio con caída natural y brillo espejo duradero.",
+    syllabus: [
+      "Módulo 1: Tipos de alisados: Diferencias entre ácidos orgánicos, taninoplastia y químicos tradicionales.",
+      "Módulo 2: Protocolo de lavado preparador, secado y técnica de aplicación milimétrica por mechón.",
+      "Módulo 3: Termoactivación profesional: Presión, velocidad y calibración térmica de la plancha.",
+      "Módulo 4: Bótox capilar & cauterización: Cuándo alisar y cuándo restaurar primero.",
+      "Módulo 5: Enjuague final en cabina, secado solo con aire de secadora (sin cepillo) para demostrar el resultado.",
+      "Módulo 6: Recomendaciones de mantenimiento post-alisado para vender a tu clienta."
+    ],
+    includes: [
+      "Insumos de alisado orgánico de grado profesional para la práctica",
+      "Guía de temperaturas por tipo y grosor de fibra capilar",
+      "Práctica supervisada paso a paso sobre modelo real",
+      "Certificado de Capacitación emitido por Salón & Estilo",
+      "Asesoría continua por WhatsApp para tus primeras clientas"
+    ],
+    requirements: "Abierto a principiantes, asistentes de salón y estilistas que buscan actualizarse."
+  },
+  {
+    id: "curso-003",
+    title: "Especialización en Maquillaje Social & Piel Blindada Anti-Humedad",
+    subtitle: "Técnicas de preparación cutánea resistente al calor, lágrimas y eventos sociales de gala",
+    category: "Maquillaje Profesional",
+    startDate: "Martes 18 de Noviembre",
+    schedule: "Martes y Jueves: 9:30 AM a 1:30 PM",
+    duration: "3 semanas (24 horas prácticas)",
+    mode: "Presencial • Grupos de 4 alumnas",
+    price: 460.00,
+    discountPrice: 410.00,
+    maxSpots: 4,
+    availableSpots: 1,
+    status: "abierto",
+    image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=900&q=80",
+    description: "Diseñado especialmente para dominar el maquillaje social duradero en el clima del norte. Aprenderás a construir una piel blindada sin aspecto acartonado, correcciones morfológicas, diseño de ojos sociales de alto impacto y colocación de pestañas para quinceañeras, novias y graduadas.",
+    syllabus: [
+      "Módulo 1: Biotipos cutáneos, limpieza profunda y preparación química de piel anti-grasa.",
+      "Módulo 2: Piel blindada: Sellado de bases, polvos micro-pulverizados y fijación a prueba de agua.",
+      "Módulo 3: Visagismo: Corrección de manchas, ojeras oscuras, contorno cremoso y rubor glow.",
+      "Módulo 4: Técnicas de ojos: Ahumado glam, foxy eyes, corte de cuenca y delineado de precisión.",
+      "Módulo 5: Cejas orgánicas y aplicación de pestañas punto a punto y enteras.",
+      "Módulo 6: Maquillaje de Novia y fotografía para portafolio profesional en redes."
+    ],
+    includes: [
+      "Uso de paletas y productos del atelier durante las sesiones",
+      "Facecharts impresos para diseño previo",
+      "Certificado emitido por Salón & Estilo",
+      "Oportunidad de apoyar en fechas de alta demanda de novias y eventos"
+    ],
+    requirements: "Traer set básico de brochas personales. Los cosméticos de práctica se facilitan en el taller."
+  },
+  {
+    id: "curso-004",
+    title: "Iniciación Práctica en Peluquería & Estilismo de Salón",
+    subtitle: "Cortes comerciales femeninos, brushing pulido, ondas con calor y bioseguridad",
+    category: "Peluquería Integral",
+    startDate: "Viernes 28 de Noviembre",
+    schedule: "Viernes y Sábados: 3:30 PM a 7:30 PM",
+    duration: "6 semanas (48 horas prácticas)",
+    mode: "Presencial • Formación Modular Continua",
+    price: 690.00,
+    discountPrice: 620.00,
+    maxSpots: 6,
+    availableSpots: 4,
+    status: "proximo",
+    image: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?auto=format&fit=crop&w=900&q=80",
+    description: "El cimiento indispensable para quien desea trabajar en un salón de belleza de prestigio o montar su propio negocio. Aprenderás desde la ergonomía en tijera y ángulo de corte, pasando por los peinados con secadora y plancha más demandados, hasta el protocolo de lavado capilar relajante.",
+    syllabus: [
+      "Módulo 1: Herramientas de peluquería, bioseguridad, desinfección y ergonomía postural.",
+      "Módulo 2: Geometría de cortes femeninos: Corte recto sólido, corte en V, capas suaves y desvanecido.",
+      "Módulo 3: Flequillos en tendencia: Cortina (curtain bangs), degrafilado y despunte de mantenimiento.",
+      "Módulo 4: Lavado profesional en lavacabezas, masaje capilar y aplicación de mascarillas de rescate.",
+      "Módulo 5: Técnicas de brushing: Alisado con secadora, volumen en raíz y movimiento de puntas.",
+      "Módulo 6: Ondas glam con plancha y tenaza, fijadores flexibles y acabado de pasarela.",
+      "Módulo 7: Rotación y pasantía práctica en salones de belleza asociados."
+    ],
+    includes: [
+      "Práctica en cabezales sintéticos y modelos vivientes",
+      "Certificado de Aptitud Profesional emitido por Salón & Estilo",
+      "Convalidación directa de horas para titulación como Auxiliar Técnico ante CETPRO del Estado",
+      "Pasantía coordinada en centros de belleza aliados de la red"
+    ],
+    requirements: "Abierto a todo público con vocación por la belleza, sin límite de edad."
+  }
+];
+
+export const INITIAL_ACADEMY_PARTNERSHIPS = [
+  {
+    id: "convenio-cetpro",
+    name: "Convenio Oficial CETPRO del Estado",
+    institutionType: "cetpro", // 'cetpro' | 'salon'
+    badge: "Certificación a Nombre de la Nación",
+    location: "Gestión Oficial para Egresadas de Chiclayo & Lambayeque",
+    highlight: "Título Oficial de Auxiliar Técnico",
+    description: "Gracias a nuestro marco de cooperación interinstitucional con un Centro de Educación Técnico-Productiva (CETPRO) estatal, nuestras alumnas pueden convalidar las horas teórico-prácticas cursadas en Salón & Estilo para gestionar y obtener en dicho centro su certificación oficial a Nombre de la Nación como 'Auxiliares Técnicos'. Este respaldo legal complementa tu formación y te abre puertas en instituciones formales.",
+    benefits: [
+      "Convalidación formal de horas cronológicas de capacitación",
+      "Acompañamiento en el trámite y portafolio de evidencias ante el CETPRO",
+      "Validez nacional reconocida para tu currículum técnico profesional",
+      "Doble reconocimiento: Certificado de Especialización Salón & Estilo + Título CETPRO del Estado"
+    ],
+    contactInfo: "Consultas de convalidación: vía coordinación de Salón & Estilo"
+  },
+  {
+    id: "salon-aliado-01",
+    name: "Salón & Estilo - Sede Atelier Miluska Vidaurre",
+    institutionType: "salon",
+    badge: "Sede Principal de Capacitación",
+    location: "Chiclayo Centro, Lambayeque",
+    highlight: "Práctica en Mesa Real",
+    description: "Nuestro propio espacio físico adaptado para que cada alumna aprenda a lado de Miluska Vidaurre con clientas reales y casos complejos de salón.",
+    benefits: [
+      "Entorno íntimo y personalizado (máximo 4 a 6 alumnas por turno)",
+      "Uso de equipamiento, aparatología y productos de alta gama",
+      "Casos reales de corrección de color y transformaciones capilares"
+    ],
+    contactInfo: "WhatsApp: 920 731 163"
+  },
+  {
+    id: "salon-aliado-02",
+    name: "Studio & Spa Santa Victoria (Salón Aliado)",
+    institutionType: "salon",
+    badge: "Red de Prácticas Preprofesionales",
+    location: "Urb. Santa Victoria, Chiclayo",
+    highlight: "Prácticas Supervisadas",
+    description: "Salón de belleza aliado donde nuestras egresadas más destacadas realizan pasantías prácticas supervisadas, ganando experiencia con clientela exigente y afianzando la velocidad y seguridad en sus servicios.",
+    benefits: [
+      "Prácticas en servicios de color, peinado social y tratamientos",
+      "Inserción en bolsa laboral según desempeño y vacantes",
+      "Certificado de horas de práctica preprofesional"
+    ],
+    contactInfo: "Convenio activo coordinado por Salón & Estilo"
+  },
+  {
+    id: "salon-aliado-03",
+    name: "Centro de Estética & Glamour Pimentel (Salón Aliado)",
+    institutionType: "salon",
+    badge: "Red de Prácticas Preprofesionales",
+    location: "Balneario de Pimentel, Lambayeque",
+    highlight: "Prácticas de Alisados & Cuidado Capilar",
+    description: "Centro especializado con el que mantenemos alianza de intercambio para que las alumnas roten en servicios de alisados orgánicos, cepillado exprés y tratamientos reconstructivos.",
+    benefits: [
+      "Contacto con clientas de eventos sociales y novias",
+      "Entrenamiento en atención al cliente de alta fidelización",
+      "Oportunidad de empleo temporal o permanente para graduadas"
+    ],
+    contactInfo: "Convenio activo coordinado por Salón & Estilo"
+  }
+];
+

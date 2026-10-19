@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_PRODUCTS, INITIAL_SERVICES, INITIAL_SETTINGS, INITIAL_ORDERS, INITIAL_COMPARISON_CASES, INITIAL_REGISTERED_USERS } from '../data/initialData';
+import { 
+  INITIAL_PRODUCTS, 
+  INITIAL_SERVICES, 
+  INITIAL_SETTINGS, 
+  INITIAL_ORDERS, 
+  INITIAL_COMPARISON_CASES, 
+  INITIAL_REGISTERED_USERS,
+  INITIAL_COURSES,
+  INITIAL_ACADEMY_PARTNERSHIPS
+} from '../data/initialData';
 import { supabase } from '../lib/supabase';
 
 const StoreContext = createContext(null);
@@ -22,6 +31,26 @@ export const StoreProvider = ({ children }) => {
       return saved ? JSON.parse(saved) : INITIAL_SERVICES;
     } catch {
       return INITIAL_SERVICES;
+    }
+  });
+
+  // Aprende Conmigo: Cursos & Capacitaciones
+  const [courses, setCourses] = useState(() => {
+    try {
+      const saved = localStorage.getItem('salonestilo_courses');
+      return saved ? JSON.parse(saved) : INITIAL_COURSES;
+    } catch {
+      return INITIAL_COURSES;
+    }
+  });
+
+  // Aprende Conmigo: Convenios Estratégicos (CETPRO del Estado & Salones Aliados)
+  const [academyPartnerships, setAcademyPartnerships] = useState(() => {
+    try {
+      const saved = localStorage.getItem('salonestilo_partnerships');
+      return saved ? JSON.parse(saved) : INITIAL_ACADEMY_PARTNERSHIPS;
+    } catch {
+      return INITIAL_ACADEMY_PARTNERSHIPS;
     }
   });
 
@@ -151,6 +180,10 @@ export const StoreProvider = ({ children }) => {
   const [selectedServiceCategory, setSelectedServiceCategory] = useState("Todos");
   const [serviceSearchQuery, setServiceSearchQuery] = useState("");
 
+  // Aprende Conmigo filtering & search
+  const [selectedCourseCategory, setSelectedCourseCategory] = useState("Todos");
+  const [courseSearchQuery, setCourseSearchQuery] = useState("");
+
   const [notification, setNotification] = useState(null);
 
   // Toast
@@ -169,6 +202,14 @@ export const StoreProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('salonestilo_services', JSON.stringify(services));
   }, [services]);
+
+  useEffect(() => {
+    localStorage.setItem('salonestilo_courses', JSON.stringify(courses));
+  }, [courses]);
+
+  useEffect(() => {
+    localStorage.setItem('salonestilo_partnerships', JSON.stringify(academyPartnerships));
+  }, [academyPartnerships]);
 
   useEffect(() => {
     localStorage.setItem('salonestilo_settings', JSON.stringify(settings));
@@ -798,6 +839,106 @@ export const StoreProvider = ({ children }) => {
   };
 
   // ==========================================
+  // Aprende Conmigo: Courses CRUD
+  // ==========================================
+  const addCourse = async (courseData) => {
+    const courseId = courseData.id || `curso-${Date.now().toString().slice(-6)}`;
+    const created = { ...courseData, id: courseId };
+    setCourses(prev => [created, ...prev]);
+    showToast("Capacitación creada exitosamente");
+    try {
+      await supabase.from('academy_courses').insert({
+        id: created.id,
+        title: created.title,
+        category: created.category,
+        price: created.price || 0,
+        data: created,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Notice: Local storage fallback for academy_courses:", err);
+    }
+    return created;
+  };
+
+  const updateCourse = async (updatedCourse) => {
+    setCourses(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+    showToast("Capacitación actualizada");
+    try {
+      await supabase.from('academy_courses').upsert({
+        id: updatedCourse.id,
+        title: updatedCourse.title,
+        category: updatedCourse.category,
+        price: updatedCourse.price || 0,
+        data: updatedCourse,
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Notice: Local storage fallback for academy_courses:", err);
+    }
+  };
+
+  const deleteCourse = async (id) => {
+    setCourses(prev => prev.filter(c => c.id !== id));
+    showToast("Capacitación eliminada");
+    try {
+      await supabase.from('academy_courses').delete().eq('id', id);
+    } catch (err) {
+      console.warn("Notice: Local storage fallback for academy_courses:", err);
+    }
+  };
+
+  // ==========================================
+  // Aprende Conmigo: Partnerships CRUD (CETPRO & Salones Aliados)
+  // ==========================================
+  const addAcademyPartnership = async (partnerData) => {
+    const partnerId = partnerData.id || `convenio-${Date.now().toString().slice(-6)}`;
+    const created = { ...partnerData, id: partnerId };
+    setAcademyPartnerships(prev => [...prev, created]);
+    showToast("Convenio institucional registrado");
+    try {
+      await supabase.from('academy_partnerships').insert({
+        id: created.id,
+        name: created.name,
+        type: created.institutionType || 'salon',
+        data: created,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Notice: Local storage fallback for academy_partnerships:", err);
+    }
+    return created;
+  };
+
+  const updateAcademyPartnership = async (updatedPartner) => {
+    setAcademyPartnerships(prev => prev.map(p => p.id === updatedPartner.id ? updatedPartner : p));
+    showToast("Convenio actualizado");
+    try {
+      await supabase.from('academy_partnerships').upsert({
+        id: updatedPartner.id,
+        name: updatedPartner.name,
+        type: updatedPartner.institutionType || 'salon',
+        data: updatedPartner,
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn("Notice: Local storage fallback for academy_partnerships:", err);
+    }
+  };
+
+  const deleteAcademyPartnership = async (id) => {
+    setAcademyPartnerships(prev => prev.filter(p => p.id !== id));
+    showToast("Convenio eliminado");
+    try {
+      await supabase.from('academy_partnerships').delete().eq('id', id);
+    } catch (err) {
+      console.warn("Notice: Local storage fallback for academy_partnerships:", err);
+    }
+  };
+
+  // ==========================================
   // Orders CRUD (Synchronized with Supabase)
   // ==========================================
   const createOrder = async (orderData) => {
@@ -1172,6 +1313,23 @@ export const StoreProvider = ({ children }) => {
 
   const serviceCategories = ["Todos", ...Array.from(new Set(services.map(s => s.category?.trim()).filter(Boolean)))];
 
+  // Aprende Conmigo: Filtered Courses
+  const filteredCourses = courses.filter(course => {
+    const cCat = course.category || "";
+    const matchesCategory = selectedCourseCategory === "Todos" || normStr(cCat) === normStr(selectedCourseCategory);
+    const q = normStr(courseSearchQuery);
+    if (q === "") return matchesCategory;
+
+    const matchesSearch = 
+      normStr(course.title).includes(q) ||
+      normStr(course.subtitle).includes(q) ||
+      normStr(course.description).includes(q) ||
+      normStr(course.category).includes(q);
+    return matchesCategory && matchesSearch;
+  });
+
+  const courseCategories = ["Todos", ...Array.from(new Set(courses.map(c => c.category?.trim()).filter(Boolean)))];
+
   return (
     <StoreContext.Provider value={{
       // Tab Navigation
@@ -1205,6 +1363,22 @@ export const StoreProvider = ({ children }) => {
       addService,
       updateService,
       deleteService,
+
+      // Aprende Conmigo (Educación & Capacitaciones)
+      courses,
+      filteredCourses,
+      courseCategories,
+      selectedCourseCategory,
+      setSelectedCourseCategory,
+      courseSearchQuery,
+      setCourseSearchQuery,
+      addCourse,
+      updateCourse,
+      deleteCourse,
+      academyPartnerships,
+      addAcademyPartnership,
+      updateAcademyPartnership,
+      deleteAcademyPartnership,
 
       // Comparison Cases (Antes y Después)
       comparisonCases,

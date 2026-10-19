@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from '../context/StoreContext';
-import { ShoppingCart, Scissors, Store, HeartHandshake, ArrowLeft, User, Sparkles } from 'lucide-react';
+import { ShoppingCart, Scissors, Store, HeartHandshake, ArrowLeft, User, Sparkles, GraduationCap } from 'lucide-react';
 
 export const Navbar = () => {
   const {
@@ -161,6 +161,17 @@ export const Navbar = () => {
                 <Store size={14} />
                 <span>Productos</span>
               </button>
+
+              {/* Tab 4: Aprende Conmigo (Educación & Capacitaciones) */}
+              <button
+                type="button"
+                onClick={() => handleTabClick('aprende-conmigo')}
+                className={`nav-tab-pill ${activeMainTab === 'aprende-conmigo' ? 'active' : 'inactive'}`}
+                title="Capacitaciones y Formación Profesional en Salón & Estilo"
+              >
+                <GraduationCap size={14} />
+                <span>Aprende Conmigo</span>
+              </button>
             </div>
           )}
 
@@ -313,6 +324,17 @@ export const Navbar = () => {
               <Store size={14} />
               <span>Productos</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabClick('aprende-conmigo')}
+              className={`nav-tab-pill ${activeMainTab === 'aprende-conmigo' ? 'active' : 'inactive'}`}
+              style={{ flex: 1, minHeight: '38px', justifyContent: 'center', whiteSpace: 'nowrap' }}
+              title="Capacitaciones Salón & Estilo"
+            >
+              <GraduationCap size={14} />
+              <span>Aprende</span>
+            </button>
           </div>
         )}
       </div>
@@ -366,6 +388,14 @@ export const Navbar = () => {
           .mobile-tabs-bar {
             display: flex !important;
             margin-top: 0.65rem !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            scrollbar-width: none !important;
+          }
+          .mobile-tabs-bar .nav-tab-pill {
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.74rem !important;
+            gap: 0.3rem !important;
           }
         }
         @media (max-width: 380px) {

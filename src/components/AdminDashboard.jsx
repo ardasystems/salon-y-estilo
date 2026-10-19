@@ -5,7 +5,7 @@ import {
   DollarSign, TrendingUp, Phone, BookOpen, X, Upload, Image as ImageIcon, 
   Lock, KeyRound, Truck, Eye, EyeOff, Scissors, RotateCcw, Clock, Sparkles, QrCode,
   Download, Database, ShieldCheck, CreditCard, CheckCircle, Users, UserCheck,
-  Search, Filter, ExternalLink, Palette, Layers
+  Search, Filter, ExternalLink, Palette, GraduationCap, Building2
 } from 'lucide-react';
 import { compressImage } from '../utils/imageCompressor';
 import { uploadToSalonAssets } from '../lib/supabase';
@@ -20,6 +20,14 @@ export const AdminDashboard = () => {
     addService,
     updateService,
     deleteService,
+    courses,
+    addCourse,
+    updateCourse,
+    deleteCourse,
+    academyPartnerships,
+    addAcademyPartnership,
+    updateAcademyPartnership,
+    deleteAcademyPartnership,
     comparisonCases,
     updateComparisonCase,
     orders,
@@ -97,6 +105,47 @@ export const AdminDashboard = () => {
     afterImage: ''
   });
 
+  // Aprende Conmigo: Estados de Educación & Capacitaciones
+  const [academySubTab, setAcademySubTab] = useState('courses'); // 'courses' | 'partnerships' | 'settings'
+  const [academySearch, setAcademySearch] = useState('');
+  
+  // Course Modal State
+  const [courseModalOpen, setCourseModalOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [courseForm, setCourseForm] = useState({
+    title: '',
+    subtitle: '',
+    category: 'Colorimetría Avanzada',
+    startDate: '',
+    schedule: '',
+    duration: '',
+    mode: 'Presencial • Grupos Reducidos (Máx. 5 alumnas)',
+    price: '',
+    discountPrice: '',
+    maxSpots: 5,
+    availableSpots: 2,
+    status: 'abierto',
+    image: '',
+    description: '',
+    syllabusText: '',
+    includesText: '',
+    requirements: ''
+  });
+
+  // Partnership Modal State (Convenios CETPRO & Salones)
+  const [partnershipModalOpen, setPartnershipModalOpen] = useState(false);
+  const [editingPartnership, setEditingPartnership] = useState(null);
+  const [partnershipForm, setPartnershipForm] = useState({
+    name: '',
+    institutionType: 'salon', // 'cetpro' | 'salon'
+    badge: 'Salón de Belleza Aliado',
+    location: 'Chiclayo Centro',
+    highlight: 'Prácticas Supervisadas',
+    description: '',
+    benefitsText: '',
+    contactInfo: ''
+  });
+
   const [settingsForm, setSettingsForm] = useState(settings);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -106,6 +155,189 @@ export const AdminDashboard = () => {
       setSettingsForm(settings);
     }
   }, [settings]);
+
+  // Cursos: Subida de imagen comprimida
+  const handleCourseImageUpload = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      try {
+        showToast("Subiendo imagen de la capacitación...", "info");
+        const compressed = await compressImage(file, 900, 900, 0.82);
+        const uploadedUrl = await uploadToSalonAssets(compressed, 'academy');
+        const finalUrl = uploadedUrl || compressed;
+        setCourseForm(prev => ({ ...prev, image: finalUrl }));
+        showToast("Foto de capacitación guardada con éxito");
+      } catch (err) {
+        console.warn("Error al subir foto de curso:", err);
+        showToast("Error al procesar la foto del curso", "error");
+      }
+    }
+  };
+
+  // Cursos: Abrir modal nuevo / editar
+  const handleOpenAddCourse = () => {
+    setEditingCourse(null);
+    setCourseForm({
+      title: '',
+      subtitle: '',
+      category: 'Colorimetría Avanzada',
+      startDate: 'Lunes 15 de Noviembre',
+      schedule: 'Lunes y Miércoles: 3:00 PM a 7:00 PM',
+      duration: '4 semanas (32 horas prácticas)',
+      mode: 'Presencial • Grupos Reducidos (Máx. 5 alumnas)',
+      price: '580.00',
+      discountPrice: '520.00',
+      maxSpots: 5,
+      availableSpots: 3,
+      status: 'abierto',
+      image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80',
+      description: '',
+      syllabusText: 'Módulo 1: Fundamentos y diagnóstico capilar\nMódulo 2: Formulaciones y fondos de aclaración\nMódulo 3: Práctica con modelo real\nMódulo 4: Evaluación final y fotografía para redes',
+      includesText: 'Manual de fórmulas de Salón & Estilo\nInsumos para las prácticas en clase\nModelo para evaluación en vivo\nCertificado emitido por Salón & Estilo\nConvalidación de horas para CETPRO del Estado\nPrácticas en salones aliados',
+      requirements: 'Puntualidad y ganas de aprender. No se exige experiencia previa.'
+    });
+    setCourseModalOpen(true);
+  };
+
+  const handleOpenEditCourse = (course) => {
+    setEditingCourse(course);
+    setCourseForm({
+      title: course.title || '',
+      subtitle: course.subtitle || '',
+      category: course.category || 'Colorimetría Avanzada',
+      startDate: course.startDate || '',
+      schedule: course.schedule || '',
+      duration: course.duration || '',
+      mode: course.mode || 'Presencial • Grupos Reducidos',
+      price: course.price !== undefined ? course.price : '',
+      discountPrice: course.discountPrice !== undefined ? course.discountPrice : '',
+      maxSpots: course.maxSpots !== undefined ? course.maxSpots : 5,
+      availableSpots: course.availableSpots !== undefined ? course.availableSpots : 2,
+      status: course.status || 'abierto',
+      image: course.image || '',
+      description: course.description || '',
+      syllabusText: Array.isArray(course.syllabus) ? course.syllabus.join('\n') : '',
+      includesText: Array.isArray(course.includes) ? course.includes.join('\n') : '',
+      requirements: course.requirements || ''
+    });
+    setCourseModalOpen(true);
+  };
+
+  const handleSaveCourse = (e) => {
+    e.preventDefault();
+    if (!courseForm.title.trim()) {
+      showToast("Por favor ingresa el título del curso", "error");
+      return;
+    }
+
+    const syllabus = courseForm.syllabusText
+      ? courseForm.syllabusText.split('\n').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const includes = courseForm.includesText
+      ? courseForm.includesText.split('\n').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const payload = {
+      title: courseForm.title.trim(),
+      subtitle: courseForm.subtitle.trim(),
+      category: courseForm.category,
+      startDate: courseForm.startDate.trim(),
+      schedule: courseForm.schedule.trim(),
+      duration: courseForm.duration.trim(),
+      mode: courseForm.mode.trim(),
+      price: parseFloat(courseForm.price) || 0,
+      discountPrice: courseForm.discountPrice ? parseFloat(courseForm.discountPrice) : null,
+      maxSpots: parseInt(courseForm.maxSpots, 10) || 5,
+      availableSpots: parseInt(courseForm.availableSpots, 10) || 0,
+      status: courseForm.status,
+      image: courseForm.image.trim(),
+      description: courseForm.description.trim(),
+      syllabus,
+      includes,
+      requirements: courseForm.requirements.trim()
+    };
+
+    if (editingCourse) {
+      updateCourse({ ...editingCourse, ...payload });
+    } else {
+      addCourse(payload);
+    }
+    setCourseModalOpen(false);
+  };
+
+  const handleDeleteCourse = (id, title) => {
+    if (confirm(`¿Estás seguro de eliminar el curso "${title}"?`)) {
+      deleteCourse(id);
+    }
+  };
+
+  // Convenios: Abrir modal nuevo / editar
+  const handleOpenAddPartnership = () => {
+    setEditingPartnership(null);
+    setPartnershipForm({
+      name: '',
+      institutionType: 'salon',
+      badge: 'Red de Prácticas Preprofesionales',
+      location: 'Chiclayo Centro',
+      highlight: 'Prácticas Supervisadas',
+      description: '',
+      benefitsText: 'Prácticas con clientas reales\nSupervisión por estilistas del salón\nBolsa de trabajo para egresadas',
+      contactInfo: 'Convenio activo coordinado por Salón & Estilo'
+    });
+    setPartnershipModalOpen(true);
+  };
+
+  const handleOpenEditPartnership = (partner) => {
+    setEditingPartnership(partner);
+    setPartnershipForm({
+      name: partner.name || '',
+      institutionType: partner.institutionType || 'salon',
+      badge: partner.badge || '',
+      location: partner.location || '',
+      highlight: partner.highlight || '',
+      description: partner.description || '',
+      benefitsText: Array.isArray(partner.benefits) ? partner.benefits.join('\n') : '',
+      contactInfo: partner.contactInfo || ''
+    });
+    setPartnershipModalOpen(true);
+  };
+
+  const handleSavePartnership = (e) => {
+    e.preventDefault();
+    if (!partnershipForm.name.trim()) {
+      showToast("Por favor ingresa el nombre de la institución o salón", "error");
+      return;
+    }
+
+    const benefits = partnershipForm.benefitsText
+      ? partnershipForm.benefitsText.split('\n').map(b => b.trim()).filter(Boolean)
+      : [];
+
+    const payload = {
+      name: partnershipForm.name.trim(),
+      institutionType: partnershipForm.institutionType,
+      badge: partnershipForm.badge.trim(),
+      location: partnershipForm.location.trim(),
+      highlight: partnershipForm.highlight.trim(),
+      description: partnershipForm.description.trim(),
+      benefits,
+      contactInfo: partnershipForm.contactInfo.trim()
+    };
+
+    if (editingPartnership) {
+      updateAcademyPartnership({ ...editingPartnership, ...payload });
+    } else {
+      addAcademyPartnership(payload);
+    }
+    setPartnershipModalOpen(false);
+  };
+
+  const handleDeletePartnership = (id, name) => {
+    if (confirm(`¿Estás seguro de eliminar el convenio con "${name}"?`)) {
+      deleteAcademyPartnership(id);
+    }
+  };
 
   // Compression & Storage Handlers (Persists to Supabase Storage with base64 fallback)
   const handleProductImageUpload = async (e, index = 0) => {
@@ -549,6 +781,8 @@ export const AdminDashboard = () => {
         settings: settingsForm || settings,
         products,
         services,
+        courses,
+        academyPartnerships,
         comparisonCases,
         orders,
         complaints
@@ -677,7 +911,7 @@ export const AdminDashboard = () => {
               <Package size={18} style={{ color: 'var(--accent-gold)' }} />
             </div>
             <div style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-gold-light)' }}>
-              {products.length} prod. / {services.length} serv.
+              {products.length} prod. / {services.length} serv. / {courses.length} cursos
             </div>
             <span style={{ fontSize: '0.72rem', color: 'var(--accent-gold)', fontWeight: 600 }}>Salón & Estilo</span>
           </div>
@@ -724,6 +958,7 @@ export const AdminDashboard = () => {
           {[
             { id: 'products', label: `Productos (${products.length})`, icon: <Package size={16} /> },
             { id: 'services', label: `Servicios del Salón (${services.length})`, icon: <Scissors size={16} /> },
+            { id: 'academy', label: `Aprende Conmigo (${courses.length})`, icon: <GraduationCap size={16} /> },
             { id: 'comparison', label: `Antes & Después (${comparisonCases ? comparisonCases.length : 0})`, icon: <Sparkles size={16} /> },
             { id: 'orders', label: `Órdenes Recibidas (${orders.length})`, icon: <ShoppingCart size={16} /> },
             { id: 'users', label: `Usuarios Registrados (${(registeredUsers || []).length})`, icon: <Users size={16} /> },
@@ -2893,6 +3128,483 @@ export const AdminDashboard = () => {
           );
         })()}
 
+        {/* TAB: APRENDE CONMIGO (GESTIÓN DE EDUCACIÓN, CAPACITACIONES & CONVENIOS) */}
+        {activeTab === 'academy' && (() => {
+          const filteredCoursesList = courses.filter(c => {
+            if (!academySearch.trim()) return true;
+            const q = academySearch.toLowerCase();
+            return (
+              (c.title || '').toLowerCase().includes(q) ||
+              (c.category || '').toLowerCase().includes(q) ||
+              (c.description || '').toLowerCase().includes(q)
+            );
+          });
+
+          return (
+            <div>
+              {/* Header de la sección */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.4rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>
+                    Aprende Conmigo • Capacitaciones & Convenios
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Gestiona cursos presenciales, fechas, cupos limitados y los convenios con CETPRO del Estado y Salones Aliados.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  {academySubTab === 'courses' && (
+                    <button
+                      type="button"
+                      onClick={handleOpenAddCourse}
+                      className="btn-luxury-gold"
+                      style={{ fontSize: '0.8rem', padding: '0.75rem 1.5rem' }}
+                    >
+                      <Plus size={16} />
+                      <span>Nueva Capacitación</span>
+                    </button>
+                  )}
+                  {academySubTab === 'partnerships' && (
+                    <button
+                      type="button"
+                      onClick={handleOpenAddPartnership}
+                      className="btn-luxury-gold"
+                      style={{ fontSize: '0.8rem', padding: '0.75rem 1.5rem' }}
+                    >
+                      <Plus size={16} />
+                      <span>Nuevo Convenio / Salón Aliado</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Sub-navegación dentro de Aprende Conmigo */}
+              <div style={{
+                display: 'flex',
+                gap: '0.5rem',
+                background: '#161210',
+                padding: '0.35rem',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                width: 'fit-content',
+                marginBottom: '1.5rem',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setAcademySubTab('courses')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.5rem 1.15rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: academySubTab === 'courses' ? 'var(--accent-gold)' : 'transparent',
+                    color: academySubTab === 'courses' ? '#000000' : 'var(--text-muted)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <GraduationCap size={15} />
+                  <span>Cursos & Talleres ({courses.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAcademySubTab('partnerships')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.5rem 1.15rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: academySubTab === 'partnerships' ? 'var(--accent-gold)' : 'transparent',
+                    color: academySubTab === 'partnerships' ? '#000000' : 'var(--text-muted)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <Building2 size={15} />
+                  <span>Convenios & Salones Aliados ({academyPartnerships.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAcademySubTab('settings')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.5rem 1.15rem',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: academySubTab === 'settings' ? 'var(--accent-gold)' : 'transparent',
+                    color: academySubTab === 'settings' ? '#000000' : 'var(--text-muted)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <Settings size={15} />
+                  <span>Ajustes & Textos Web</span>
+                </button>
+              </div>
+
+              {/* SUBTAB 1: CURSOS Y CAPACITACIONES */}
+              {academySubTab === 'courses' && (
+                <div>
+                  {/* Buscador de cursos */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                    marginBottom: '1.25rem',
+                    background: '#161210',
+                    padding: '0.65rem 1rem',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid rgba(212, 175, 55, 0.25)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: '240px' }}>
+                      <Search size={16} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
+                      <input
+                        type="text"
+                        placeholder="Buscar capacitación por título, categoría o temario..."
+                        value={academySearch}
+                        onChange={(e) => setAcademySearch(e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#FFFFFF',
+                          fontSize: '0.84rem',
+                          outline: 'none'
+                        }}
+                      />
+                      {academySearch && (
+                        <button
+                          type="button"
+                          onClick={() => setAcademySearch('')}
+                          style={{ background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer', padding: 0 }}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    <span style={{ fontSize: '0.76rem', color: 'var(--accent-gold)', fontWeight: 600 }}>
+                      {filteredCoursesList.length} de {courses.length} capacitaciones
+                    </span>
+                  </div>
+
+                  {/* Tabla / Tarjetas de Cursos */}
+                  {filteredCoursesList.length === 0 ? (
+                    <div style={{ background: '#161210', padding: '3.5rem 1rem', borderRadius: 'var(--radius-md)', textAlign: 'center', border: '1px dashed rgba(212,175,55,0.2)' }}>
+                      <GraduationCap size={44} style={{ color: 'var(--accent-gold)', opacity: 0.5, margin: '0 auto 0.75rem auto' }} />
+                      <h4 style={{ color: '#FFFFFF', fontSize: '1.1rem' }}>No se encontraron cursos</h4>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '0.25rem' }}>
+                        Crea una nueva capacitación o ajusta el término de búsqueda.
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                      {filteredCoursesList.map(course => {
+                        const isSoldOut = course.status === 'agotado' || Number(course.availableSpots) <= 0;
+                        const isUpcoming = course.status === 'proximo';
+
+                        return (
+                          <div
+                            key={course.id}
+                            style={{
+                              background: '#161210',
+                              borderRadius: 'var(--radius-md)',
+                              border: '1px solid rgba(212, 175, 55, 0.2)',
+                              overflow: 'hidden',
+                              display: 'flex',
+                              flexDirection: 'column'
+                            }}
+                          >
+                            <div style={{ position: 'relative', height: '140px', background: '#0A0A0A' }}>
+                              <img
+                                src={course.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80"}
+                                alt={course.title}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                              <div style={{
+                                position: 'absolute',
+                                top: '0.65rem',
+                                left: '0.65rem',
+                                background: isSoldOut ? '#EF4444' : isUpcoming ? '#F59E0B' : '#10B981',
+                                color: '#FFFFFF',
+                                fontSize: '0.65rem',
+                                fontWeight: 800,
+                                padding: '0.2rem 0.55rem',
+                                borderRadius: 'var(--radius-full)',
+                                textTransform: 'uppercase'
+                              }}>
+                                {isSoldOut ? 'Agotado' : isUpcoming ? 'Próximo' : 'Abierto'}
+                              </div>
+
+                              <div style={{
+                                position: 'absolute',
+                                bottom: '0.65rem',
+                                right: '0.65rem',
+                                background: 'rgba(0,0,0,0.8)',
+                                color: 'var(--accent-gold-light)',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                padding: '0.2rem 0.5rem',
+                                borderRadius: '4px'
+                              }}>
+                                {course.availableSpots || 0} / {course.maxSpots || 5} cupos libres
+                              </div>
+                            </div>
+
+                            <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                              <span style={{ fontSize: '0.68rem', color: 'var(--accent-gold)', fontWeight: 700, textTransform: 'uppercase' }}>
+                                {course.category}
+                              </span>
+
+                              <h4 style={{ fontSize: '1.05rem', color: '#FFFFFF', marginTop: '0.2rem', marginBottom: '0.5rem', fontFamily: 'var(--font-serif)' }}>
+                                {course.title}
+                              </h4>
+
+                              <div style={{ fontSize: '0.75rem', color: '#D1D5DB', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '1rem' }}>
+                                <div><strong>Inicio:</strong> {course.startDate || "Por coordinar"}</div>
+                                <div><strong>Horario:</strong> {course.schedule || course.duration}</div>
+                                <div><strong>Modalidad:</strong> {course.mode}</div>
+                              </div>
+
+                              <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                <div>
+                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Inversión</div>
+                                  <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent-gold-light)' }}>
+                                    S/ {Number(course.discountPrice || course.price || 0).toFixed(2)}
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditCourse(course)}
+                                    className="btn-luxury-outline"
+                                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.72rem' }}
+                                    title="Editar curso"
+                                  >
+                                    <Edit2 size={13} />
+                                    <span>Editar</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteCourse(course.id, course.title)}
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.15)',
+                                      border: '1px solid rgba(239, 68, 68, 0.4)',
+                                      color: '#EF4444',
+                                      padding: '0.45rem',
+                                      borderRadius: 'var(--radius-sm)',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Eliminar curso"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SUBTAB 2: CONVENIOS & SALONES ALIADOS */}
+              {academySubTab === 'partnerships' && (
+                <div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: '1.25rem'
+                  }}>
+                    {academyPartnerships.map(partner => (
+                      <div
+                        key={partner.id}
+                        style={{
+                          background: '#161210',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid rgba(212, 175, 55, 0.2)',
+                          padding: '1.4rem',
+                          display: 'flex',
+                          flexDirection: 'column'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <span style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '4px',
+                            background: partner.institutionType === 'cetpro' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(212, 175, 55, 0.15)',
+                            color: partner.institutionType === 'cetpro' ? '#34D399' : 'var(--accent-gold)'
+                          }}>
+                            {partner.institutionType === 'cetpro' ? '🏛️ CETPRO del Estado' : '💼 Salón Aliado'}
+                          </span>
+
+                          <span style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>{partner.location}</span>
+                        </div>
+
+                        <h4 style={{ fontSize: '1.1rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)', marginBottom: '0.4rem' }}>
+                          {partner.name}
+                        </h4>
+
+                        <p style={{ fontSize: '0.8rem', color: '#D1D5DB', lineHeight: 1.5, marginBottom: '0.85rem' }}>
+                          {partner.description}
+                        </p>
+
+                        {Array.isArray(partner.benefits) && partner.benefits.length > 0 && (
+                          <div style={{ fontSize: '0.74rem', color: '#9CA3AF', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginBottom: '1rem' }}>
+                            {partner.benefits.map((b, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                <CheckCircle size={12} style={{ color: 'var(--accent-gold)' }} />
+                                <span>{b}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#6B7280' }}>
+                            {partner.contactInfo || "Convenio formal Salón & Estilo"}
+                          </span>
+
+                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditPartnership(partner)}
+                              className="btn-luxury-outline"
+                              style={{ padding: '0.4rem 0.75rem', fontSize: '0.72rem' }}
+                            >
+                              <Edit2 size={13} />
+                              <span>Editar</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePartnership(partner.id, partner.name)}
+                              style={{
+                                background: 'rgba(239, 68, 68, 0.15)',
+                                border: '1px solid rgba(239, 68, 68, 0.4)',
+                                color: '#EF4444',
+                                padding: '0.4rem',
+                                borderRadius: 'var(--radius-sm)',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SUBTAB 3: AJUSTES & MANIFIESTO WEB */}
+              {academySubTab === 'settings' && (
+                <div style={{
+                  background: '#161210',
+                  padding: '2rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid rgba(212, 175, 55, 0.2)',
+                  maxWidth: '780px'
+                }}>
+                  <h4 style={{ fontSize: '1.2rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)', marginBottom: '1.25rem' }}>
+                    Textos & Mensajes de la Sección Aprende Conmigo
+                  </h4>
+
+                  <form onSubmit={handleSaveSettings} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--accent-gold-light)', display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>
+                        Etiqueta del Hero (Badge Superior)
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.academyHeroTag || ''}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, academyHeroTag: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                        placeholder="Aprende Conmigo • Capacitación Especializada"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--accent-gold-light)', display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>
+                        Título Principal del Hero
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.academyHeroTitle || ''}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, academyHeroTitle: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                        placeholder="Educación Real en Belleza: Técnica, Práctica & Convenios Oficiales"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--accent-gold-light)', display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>
+                        Manifiesto / Subtítulo del Hero (Honesto & Persuasivo)
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={settingsForm.academyHeroSubtitle || ''}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, academyHeroSubtitle: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', lineHeight: 1.5 }}
+                        placeholder="No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio íntimo aprendes haciendo con grupos reducidos de máximo 4 a 6 alumnas..."
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.78rem', color: 'var(--accent-gold-light)', display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>
+                        Mensaje Pre-redactado de WhatsApp para Consultas de Cursos
+                      </label>
+                      <input
+                        type="text"
+                        value={settingsForm.academyWhatsappMsg || ''}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, academyWhatsappMsg: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                        placeholder="Hola Miluska, deseo solicitar información detallada sobre las capacitaciones de Aprende Conmigo en Salón&Estilo."
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                      <button
+                        type="submit"
+                        className="btn-luxury-gold"
+                        style={{ padding: '0.75rem 1.8rem', fontSize: '0.85rem' }}
+                      >
+                        Guardar Ajustes de Educación
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+            </div>
+          );
+        })()}
+
         {/* MODAL 1: ADD / EDIT PRODUCT (WITH AUTO IMAGE COMPRESSION) */}
         {productModalOpen && (
           <div style={{
@@ -4032,6 +4744,472 @@ export const AdminDashboard = () => {
                     style={{ fontSize: '0.8rem', padding: '0.65rem 1.8rem' }}
                   >
                     Guardar Cambios del Caso
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 5: ADD / EDIT COURSE (APRENDE CONMIGO) */}
+        {courseModalOpen && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1400,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            backgroundColor: 'rgba(5, 4, 3, 0.88)',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <div 
+              className="animate-modal"
+              style={{
+                background: '#15110F',
+                borderRadius: 'var(--radius-lg)',
+                maxWidth: '680px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                padding: '2.2rem',
+                border: '1px solid var(--accent-gold-border)',
+                position: 'relative'
+              }}
+            >
+              <button
+                onClick={() => setCourseModalOpen(false)}
+                style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', color: 'var(--accent-gold-light)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+
+              <h2 style={{ fontSize: '1.65rem', color: '#FFFFFF', marginBottom: '0.35rem', fontFamily: 'var(--font-serif)' }}>
+                {editingCourse ? 'Editar Capacitación' : 'Nueva Capacitación / Taller'}
+              </h2>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                Define la información, fechas de inicio, cupos limitados y el temario que verán las postulantes.
+              </p>
+
+              <form onSubmit={handleSaveCourse} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Título de la Capacitación *</label>
+                  <input
+                    type="text"
+                    required
+                    value={courseForm.title}
+                    onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+                    placeholder="Ej. Especialización en Colorimetría & Balayage Signature"
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Subtítulo / Propuesta de Valor</label>
+                  <input
+                    type="text"
+                    value={courseForm.subtitle}
+                    onChange={(e) => setCourseForm({ ...courseForm, subtitle: e.target.value })}
+                    placeholder="Ej. Domina fondos de decoloración y montajes sin marcas"
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Categoría *</label>
+                    <select
+                      value={courseForm.category}
+                      onChange={(e) => setCourseForm({ ...courseForm, category: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    >
+                      <option value="Colorimetría Avanzada">Colorimetría Avanzada</option>
+                      <option value="Tratamientos & Alisados">Tratamientos & Alisados</option>
+                      <option value="Maquillaje Profesional">Maquillaje Profesional</option>
+                      <option value="Peluquería Integral">Peluquería Integral</option>
+                      <option value="Estilismo & Peinado">Estilismo & Peinado</option>
+                      <option value="Salud Capilar">Salud Capilar</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Estado de Convocatoria</label>
+                    <select
+                      value={courseForm.status}
+                      onChange={(e) => setCourseForm({ ...courseForm, status: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    >
+                      <option value="abierto">Inscripciones Abiertas</option>
+                      <option value="proximo">Próximo Inicio</option>
+                      <option value="agotado">Cupos Agotados</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Fecha de Inicio</label>
+                    <input
+                      type="text"
+                      value={courseForm.startDate}
+                      onChange={(e) => setCourseForm({ ...courseForm, startDate: e.target.value })}
+                      placeholder="Ej. Lunes 10 de Noviembre"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Horarios & Días</label>
+                    <input
+                      type="text"
+                      value={courseForm.schedule}
+                      onChange={(e) => setCourseForm({ ...courseForm, schedule: e.target.value })}
+                      placeholder="Ej. Lunes y Miércoles 3:00 PM a 7:00 PM"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Duración Total</label>
+                    <input
+                      type="text"
+                      value={courseForm.duration}
+                      onChange={(e) => setCourseForm({ ...courseForm, duration: e.target.value })}
+                      placeholder="Ej. 4 semanas (32 horas prácticas)"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Modalidad</label>
+                    <input
+                      type="text"
+                      value={courseForm.mode}
+                      onChange={(e) => setCourseForm({ ...courseForm, mode: e.target.value })}
+                      placeholder="Ej. Presencial • Grupos Reducidos (Máx. 5 alumnas)"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Precio (S/.) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required
+                      value={courseForm.price}
+                      onChange={(e) => setCourseForm({ ...courseForm, price: e.target.value })}
+                      placeholder="580.00"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Pronto Pago (S/.)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={courseForm.discountPrice}
+                      onChange={(e) => setCourseForm({ ...courseForm, discountPrice: e.target.value })}
+                      placeholder="520.00"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Cupos Totales</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={courseForm.maxSpots}
+                      onChange={(e) => setCourseForm({ ...courseForm, maxSpots: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Cupos Libres</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="20"
+                      value={courseForm.availableSpots}
+                      onChange={(e) => setCourseForm({ ...courseForm, availableSpots: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Imagen del curso */}
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Imagen Destacada de la Capacitación</label>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <div style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#090909', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
+                      {courseForm.image ? (
+                        <img src={courseForm.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}><GraduationCap size={22} /></div>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <label style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        background: 'rgba(212, 175, 55, 0.15)',
+                        border: '1px solid var(--accent-gold)',
+                        color: 'var(--accent-gold-light)',
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: 'var(--radius-xs)',
+                        fontSize: '0.74rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        width: 'fit-content'
+                      }}>
+                        <Upload size={13} />
+                        <span>Subir foto comprimida</span>
+                        <input type="file" accept="image/*" onChange={handleCourseImageUpload} style={{ display: 'none' }} />
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="O escribe/pega URL de la imagen (https://...)"
+                        value={courseForm.image}
+                        onChange={(e) => setCourseForm({ ...courseForm, image: e.target.value })}
+                        style={{ width: '100%', padding: '0.45rem', borderRadius: 'var(--radius-xs)', fontSize: '0.78rem' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Descripción General</label>
+                  <textarea
+                    rows={3}
+                    value={courseForm.description}
+                    onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                    placeholder="Detalles sobre lo que aprenderá la alumna, enfoque técnico y aplicación real..."
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Temario / Módulos (un punto o módulo por cada línea)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={courseForm.syllabusText}
+                    onChange={(e) => setCourseForm({ ...courseForm, syllabusText: e.target.value })}
+                    placeholder={"Módulo 1: Química capilar y escala de pH\nMódulo 2: Círculo cromático y neutralización\nMódulo 3: Diseños de Balayage paso a paso\nMódulo 4: Práctica con modelo real"}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', lineHeight: 1.5 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    La Inscripción Incluye (un ítem por cada línea)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={courseForm.includesText}
+                    onChange={(e) => setCourseForm({ ...courseForm, includesText: e.target.value })}
+                    placeholder={"Manual físico de fórmulas de Salón & Estilo\nInsumos y decolorantes en clase\nModelo asignada para evaluación\nCertificado emitido por Salón & Estilo\nHoras válidas para CETPRO del Estado"}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', lineHeight: 1.5 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Requisitos de Ingreso</label>
+                  <input
+                    type="text"
+                    value={courseForm.requirements}
+                    onChange={(e) => setCourseForm({ ...courseForm, requirements: e.target.value })}
+                    placeholder="Ej. Puntualidad y ganas de aprender. No se exige experiencia previa."
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCourseModalOpen(false)}
+                    className="btn-luxury-outline"
+                    style={{ fontSize: '0.8rem', padding: '0.65rem 1.4rem' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-luxury-gold"
+                    style={{ fontSize: '0.8rem', padding: '0.65rem 1.8rem' }}
+                  >
+                    Guardar Capacitación
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 6: ADD / EDIT PARTNERSHIP (CONVENIOS CETPRO & SALONES) */}
+        {partnershipModalOpen && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1400,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            backgroundColor: 'rgba(5, 4, 3, 0.88)',
+            backdropFilter: 'blur(10px)'
+          }}>
+            <div 
+              className="animate-modal"
+              style={{
+                background: '#15110F',
+                borderRadius: 'var(--radius-lg)',
+                maxWidth: '620px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                padding: '2.2rem',
+                border: '1px solid var(--accent-gold-border)',
+                position: 'relative'
+              }}
+            >
+              <button
+                onClick={() => setPartnershipModalOpen(false)}
+                style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', color: 'var(--accent-gold-light)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+
+              <h2 style={{ fontSize: '1.65rem', color: '#FFFFFF', marginBottom: '0.35rem', fontFamily: 'var(--font-serif)' }}>
+                {editingPartnership ? 'Editar Convenio' : 'Nuevo Convenio Institucional'}
+              </h2>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                Registra o modifica convenios con CETPROs del Estado o salones de belleza aliados para prácticas preprofesionales.
+              </p>
+
+              <form onSubmit={handleSavePartnership} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Nombre de la Institución o Salón *</label>
+                  <input
+                    type="text"
+                    required
+                    value={partnershipForm.name}
+                    onChange={(e) => setPartnershipForm({ ...partnershipForm, name: e.target.value })}
+                    placeholder="Ej. Convenio Oficial con CETPRO del Estado"
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Tipo de Convenio *</label>
+                    <select
+                      value={partnershipForm.institutionType}
+                      onChange={(e) => setPartnershipForm({ ...partnershipForm, institutionType: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    >
+                      <option value="cetpro">🏛️ CETPRO Estatal (Certificación a Nombre de la Nación)</option>
+                      <option value="salon">💼 Salón de Belleza Aliado (Prácticas Profesionales)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Ubicación / Ciudad</label>
+                    <input
+                      type="text"
+                      value={partnershipForm.location}
+                      onChange={(e) => setPartnershipForm({ ...partnershipForm, location: e.target.value })}
+                      placeholder="Ej. Chiclayo Centro / Santa Victoria / Pimentel"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Insignia / Badge</label>
+                    <input
+                      type="text"
+                      value={partnershipForm.badge}
+                      onChange={(e) => setPartnershipForm({ ...partnershipForm, badge: e.target.value })}
+                      placeholder="Ej. Certificación a Nombre de la Nación"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Destacado Corto</label>
+                    <input
+                      type="text"
+                      value={partnershipForm.highlight}
+                      onChange={(e) => setPartnershipForm({ ...partnershipForm, highlight: e.target.value })}
+                      placeholder="Ej. Título Oficial de Auxiliar Técnico"
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Descripción del Convenio y Respaldo</label>
+                  <textarea
+                    rows={3}
+                    value={partnershipForm.description}
+                    onChange={(e) => setPartnershipForm({ ...partnershipForm, description: e.target.value })}
+                    placeholder="Explica qué beneficio otorga esta alianza a la alumna (ej. convalidación de horas, prácticas con clientela real, bolsa de trabajo)..."
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', lineHeight: 1.5 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>
+                    Beneficios Concretos (un punto por cada línea)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={partnershipForm.benefitsText}
+                    onChange={(e) => setPartnershipForm({ ...partnershipForm, benefitsText: e.target.value })}
+                    placeholder={"Prácticas supervisadas con clientas reales\nBolsa laboral activa para graduadas destacadas\nCertificado formal de horas de práctica"}
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', lineHeight: 1.5 }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Contacto / Coordinación</label>
+                  <input
+                    type="text"
+                    value={partnershipForm.contactInfo}
+                    onChange={(e) => setPartnershipForm({ ...partnershipForm, contactInfo: e.target.value })}
+                    placeholder="Ej. WhatsApp: 920 731 163 / Coordinación Salón & Estilo"
+                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPartnershipModalOpen(false)}
+                    className="btn-luxury-outline"
+                    style={{ fontSize: '0.8rem', padding: '0.65rem 1.4rem' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-luxury-gold"
+                    style={{ fontSize: '0.8rem', padding: '0.65rem 1.8rem' }}
+                  >
+                    Guardar Convenio
                   </button>
                 </div>
               </form>

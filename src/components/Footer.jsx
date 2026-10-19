@@ -5,7 +5,7 @@ import { CardsBadge } from './PaymentIcons';
 import { PrivacyModal, TermsModal } from './LegalModals';
 
 export const Footer = () => {
-  const { setIsLibroOpen, settings, setIsAdminAuthOpen } = useStore();
+  const { setIsLibroOpen, settings, setIsAdminAuthOpen, setActiveMainTab, setIsAdminView } = useStore();
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
 
@@ -197,6 +197,45 @@ export const Footer = () => {
                 <Sparkles size={17} style={{ color: 'var(--accent-gold)', flexShrink: 0, marginTop: '0.1rem' }} />
                 <span>Motorizado Express en Chiclayo y Pimentel</span>
               </div>
+            </div>
+          </div>
+
+          {/* Aprende Conmigo: Capacitaciones & Convenios */}
+          <div>
+            <h4 style={{ fontSize: '0.88rem', color: '#FFFFFF', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1.25rem', fontWeight: 600 }}>
+              Aprende Conmigo
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.84rem' }}>
+              <button
+                type="button"
+                onClick={() => { setIsAdminView(false); setActiveMainTab('aprende-conmigo'); window.scrollTo({ top: 0, behavior: 'instant' }); }}
+                style={{ background: 'none', border: 'none', color: '#D1D5DB', textAlign: 'left', cursor: 'pointer', padding: 0, fontSize: '0.84rem', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-gold)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#D1D5DB'}
+              >
+                🎓 Cursos & Talleres Prácticos
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsAdminView(false); setActiveMainTab('aprende-conmigo'); window.scrollTo({ top: 0, behavior: 'instant' }); }}
+                style={{ background: 'none', border: 'none', color: '#D1D5DB', textAlign: 'left', cursor: 'pointer', padding: 0, fontSize: '0.84rem', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-gold)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#D1D5DB'}
+              >
+                🏛️ Convenio CETPRO (Título Nacional)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsAdminView(false); setActiveMainTab('aprende-conmigo'); window.scrollTo({ top: 0, behavior: 'instant' }); }}
+                style={{ background: 'none', border: 'none', color: '#D1D5DB', textAlign: 'left', cursor: 'pointer', padding: 0, fontSize: '0.84rem', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-gold)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#D1D5DB'}
+              >
+                💼 Red de Salones para Prácticas
+              </button>
+              <span style={{ fontSize: '0.74rem', color: '#888888', marginTop: '0.2rem', lineHeight: 1.4 }}>
+                Atención personalizada: Máx. 4 a 6 alumnas por grupo.
+              </span>
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar';
 import { SalonSection } from './components/SalonSection';
 import { ServicesSection } from './components/ServicesSection';
 import { ProductsSection } from './components/ProductsSection';
+import { AprendeConmigoSection } from './components/AprendeConmigoSection';
 import { ProductQuickView } from './components/ProductQuickView';
 import { BookingModal } from './components/BookingModal';
 import { CartDrawer } from './components/CartDrawer';
@@ -40,7 +41,7 @@ export const MainApp = () => {
       {/* Navigation */}
       <Navbar />
 
-      {/* Main Switcher between Admin and 3 Public Sections */}
+      {/* Main Switcher between Admin and 4 Public Sections */}
       {isAdminView ? (
         <main style={{ flex: 1 }}>
           <AdminDashboard />
@@ -50,6 +51,7 @@ export const MainApp = () => {
           {activeMainTab === 'salon' && <SalonSection />}
           {activeMainTab === 'servicios' && <ServicesSection />}
           {activeMainTab === 'productos' && <ProductsSection />}
+          {activeMainTab === 'aprende-conmigo' && <AprendeConmigoSection />}
         </main>
       )}
 
