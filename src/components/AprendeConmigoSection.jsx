@@ -27,7 +27,7 @@ export const AprendeConmigoSection = () => {
 
   const handleOpenCourseWhatsApp = (course) => {
     const text = encodeURIComponent(
-      `Hola Miluska, tengo interés en inscribirme en la capacitación "${course.title}" de Aprende Conmigo (Salón & Estilo). ¿Podrías brindarme los detalles para reservar mi vacante?`
+      `Hola Salón & Estilo, tengo interés en inscribirme en la capacitación "${course.title}" de Aprende Conmigo. ¿Podrían brindarme los detalles para reservar mi vacante?`
     );
     window.open(`https://wa.me/${whatsappPhone}?text=${text}`, '_blank');
   };
@@ -35,15 +35,15 @@ export const AprendeConmigoSection = () => {
   const handleGeneralInquiryWhatsApp = () => {
     const text = encodeURIComponent(
       settings.academyWhatsappMsg || 
-      "Hola Miluska, deseo solicitar información sobre las capacitaciones y convenios de Aprende Conmigo en Salón&Estilo."
+      "Hola Salón & Estilo, deseo solicitar información sobre las capacitaciones y convenios de Aprende Conmigo."
     );
     window.open(`https://wa.me/${whatsappPhone}?text=${text}`, '_blank');
   };
 
   const faqs = [
     {
-      q: "¿Por qué las capacitaciones son en grupos reducidos de 4 a 6 alumnas?",
-      a: "Porque la verdadera destreza en belleza no se aprende en auditorios masivos viendo una pantalla. En Salón & Estilo priorizamos la enseñanza personalizada: la instructora supervisa cada mechón, corrige tu postura de tijera, verifica tu cálculo de decoloración y te guía paso a paso. Así garantizamos que salgas con seguridad real."
+      q: "¿Por qué las capacitaciones se dictan en grupos reducidos y no masivos?",
+      a: "Porque la verdadera destreza en belleza no se aprende en auditorios llenos ni clases multitudinarias. En Salón & Estilo priorizamos la enseñanza personalizada: al trabajar en grupos reducidos, nuestro equipo de instructores supervisa cada mechón, corrige tu postura técnica, verifica cada formulación y te acompaña paso a paso. Así garantizamos que adquieras seguridad real y destreza profesional."
     },
     {
       q: "¿Cómo funciona el convenio con el CETPRO del Estado para el título a Nombre de la Nación?",
@@ -59,11 +59,11 @@ export const AprendeConmigoSection = () => {
     },
     {
       q: "¿Entregan certificado a nombre de la empresa Salón & Estilo?",
-      a: "Sí. Todas las egresadas reciben un Diploma / Certificado de Especialización emitido por Salón & Estilo firmado por Miluska Vidaurre, acreditando las horas prácticas cumplidas y las competencias adquiridas."
+      a: "Sí. Todas las egresadas reciben un Diploma / Certificado de Especialización emitido y respaldado formalmente por la empresa Salón & Estilo, acreditando las horas prácticas cumplidas y las competencias técnicas adquiridas."
     },
     {
       q: "¿Puedo reservar mi cupo con anticipación?",
-      a: "Sí. Debido a que las vacantes están estrictamente limitadas a 4 - 6 participantes por grupo para no saturar el espacio, los cupos se reservan con un adelanto. Puedes consultar los métodos de pago (Yape, transferencia o tarjeta) directamente por WhatsApp."
+      a: "Sí. Debido a que las vacantes están rigurosamente limitadas para mantener grupos reducidos y no saturar el espacio de trabajo, los cupos se reservan con un adelanto. Puedes consultar los métodos de pago (Yape, transferencia o tarjeta) directamente por WhatsApp."
     }
   ];
 
@@ -140,7 +140,7 @@ export const AprendeConmigoSection = () => {
               maxWidth: '760px',
               margin: '0 auto 2.5rem auto'
             }}>
-              {settings.academyHeroSubtitle || "No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio íntimo aprendes haciendo con grupos reducidos de máximo 4 a 6 alumnas, práctica en modelos reales, certificado de Salón & Estilo y convenio oficial con CETPRO del Estado para tramitar tu título como Auxiliar Técnico a Nombre de la Nación."}
+              {settings.academyHeroSubtitle || "No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio aprendes haciendo en grupos reducidos y no masivos, con atención personalizada y cercana, práctica en modelos reales, certificado de Salón & Estilo y convenio oficial con CETPRO del Estado para tramitar tu título como Auxiliar Técnico a Nombre de la Nación."}
             </p>
 
             {/* Action Buttons */}
@@ -198,8 +198,8 @@ export const AprendeConmigoSection = () => {
                   <Users size={18} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#FFFFFF' }}>Grupos de 4 a 6</div>
-                  <div style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>Atención personalizada 1 a 1</div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#FFFFFF' }}>Grupos Reducidos</div>
+                  <div style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>Atención personalizada y cercana</div>
                 </div>
               </div>
 
@@ -416,7 +416,7 @@ export const AprendeConmigoSection = () => {
                 fontWeight: 700,
                 letterSpacing: '0.04em'
               }}>
-                Máx. 4 a 6
+                Grupos Reducidos
               </div>
 
               <div style={{
@@ -435,11 +435,11 @@ export const AprendeConmigoSection = () => {
               </div>
 
               <h3 style={{ fontSize: '1.25rem', color: '#FFFFFF', marginBottom: '0.75rem', fontFamily: 'var(--font-serif)' }}>
-                Certificado de la Marca & 1 a 1
+                Salón & Estilo
               </h3>
 
               <p style={{ fontSize: '0.85rem', color: '#D1D5DB', lineHeight: 1.6, marginBottom: '1.25rem', flex: 1 }}>
-                Diploma de culminación expedido a nombre de <strong>Salón & Estilo</strong>. La instrucción personalizada garantiza que Miluska Vidaurre evalúe tu avance de forma continua y personal en cada clase.
+                Diploma de culminación y certificación respaldados formalmente por la empresa <strong>Salón & Estilo</strong>. Nuestro equipo de instructores garantiza una formación técnica personalizada, evaluando y potenciando tu avance en cada clase práctica.
               </p>
 
               <div style={{
@@ -668,7 +668,7 @@ export const AprendeConmigoSection = () => {
                         borderRadius: 'var(--radius-sm)',
                         backdropFilter: 'blur(8px)'
                       }}>
-                        {isSoldOut ? '0 cupos libres' : `${course.availableSpots || 2} de ${course.maxSpots || 5} cupos libres`}
+                        {isSoldOut ? 'Cupos Agotados' : Number(course.availableSpots) <= 2 ? 'Últimos cupos libres' : 'Grupo Reducido • Cupos Limitados'}
                       </div>
                     </div>
 
@@ -1044,7 +1044,7 @@ export const AprendeConmigoSection = () => {
               }}
             >
               <Phone size={18} />
-              <span>Chatear con Miluska Vidaurre</span>
+              <span>Contactar con Salón & Estilo</span>
             </button>
           </div>
         </div>
@@ -1156,8 +1156,8 @@ export const AprendeConmigoSection = () => {
                   <strong style={{ color: '#FFFFFF' }}>{activeCourseModal.schedule || activeCourseModal.duration}</strong>
                 </div>
                 <div>
-                  <span style={{ color: '#9CA3AF', display: 'block', fontSize: '0.72rem' }}>Capacidad:</span>
-                  <strong style={{ color: 'var(--accent-gold-light)' }}>Máximo {activeCourseModal.maxSpots || 6} alumnas</strong>
+                  <span style={{ color: '#9CA3AF', display: 'block', fontSize: '0.72rem' }}>Modalidad:</span>
+                  <strong style={{ color: 'var(--accent-gold-light)' }}>Grupo Reducido (No Masivo)</strong>
                 </div>
                 <div>
                   <span style={{ color: '#9CA3AF', display: 'block', fontSize: '0.72rem' }}>Inversión:</span>

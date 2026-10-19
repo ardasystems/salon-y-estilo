@@ -234,7 +234,7 @@ export const Footer = () => {
                 💼 Red de Salones para Prácticas
               </button>
               <span style={{ fontSize: '0.74rem', color: '#888888', marginTop: '0.2rem', lineHeight: 1.4 }}>
-                Atención personalizada: Máx. 4 a 6 alumnas por grupo.
+                Atención personalizada en grupos reducidos (no masivos).
               </span>
             </div>
           </div>

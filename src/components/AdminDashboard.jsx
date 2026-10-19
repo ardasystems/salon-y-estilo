@@ -119,7 +119,7 @@ export const AdminDashboard = () => {
     startDate: '',
     schedule: '',
     duration: '',
-    mode: 'Presencial • Grupos Reducidos (Máx. 5 alumnas)',
+    mode: 'Presencial • Grupos Reducidos (Cupos Limitados)',
     price: '',
     discountPrice: '',
     maxSpots: 5,
@@ -184,7 +184,7 @@ export const AdminDashboard = () => {
       startDate: 'Lunes 15 de Noviembre',
       schedule: 'Lunes y Miércoles: 3:00 PM a 7:00 PM',
       duration: '4 semanas (32 horas prácticas)',
-      mode: 'Presencial • Grupos Reducidos (Máx. 5 alumnas)',
+      mode: 'Presencial • Grupos Reducidos (Cupos Limitados)',
       price: '580.00',
       discountPrice: '520.00',
       maxSpots: 5,
@@ -3571,7 +3571,7 @@ export const AdminDashboard = () => {
                         value={settingsForm.academyHeroSubtitle || ''}
                         onChange={(e) => setSettingsForm({ ...settingsForm, academyHeroSubtitle: e.target.value })}
                         style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', lineHeight: 1.5 }}
-                        placeholder="No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio íntimo aprendes haciendo con grupos reducidos de máximo 4 a 6 alumnas..."
+                        placeholder="No creemos en clases multitudinarias donde apenas observas de lejos. En nuestro espacio aprendes haciendo en grupos reducidos y no masivos..."
                       />
                     </div>
 
@@ -3584,7 +3584,7 @@ export const AdminDashboard = () => {
                         value={settingsForm.academyWhatsappMsg || ''}
                         onChange={(e) => setSettingsForm({ ...settingsForm, academyWhatsappMsg: e.target.value })}
                         style={{ width: '100%', padding: '0.65rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                        placeholder="Hola Miluska, deseo solicitar información detallada sobre las capacitaciones de Aprende Conmigo en Salón&Estilo."
+                        placeholder="Hola Salón & Estilo, deseo solicitar información detallada sobre las capacitaciones de Aprende Conmigo."
                       />
                     </div>
 
@@ -4889,7 +4889,7 @@ export const AdminDashboard = () => {
                       type="text"
                       value={courseForm.mode}
                       onChange={(e) => setCourseForm({ ...courseForm, mode: e.target.value })}
-                      placeholder="Ej. Presencial • Grupos Reducidos (Máx. 5 alumnas)"
+                      placeholder="Ej. Presencial • Grupos Reducidos (Cupos Limitados)"
                       style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
                     />
                   </div>
