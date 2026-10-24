@@ -211,7 +211,7 @@ export const Navbar = () => {
                     letterSpacing: '0.02em',
                     flexShrink: 0
                   }}
-                  title={currentUser ? `Miembro Club VIP: ${currentUser.name} (Descuentos en productos seleccionados)` : "Club VIP: Promociones y descuentos en productos seleccionados"}
+                  title={currentUser ? `Miembro Club VIP: ${currentUser.name} (Descuentos en productos seleccionados)` : "Regístrate Gratis: Promociones y descuentos en productos seleccionados"}
                 >
                   {currentUser ? (
                     <>
@@ -226,7 +226,7 @@ export const Navbar = () => {
                   ) : (
                     <>
                       <Sparkles size={13} style={{ color: 'var(--accent-gold)', flexShrink: 0 }} />
-                      <span>Club VIP</span>
+                      <span>Regístrate Gratis</span>
                     </>
                   )}
                 </button>

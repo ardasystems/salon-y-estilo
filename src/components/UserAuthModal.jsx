@@ -237,7 +237,7 @@ export const UserAuthModal = () => {
                 Club VIP • Salón & Estilo
               </span>
               <h3 style={{ fontSize: '1.45rem', fontFamily: 'var(--font-serif)', color: '#FFFFFF', marginTop: '0.2rem', marginBottom: '0.4rem' }}>
-                {activeTab === 'register' && 'Únete al Club VIP'}
+                {activeTab === 'register' && 'Regístrate Gratis'}
                 {activeTab === 'login' && 'Iniciar Sesión'}
                 {activeTab === 'recover' && 'Recuperar Contraseña'}
               </h3>
