@@ -159,7 +159,7 @@ export const ServicesSection = () => {
               >
                 {/* Image */}
                 <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', backgroundColor: '#130F0E' }}>
-                  {service.imageOrientation === 'horizontal' && (
+                  {service.imageOrientation !== 'horizontal' && (
                     <img
                       src={service.image}
                       alt=""
@@ -183,7 +183,7 @@ export const ServicesSection = () => {
                       position: 'relative',
                       width: '100%',
                       height: '100%',
-                      objectFit: service.imageOrientation === 'horizontal' ? 'contain' : 'cover'
+                      objectFit: service.imageOrientation === 'horizontal' ? 'cover' : 'contain'
                     }}
                   />
                   <div style={{

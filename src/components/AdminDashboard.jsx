@@ -3906,31 +3906,70 @@ export const AdminDashboard = () => {
                           }}
                         >
                           <div style={{
-                            width: '68px',
-                            height: '68px',
+                            width: productForm.imageOrientation === 'horizontal' ? '92px' : '62px',
+                            height: productForm.imageOrientation === 'horizontal' ? '60px' : '84px',
                             borderRadius: 'var(--radius-xs)',
                             background: '#1E1917',
-                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            border: '1px solid rgba(229, 192, 123, 0.45)',
                             overflow: 'hidden',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             flexShrink: 0,
-                            position: 'relative'
+                            position: 'relative',
+                            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.6)'
                           }}>
                             {imgUrl ? (
-                              <img
-                                src={imgUrl}
-                                alt={`Foto ${index + 1}`}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                              />
+                              <>
+                                {productForm.imageOrientation === 'horizontal' && (
+                                  <img
+                                    src={imgUrl}
+                                    alt=""
+                                    aria-hidden="true"
+                                    style={{
+                                      position: 'absolute',
+                                      inset: 0,
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      filter: 'blur(10px) brightness(0.35)',
+                                      transform: 'scale(1.25)'
+                                    }}
+                                  />
+                                )}
+                                <img
+                                  src={imgUrl}
+                                  alt={`Foto ${index + 1}`}
+                                  style={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: productForm.imageOrientation === 'horizontal' ? 'contain' : 'cover'
+                                  }}
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                              </>
                             ) : (
                               <div style={{ textAlign: 'center', color: '#6B7280', fontSize: '0.65rem' }}>
                                 <ImageIcon size={20} style={{ margin: '0 auto 0.1rem', opacity: 0.5 }} />
                                 <span>Vacío</span>
                               </div>
                             )}
+                            <span style={{
+                              position: 'absolute',
+                              bottom: '2px',
+                              right: '2px',
+                              background: 'rgba(0,0,0,0.85)',
+                              color: 'var(--accent-gold-light)',
+                              fontSize: '0.52rem',
+                              fontWeight: 800,
+                              padding: '1px 3px',
+                              borderRadius: '2px',
+                              border: '1px solid rgba(229, 192, 123, 0.4)'
+                            }}>
+                              {productForm.imageOrientation === 'horizontal' ? '🖥️ H' : '📱 V'}
+                            </span>
                           </div>
 
                           <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -4531,27 +4570,67 @@ export const AdminDashboard = () => {
 
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{
-                      width: '74px',
-                      height: '74px',
+                      width: serviceForm.imageOrientation === 'horizontal' ? '96px' : '64px',
+                      height: serviceForm.imageOrientation === 'horizontal' ? '62px' : '88px',
                       borderRadius: 'var(--radius-sm)',
                       background: '#1C1C1C',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(229, 192, 123, 0.45)',
                       overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      position: 'relative',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.6)'
                     }}>
                       {serviceForm.image ? (
-                        <img
-                          src={serviceForm.image}
-                          alt="Service Preview"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
+                        <>
+                          {serviceForm.imageOrientation !== 'horizontal' && (
+                            <img
+                              src={serviceForm.image}
+                              alt=""
+                              aria-hidden="true"
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                filter: 'blur(10px) brightness(0.35)',
+                                transform: 'scale(1.25)'
+                              }}
+                            />
+                          )}
+                          <img
+                            src={serviceForm.image}
+                            alt="Service Preview"
+                            style={{
+                              position: 'relative',
+                              width: '100%',
+                              height: '100%',
+                              objectFit: serviceForm.imageOrientation === 'horizontal' ? 'cover' : 'contain'
+                            }}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        </>
                       ) : (
                         <ImageIcon size={24} style={{ color: '#666' }} />
                       )}
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '2px',
+                        background: 'rgba(0,0,0,0.85)',
+                        color: 'var(--accent-gold-light)',
+                        fontSize: '0.55rem',
+                        fontWeight: 800,
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        border: '1px solid rgba(229, 192, 123, 0.4)'
+                      }}>
+                        {serviceForm.imageOrientation === 'horizontal' ? '🖥️ H' : '📱 V'}
+                      </span>
                     </div>
 
                     <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -5163,13 +5242,68 @@ export const AdminDashboard = () => {
                   </div>
 
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Imagen Destacada de la Capacitación</label>
-                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                    <div style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#090909', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+                    <div style={{
+                      width: courseForm.imageOrientation === 'horizontal' ? '96px' : '64px',
+                      height: courseForm.imageOrientation === 'horizontal' ? '62px' : '88px',
+                      borderRadius: 'var(--radius-sm)',
+                      overflow: 'hidden',
+                      background: '#090909',
+                      flexShrink: 0,
+                      border: '1px solid rgba(229, 192, 123, 0.45)',
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.6)'
+                    }}>
                       {courseForm.image ? (
-                        <img src={courseForm.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <>
+                          {courseForm.imageOrientation !== 'horizontal' && (
+                            <img
+                              src={courseForm.image}
+                              alt=""
+                              aria-hidden="true"
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                filter: 'blur(10px) brightness(0.35)',
+                                transform: 'scale(1.25)'
+                              }}
+                            />
+                          )}
+                          <img
+                            src={courseForm.image}
+                            alt="Preview"
+                            style={{
+                              position: 'relative',
+                              width: '100%',
+                              height: '100%',
+                              objectFit: courseForm.imageOrientation === 'horizontal' ? 'cover' : 'contain'
+                            }}
+                          />
+                        </>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}><GraduationCap size={22} /></div>
                       )}
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '2px',
+                        right: '2px',
+                        background: 'rgba(0,0,0,0.85)',
+                        color: 'var(--accent-gold-light)',
+                        fontSize: '0.55rem',
+                        fontWeight: 800,
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        border: '1px solid rgba(229, 192, 123, 0.4)'
+                      }}>
+                        {courseForm.imageOrientation === 'horizontal' ? '🖥️ H' : '📱 V'}
+                      </span>
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       <label style={{
