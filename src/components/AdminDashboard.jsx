@@ -4847,6 +4847,7 @@ export const AdminDashboard = () => {
                       <option value="Tratamientos & Alisados">Tratamientos & Alisados</option>
                       <option value="Maquillaje Profesional">Maquillaje Profesional</option>
                       <option value="Peluquería Integral">Peluquería Integral</option>
+                      <option value="Barbería">Barbería</option>
                       <option value="Estilismo & Peinado">Estilismo & Peinado</option>
                       <option value="Salud Capilar">Salud Capilar</option>
                     </select>

@@ -1541,7 +1541,13 @@ export const StoreProvider = ({ children }) => {
     return matchesCategory && matchesSearch;
   });
 
-  const courseCategories = ["Todos", ...Array.from(new Set(courses.map(c => c.category?.trim()).filter(Boolean)))];
+  const courseCategories = [
+    "Todos",
+    ...Array.from(new Set([
+      ...courses.map(c => c.category?.trim()).filter(Boolean),
+      "Barbería"
+    ]))
+  ];
 
   return (
     <StoreContext.Provider value={{
