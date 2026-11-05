@@ -48,15 +48,10 @@ export const StoreProvider = ({ children }) => {
   });
 
   // Aprende Conmigo: Cursos & Capacitaciones
-  // Aprende Conmigo: Cursos & Capacitaciones
   const [courses, setCourses] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_courses');
-      const loaded = saved ? JSON.parse(saved) : INITIAL_COURSES;
-      return Array.isArray(loaded) ? loaded.map(c => ({
-        ...c,
-        mode: c.mode && /4\s*(a|o|-)\s*6|máx|alumnas/i.test(c.mode) ? 'Presencial • Grupos Reducidos (Cupos Limitados)' : c.mode
-      })) : INITIAL_COURSES;
+      return saved ? JSON.parse(saved) : INITIAL_COURSES;
     } catch {
       return INITIAL_COURSES;
     }
@@ -66,18 +61,7 @@ export const StoreProvider = ({ children }) => {
   const [academyPartnerships, setAcademyPartnerships] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_partnerships');
-      const loaded = saved ? JSON.parse(saved) : INITIAL_ACADEMY_PARTNERSHIPS;
-      return Array.isArray(loaded) ? loaded.map(p => {
-        if (p.id === 'salon-aliado-01') {
-          return {
-            ...p,
-            name: "Salón & Estilo - Sede Principal Chiclayo",
-            description: "Nuestro propio espacio técnico profesional acondicionado para que cada alumna aprenda junto al equipo de formadores de Salón & Estilo con clientas reales y casos de salón.",
-            benefits: Array.isArray(p.benefits) ? p.benefits.map(b => /4\s*(a|o|-)\s*6|alumnas/i.test(b) ? "Entorno formativo personalizado en grupos reducidos (no masivos)" : b) : p.benefits
-          };
-        }
-        return p;
-      }) : INITIAL_ACADEMY_PARTNERSHIPS;
+      return saved ? JSON.parse(saved) : INITIAL_ACADEMY_PARTNERSHIPS;
     } catch {
       return INITIAL_ACADEMY_PARTNERSHIPS;
     }
@@ -110,12 +94,6 @@ export const StoreProvider = ({ children }) => {
       }
       if (loaded.tagline && (/autor|atelier|alta gama/i.test(loaded.tagline))) {
         loaded.tagline = INITIAL_SETTINGS.tagline;
-      }
-      if (!loaded.academyHeroSubtitle || /4\s*(a|o|-)\s*6|máximo\s*4|alumnas/i.test(loaded.academyHeroSubtitle)) {
-        loaded.academyHeroSubtitle = INITIAL_SETTINGS.academyHeroSubtitle;
-      }
-      if (loaded.academyWhatsappMsg && /Miluska/i.test(loaded.academyWhatsappMsg)) {
-        loaded.academyWhatsappMsg = INITIAL_SETTINGS.academyWhatsappMsg;
       }
       return loaded;
     } catch {
@@ -431,26 +409,31 @@ export const StoreProvider = ({ children }) => {
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
-        // 1. Settings
-        const { data: settingsRow, error: sErr } = await supabase
+        // 1. Settings, Aprende Conmigo Courses & Partnerships
+        const { data: settingsRows, error: sErr } = await supabase
           .from('store_settings')
-          .select('data')
-          .eq('id', 'current')
-          .maybeSingle();
+          .select('id, data')
+          .in('id', ['current', 'academy_courses', 'academy_partnerships']);
 
-        if (settingsRow && settingsRow.data && !sErr) {
-          const cloudData = { ...settingsRow.data };
-          if (!cloudData.academyHeroSubtitle || /4\s*(a|o|-)\s*6|máximo\s*4|alumnas/i.test(cloudData.academyHeroSubtitle)) {
-            cloudData.academyHeroSubtitle = INITIAL_SETTINGS.academyHeroSubtitle;
+        if (settingsRows && settingsRows.length > 0 && !sErr) {
+          const currentRow = settingsRows.find(r => r.id === 'current');
+          if (currentRow?.data) {
+            setSettings(prev => ({
+              ...INITIAL_SETTINGS,
+              ...prev,
+              ...currentRow.data
+            }));
           }
-          if (cloudData.academyWhatsappMsg && /Miluska/i.test(cloudData.academyWhatsappMsg)) {
-            cloudData.academyWhatsappMsg = INITIAL_SETTINGS.academyWhatsappMsg;
+
+          const coursesRow = settingsRows.find(r => r.id === 'academy_courses');
+          if (coursesRow?.data?.list && Array.isArray(coursesRow.data.list)) {
+            setCourses(coursesRow.data.list);
           }
-          setSettings(prev => ({
-            ...INITIAL_SETTINGS,
-            ...prev,
-            ...cloudData
-          }));
+
+          const partnershipsRow = settingsRows.find(r => r.id === 'academy_partnerships');
+          if (partnershipsRow?.data?.list && Array.isArray(partnershipsRow.data.list)) {
+            setAcademyPartnerships(partnershipsRow.data.list);
+          }
         }
 
         // 2. Products
@@ -572,10 +555,18 @@ export const StoreProvider = ({ children }) => {
   useEffect(() => {
     const channel = supabase
       .channel('salon_store_realtime')
-      // Settings change
+      // Settings, Courses & Partnerships changes
       .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, (payload) => {
-        if (payload.new && payload.new.data) {
-          setSettings(prev => ({ ...prev, ...payload.new.data }));
+        const rowId = payload.new?.id;
+        const rowData = payload.new?.data;
+        if (!rowId || !rowData) return;
+
+        if (rowId === 'current') {
+          setSettings(prev => ({ ...prev, ...rowData }));
+        } else if (rowId === 'academy_courses' && Array.isArray(rowData.list)) {
+          setCourses(rowData.list);
+        } else if (rowId === 'academy_partnerships' && Array.isArray(rowData.list)) {
+          setAcademyPartnerships(rowData.list);
         }
       })
       // Products changes
@@ -951,48 +942,48 @@ export const StoreProvider = ({ children }) => {
   const addCourse = async (courseData) => {
     const courseId = courseData.id || `curso-${Date.now().toString().slice(-6)}`;
     const created = { ...courseData, id: courseId };
-    setCourses(prev => [created, ...prev]);
+    const newList = [created, ...courses.filter(c => c.id !== courseId)];
+    setCourses(newList);
     showToast("Capacitación creada exitosamente");
     try {
-      await supabase.from('academy_courses').insert({
-        id: created.id,
-        title: created.title,
-        category: created.category,
-        price: created.price || 0,
-        data: created,
-        created_at: new Date().toISOString(),
+      await supabase.from('store_settings').upsert({
+        id: 'academy_courses',
+        data: { list: newList },
         updated_at: new Date().toISOString()
       });
     } catch (err) {
-      console.warn("Notice: Local storage fallback for academy_courses:", err);
+      console.warn("Notice: Cloud sync error for academy_courses:", err);
     }
     return created;
   };
 
   const updateCourse = async (updatedCourse) => {
-    setCourses(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+    const newList = courses.map(c => c.id === updatedCourse.id ? updatedCourse : c);
+    setCourses(newList);
     showToast("Capacitación actualizada");
     try {
-      await supabase.from('academy_courses').upsert({
-        id: updatedCourse.id,
-        title: updatedCourse.title,
-        category: updatedCourse.category,
-        price: updatedCourse.price || 0,
-        data: updatedCourse,
+      await supabase.from('store_settings').upsert({
+        id: 'academy_courses',
+        data: { list: newList },
         updated_at: new Date().toISOString()
       });
     } catch (err) {
-      console.warn("Notice: Local storage fallback for academy_courses:", err);
+      console.warn("Notice: Cloud sync error for academy_courses:", err);
     }
   };
 
   const deleteCourse = async (id) => {
-    setCourses(prev => prev.filter(c => c.id !== id));
+    const newList = courses.filter(c => c.id !== id);
+    setCourses(newList);
     showToast("Capacitación eliminada");
     try {
-      await supabase.from('academy_courses').delete().eq('id', id);
+      await supabase.from('store_settings').upsert({
+        id: 'academy_courses',
+        data: { list: newList },
+        updated_at: new Date().toISOString()
+      });
     } catch (err) {
-      console.warn("Notice: Local storage fallback for academy_courses:", err);
+      console.warn("Notice: Cloud sync error for academy_courses:", err);
     }
   };
 
@@ -1002,46 +993,48 @@ export const StoreProvider = ({ children }) => {
   const addAcademyPartnership = async (partnerData) => {
     const partnerId = partnerData.id || `convenio-${Date.now().toString().slice(-6)}`;
     const created = { ...partnerData, id: partnerId };
-    setAcademyPartnerships(prev => [...prev, created]);
+    const newList = [...academyPartnerships.filter(p => p.id !== partnerId), created];
+    setAcademyPartnerships(newList);
     showToast("Convenio institucional registrado");
     try {
-      await supabase.from('academy_partnerships').insert({
-        id: created.id,
-        name: created.name,
-        type: created.institutionType || 'salon',
-        data: created,
-        created_at: new Date().toISOString(),
+      await supabase.from('store_settings').upsert({
+        id: 'academy_partnerships',
+        data: { list: newList },
         updated_at: new Date().toISOString()
       });
     } catch (err) {
-      console.warn("Notice: Local storage fallback for academy_partnerships:", err);
+      console.warn("Notice: Cloud sync error for academy_partnerships:", err);
     }
     return created;
   };
 
   const updateAcademyPartnership = async (updatedPartner) => {
-    setAcademyPartnerships(prev => prev.map(p => p.id === updatedPartner.id ? updatedPartner : p));
+    const newList = academyPartnerships.map(p => p.id === updatedPartner.id ? updatedPartner : p);
+    setAcademyPartnerships(newList);
     showToast("Convenio actualizado");
     try {
-      await supabase.from('academy_partnerships').upsert({
-        id: updatedPartner.id,
-        name: updatedPartner.name,
-        type: updatedPartner.institutionType || 'salon',
-        data: updatedPartner,
+      await supabase.from('store_settings').upsert({
+        id: 'academy_partnerships',
+        data: { list: newList },
         updated_at: new Date().toISOString()
       });
     } catch (err) {
-      console.warn("Notice: Local storage fallback for academy_partnerships:", err);
+      console.warn("Notice: Cloud sync error for academy_partnerships:", err);
     }
   };
 
   const deleteAcademyPartnership = async (id) => {
-    setAcademyPartnerships(prev => prev.filter(p => p.id !== id));
+    const newList = academyPartnerships.filter(p => p.id !== id);
+    setAcademyPartnerships(newList);
     showToast("Convenio eliminado");
     try {
-      await supabase.from('academy_partnerships').delete().eq('id', id);
+      await supabase.from('store_settings').upsert({
+        id: 'academy_partnerships',
+        data: { list: newList },
+        updated_at: new Date().toISOString()
+      });
     } catch (err) {
-      console.warn("Notice: Local storage fallback for academy_partnerships:", err);
+      console.warn("Notice: Cloud sync error for academy_partnerships:", err);
     }
   };
 
