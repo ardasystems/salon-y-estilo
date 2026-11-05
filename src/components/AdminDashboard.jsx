@@ -1135,13 +1135,67 @@ export const AdminDashboard = () => {
                         filteredProducts.map(p => (
                       <tr key={p.id} style={{ borderBottom: '1px solid rgba(212, 175, 55, 0.1)' }}>
                         <td style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <img
-                            src={p.images && p.images[0] ? p.images[0] : ''}
-                            alt={p.name}
-                            style={{ width: '44px', height: '44px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', border: '1px solid rgba(212, 175, 55, 0.2)' }}
-                          />
+                          <div style={{
+                            position: 'relative',
+                            width: p.imageOrientation === 'horizontal' ? '54px' : '40px',
+                            height: p.imageOrientation === 'horizontal' ? '36px' : '52px',
+                            borderRadius: 'var(--radius-sm)',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            background: '#141110',
+                            border: '1px solid rgba(212, 175, 55, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {p.imageOrientation === 'horizontal' && (
+                              <img
+                                src={p.images && p.images[0] ? p.images[0] : ''}
+                                alt=""
+                                aria-hidden="true"
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  filter: 'blur(8px) brightness(0.35)',
+                                  transform: 'scale(1.25)'
+                                }}
+                              />
+                            )}
+                            <img
+                              src={p.images && p.images[0] ? p.images[0] : ''}
+                              alt={p.name}
+                              style={{
+                                position: 'relative',
+                                width: '100%',
+                                height: '100%',
+                                objectFit: p.imageOrientation === 'horizontal' ? 'contain' : 'cover'
+                              }}
+                            />
+                            <span style={{
+                              position: 'absolute',
+                              bottom: '1px',
+                              right: '1px',
+                              background: 'rgba(0,0,0,0.85)',
+                              color: 'var(--accent-gold-light)',
+                              fontSize: '0.5rem',
+                              fontWeight: 800,
+                              padding: '1px 3px',
+                              borderRadius: '2px',
+                              border: '1px solid rgba(229, 192, 123, 0.4)'
+                            }}>
+                              {p.imageOrientation === 'horizontal' ? 'H' : 'V'}
+                            </span>
+                          </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: '#FFFFFF' }}>{p.name}</div>
+                            <div style={{ fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <span>{p.name}</span>
+                              <span style={{ fontSize: '0.62rem', color: 'var(--accent-gold)', background: 'rgba(212, 175, 55, 0.12)', padding: '0.1rem 0.35rem', borderRadius: '3px' }}>
+                                {p.imageOrientation === 'horizontal' ? '🖥️ H' : '📱 V'}
+                              </span>
+                            </div>
                             <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                               {p.volume || 'Cosmético'}{p.sku ? ` • SKU: ${p.sku}` : ''}
                             </div>
@@ -1374,13 +1428,67 @@ export const AdminDashboard = () => {
                         filteredServices.map(s => (
                       <tr key={s.id} style={{ borderBottom: '1px solid rgba(212, 175, 55, 0.1)' }}>
                         <td style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                          <img
-                            src={s.image || ''}
-                            alt={s.name}
-                            style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', border: '1px solid rgba(212, 175, 55, 0.2)' }}
-                          />
+                          <div style={{
+                            position: 'relative',
+                            width: s.imageOrientation === 'horizontal' ? '54px' : '40px',
+                            height: s.imageOrientation === 'horizontal' ? '36px' : '52px',
+                            borderRadius: 'var(--radius-sm)',
+                            overflow: 'hidden',
+                            flexShrink: 0,
+                            background: '#141110',
+                            border: '1px solid rgba(212, 175, 55, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {s.imageOrientation !== 'horizontal' && (
+                              <img
+                                src={s.image || ''}
+                                alt=""
+                                aria-hidden="true"
+                                style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  filter: 'blur(8px) brightness(0.35)',
+                                  transform: 'scale(1.25)'
+                                }}
+                              />
+                            )}
+                            <img
+                              src={s.image || ''}
+                              alt={s.name}
+                              style={{
+                                position: 'relative',
+                                width: '100%',
+                                height: '100%',
+                                objectFit: s.imageOrientation === 'horizontal' ? 'cover' : 'contain'
+                              }}
+                            />
+                            <span style={{
+                              position: 'absolute',
+                              bottom: '1px',
+                              right: '1px',
+                              background: 'rgba(0,0,0,0.85)',
+                              color: 'var(--accent-gold-light)',
+                              fontSize: '0.5rem',
+                              fontWeight: 800,
+                              padding: '1px 3px',
+                              borderRadius: '2px',
+                              border: '1px solid rgba(229, 192, 123, 0.4)'
+                            }}>
+                              {s.imageOrientation === 'horizontal' ? 'H' : 'V'}
+                            </span>
+                          </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: '#FFFFFF' }}>{s.name}</div>
+                            <div style={{ fontWeight: 600, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <span>{s.name}</span>
+                              <span style={{ fontSize: '0.62rem', color: 'var(--accent-gold)', background: 'rgba(212, 175, 55, 0.12)', padding: '0.1rem 0.35rem', borderRadius: '3px' }}>
+                                {s.imageOrientation === 'horizontal' ? '🖥️ H' : '📱 V'}
+                              </span>
+                            </div>
                             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {s.description}
                             </div>
@@ -3352,25 +3460,70 @@ export const AdminDashboard = () => {
                               flexDirection: 'column'
                             }}
                           >
-                            <div style={{ position: 'relative', height: '140px', background: '#0A0A0A' }}>
+                            <div style={{
+                              position: 'relative',
+                              height: course.imageOrientation === 'horizontal' ? '140px' : '185px',
+                              background: '#0A0A0A',
+                              overflow: 'hidden',
+                              transition: 'height 0.3s ease'
+                            }}>
+                              {course.imageOrientation !== 'horizontal' && (
+                                <img
+                                  src={course.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80"}
+                                  alt=""
+                                  aria-hidden="true"
+                                  style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    filter: 'blur(16px) brightness(0.35)',
+                                    transform: 'scale(1.25)',
+                                    pointerEvents: 'none'
+                                  }}
+                                />
+                              )}
                               <img
                                 src={course.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80"}
                                 alt={course.title}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                style={{
+                                  position: 'relative',
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: course.imageOrientation === 'horizontal' ? 'cover' : 'contain'
+                                }}
                               />
                               <div style={{
                                 position: 'absolute',
                                 top: '0.65rem',
                                 left: '0.65rem',
-                                background: isSoldOut ? '#EF4444' : isUpcoming ? '#F59E0B' : '#10B981',
-                                color: '#FFFFFF',
-                                fontSize: '0.65rem',
-                                fontWeight: 800,
-                                padding: '0.2rem 0.55rem',
-                                borderRadius: 'var(--radius-full)',
-                                textTransform: 'uppercase'
+                                display: 'flex',
+                                gap: '0.4rem',
+                                alignItems: 'center'
                               }}>
-                                {isSoldOut ? 'Agotado' : isUpcoming ? 'Próximo' : 'Abierto'}
+                                <span style={{
+                                  background: isSoldOut ? '#EF4444' : isUpcoming ? '#F59E0B' : '#10B981',
+                                  color: '#FFFFFF',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 800,
+                                  padding: '0.2rem 0.55rem',
+                                  borderRadius: 'var(--radius-full)',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  {isSoldOut ? 'Agotado' : isUpcoming ? 'Próximo' : 'Abierto'}
+                                </span>
+                                <span style={{
+                                  background: 'rgba(0,0,0,0.85)',
+                                  color: 'var(--accent-gold-light)',
+                                  fontSize: '0.62rem',
+                                  fontWeight: 700,
+                                  padding: '0.2rem 0.5rem',
+                                  borderRadius: 'var(--radius-full)',
+                                  border: '1px solid rgba(229, 192, 123, 0.4)'
+                                }}>
+                                  {course.imageOrientation === 'horizontal' ? '🖥️ H' : '📱 V'}
+                                </span>
                               </div>
 
                               <div style={{
