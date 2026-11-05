@@ -117,19 +117,42 @@ export const ProductQuickView = () => {
           borderRight: '1px solid rgba(255, 255, 255, 0.12)'
         }}>
           <div style={{
+            position: 'relative',
             width: '100%',
             maxWidth: '380px',
             aspectRatio: '1/1',
             borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
             boxShadow: '0 10px 30px rgba(0,0,0,0.8)',
-            background: '#1C1C1C',
+            background: '#141110',
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
+            {quickViewProduct.imageOrientation === 'horizontal' && (
+              <img
+                src={images[selectedImageIndex]}
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'blur(16px) brightness(0.38)',
+                  transform: 'scale(1.25)',
+                  pointerEvents: 'none'
+                }}
+              />
+            )}
             <img
               src={images[selectedImageIndex]}
               alt={quickViewProduct.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                objectFit: quickViewProduct.imageOrientation === 'horizontal' ? 'contain' : 'cover'
+              }}
             />
           </div>
 

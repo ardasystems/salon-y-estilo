@@ -26,6 +26,7 @@ export const ProductCard = ({ product }) => {
 
   const isLowStock = currentStock > 0 && currentStock <= 15;
   const isOutOfStock = currentStock <= 0;
+  const isHorizontal = product.imageOrientation === 'horizontal';
 
   return (
     <div
@@ -110,11 +111,31 @@ export const ProductCard = ({ product }) => {
           width: '100%',
           paddingTop: '110%',
           overflow: 'hidden',
-          backgroundColor: '#1E1E1E',
+          backgroundColor: '#161312',
           cursor: 'pointer'
         }}
         title="Toca la foto para ampliar y ver detalles del producto"
       >
+        {/* Ambient blurred backdrop for horizontal photos so the container is filled without awkward black empty bars */}
+        {isHorizontal && (
+          <img
+            src={(isHovered && product.images && product.images.length > 1 && product.images[1]) ? product.images[1] : (product.images && product.images[0] ? product.images[0] : '')}
+            alt=""
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'blur(16px) brightness(0.38)',
+              transform: 'scale(1.25)',
+              pointerEvents: 'none'
+            }}
+          />
+        )}
+
         {/* Main Product Image */}
         <img
           src={product.images && product.images.length > 0 ? product.images[0] : ''}
@@ -126,10 +147,10 @@ export const ProductCard = ({ product }) => {
             left: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: isHorizontal ? 'contain' : 'cover',
             transition: 'opacity 0.45s ease, transform 0.5s ease',
             opacity: isHovered && product.images && product.images.length > 1 && product.images[1] ? 0 : 1,
-            transform: isHovered ? 'scale(1.06)' : 'scale(1)'
+            transform: isHovered ? (isHorizontal ? 'scale(1.03)' : 'scale(1.06)') : 'scale(1)'
           }}
         />
 
@@ -145,10 +166,10 @@ export const ProductCard = ({ product }) => {
               left: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
+              objectFit: isHorizontal ? 'contain' : 'cover',
               transition: 'opacity 0.45s ease, transform 0.5s ease',
               opacity: isHovered ? 1 : 0,
-              transform: isHovered ? 'scale(1.06)' : 'scale(1)'
+              transform: isHovered ? (isHorizontal ? 'scale(1.03)' : 'scale(1.06)') : 'scale(1)'
             }}
           />
         )}

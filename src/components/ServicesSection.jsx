@@ -158,11 +158,33 @@ export const ServicesSection = () => {
                 }}
               >
                 {/* Image */}
-                <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden' }}>
+                <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', backgroundColor: '#130F0E' }}>
+                  {service.imageOrientation === 'horizontal' && (
+                    <img
+                      src={service.image}
+                      alt=""
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        filter: 'blur(16px) brightness(0.38)',
+                        transform: 'scale(1.25)',
+                        pointerEvents: 'none'
+                      }}
+                    />
+                  )}
                   <img
                     src={service.image}
                     alt={service.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: service.imageOrientation === 'horizontal' ? 'contain' : 'cover'
+                    }}
                   />
                   <div style={{
                     position: 'absolute',

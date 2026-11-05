@@ -72,6 +72,7 @@ export const AdminDashboard = () => {
     description: '',
     benefitsText: '',
     images: ['', '', ''],
+    imageOrientation: 'vertical',
     shades: [],
     sizes: []
   });
@@ -86,7 +87,8 @@ export const AdminDashboard = () => {
     priceFrom: '',
     description: '',
     includesText: '',
-    image: ''
+    image: '',
+    imageOrientation: 'vertical'
   });
 
   // Comparison Cases Modal State (Antes y Después)
@@ -127,6 +129,7 @@ export const AdminDashboard = () => {
     availableSpots: 2,
     status: 'abierto',
     image: '',
+    imageOrientation: 'vertical',
     description: '',
     syllabusText: '',
     includesText: '',
@@ -192,6 +195,7 @@ export const AdminDashboard = () => {
       availableSpots: 3,
       status: 'abierto',
       image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=900&q=80',
+      imageOrientation: 'vertical',
       description: '',
       syllabusText: 'Módulo 1: Fundamentos y diagnóstico capilar\nMódulo 2: Formulaciones y fondos de aclaración\nMódulo 3: Práctica con modelo real\nMódulo 4: Evaluación final y fotografía para redes',
       includesText: 'Manual de fórmulas de Salón & Estilo\nInsumos para las prácticas en clase\nModelo para evaluación en vivo\nCertificado emitido por Salón & Estilo\nConvalidación de horas para CETPRO del Estado\nPrácticas en salones aliados',
@@ -216,6 +220,7 @@ export const AdminDashboard = () => {
       availableSpots: course.availableSpots !== undefined ? course.availableSpots : 2,
       status: course.status || 'abierto',
       image: course.image || '',
+      imageOrientation: course.imageOrientation || 'vertical',
       description: course.description || '',
       syllabusText: Array.isArray(course.syllabus) ? course.syllabus.join('\n') : '',
       includesText: Array.isArray(course.includes) ? course.includes.join('\n') : '',
@@ -253,6 +258,7 @@ export const AdminDashboard = () => {
       availableSpots: parseInt(courseForm.availableSpots, 10) || 0,
       status: courseForm.status,
       image: courseForm.image.trim(),
+      imageOrientation: courseForm.imageOrientation || 'vertical',
       description: courseForm.description.trim(),
       syllabus,
       includes,
@@ -523,6 +529,7 @@ export const AdminDashboard = () => {
         '',
         ''
       ],
+      imageOrientation: 'vertical',
       shades: [],
       sizes: []
     });
@@ -569,6 +576,7 @@ export const AdminDashboard = () => {
       description: product.description,
       benefitsText: product.benefits ? product.benefits.join('\n') : '',
       images: existingImages.slice(0, 3),
+      imageOrientation: product.imageOrientation || 'vertical',
       shades: existingShades,
       sizes: existingSizes
     });
@@ -680,6 +688,7 @@ export const AdminDashboard = () => {
       description: productForm.description,
       benefits: productForm.benefitsText.split('\n').filter(b => b.trim() !== ''),
       images: finalImages,
+      imageOrientation: productForm.imageOrientation || 'vertical',
       shades: cleanShades,
       sizes: cleanSizes
     };
@@ -702,7 +711,8 @@ export const AdminDashboard = () => {
       priceFrom: '150.00',
       description: '',
       includesText: 'Diagnóstico capilar previo personalizado\nLavado purificante y nutrición profunda\nBrushing de finalizado glam',
-      image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80'
+      image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+      imageOrientation: 'vertical'
     });
     setServiceModalOpen(true);
   };
@@ -716,7 +726,8 @@ export const AdminDashboard = () => {
       priceFrom: service.priceFrom.toString(),
       description: service.description,
       includesText: service.includes ? service.includes.join('\n') : '',
-      image: service.image || ''
+      image: service.image || '',
+      imageOrientation: service.imageOrientation || 'vertical'
     });
     setServiceModalOpen(true);
   };
@@ -730,7 +741,8 @@ export const AdminDashboard = () => {
       priceFrom: parseFloat(serviceForm.priceFrom) || 0,
       description: serviceForm.description,
       includes: serviceForm.includesText.split('\n').filter(i => i.trim() !== ''),
-      image: serviceForm.image
+      image: serviceForm.image,
+      imageOrientation: serviceForm.imageOrientation || 'vertical'
     };
 
     if (editingService) {
@@ -3807,6 +3819,71 @@ export const AdminDashboard = () => {
                     Sube hasta 3 ángulos o fotos de textura/aplicación del producto. Los clientes podrán deslizar la galería en el catálogo y ver el carrusel completo de imágenes.
                   </p>
 
+                  {/* Selector de Orientación de Fotos */}
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    background: '#15100E',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'var(--radius-xs)',
+                    marginBottom: '0.95rem',
+                    border: '1px solid rgba(229, 192, 123, 0.25)'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-gold-light)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>📐 Orientación de las fotos en la tienda:</span>
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>
+                        Aplica a todas las fotos del producto manteniendo las tarjetas alineadas en la cuadrícula
+                      </div>
+                    </div>
+                    <div style={{ display: 'inline-flex', background: '#090706', borderRadius: '6px', padding: '3px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <button
+                        type="button"
+                        onClick={() => setProductForm(prev => ({ ...prev, imageOrientation: 'vertical' }))}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: (productForm.imageOrientation || 'vertical') === 'vertical' ? 'var(--accent-gold)' : 'transparent',
+                          color: (productForm.imageOrientation || 'vertical') === 'vertical' ? '#000' : '#9CA3AF',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                      >
+                        📱 Vertical (Por defecto)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProductForm(prev => ({ ...prev, imageOrientation: 'horizontal' }))}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: productForm.imageOrientation === 'horizontal' ? 'var(--accent-gold)' : 'transparent',
+                          color: productForm.imageOrientation === 'horizontal' ? '#000' : '#9CA3AF',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
+                        }}
+                      >
+                        🖥️ Horizontal
+                      </button>
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                     {[
                       { index: 0, label: 'Foto 1 (Principal en portada) *' },
@@ -4393,6 +4470,65 @@ export const AdminDashboard = () => {
                     Fotografía del Servicio * (Se comprime automáticamente para no saturar memoria)
                   </label>
 
+                  {/* Selector de Orientación de Foto del Servicio */}
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    background: '#15100E',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'var(--radius-xs)',
+                    marginBottom: '0.85rem',
+                    border: '1px solid rgba(229, 192, 123, 0.25)'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-gold-light)' }}>
+                        📐 Orientación de la foto:
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>
+                        Define el formato de la tarjeta manteniendo alineada la cuadrícula
+                      </div>
+                    </div>
+                    <div style={{ display: 'inline-flex', background: '#090706', borderRadius: '6px', padding: '3px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <button
+                        type="button"
+                        onClick={() => setServiceForm(prev => ({ ...prev, imageOrientation: 'vertical' }))}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: (serviceForm.imageOrientation || 'vertical') === 'vertical' ? 'var(--accent-gold)' : 'transparent',
+                          color: (serviceForm.imageOrientation || 'vertical') === 'vertical' ? '#000' : '#9CA3AF',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        📱 Vertical (Por defecto)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setServiceForm(prev => ({ ...prev, imageOrientation: 'horizontal' }))}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: serviceForm.imageOrientation === 'horizontal' ? 'var(--accent-gold)' : 'transparent',
+                          color: serviceForm.imageOrientation === 'horizontal' ? '#000' : '#9CA3AF',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        🖥️ Horizontal
+                      </button>
+                    </div>
+                  </div>
+
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <div style={{
                       width: '74px',
@@ -4968,6 +5104,64 @@ export const AdminDashboard = () => {
 
                 {/* Imagen del curso */}
                 <div>
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    background: '#15100E',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'var(--radius-xs)',
+                    marginBottom: '0.75rem',
+                    border: '1px solid rgba(229, 192, 123, 0.25)'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-gold-light)' }}>
+                        📐 Orientación de la foto:
+                      </div>
+                      <div style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>
+                        Define el formato de la tarjeta manteniendo alineada la cuadrícula de cursos
+                      </div>
+                    </div>
+                    <div style={{ display: 'inline-flex', background: '#090706', borderRadius: '6px', padding: '3px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <button
+                        type="button"
+                        onClick={() => setCourseForm(prev => ({ ...prev, imageOrientation: 'vertical' }))}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: (courseForm.imageOrientation || 'vertical') === 'vertical' ? 'var(--accent-gold)' : 'transparent',
+                          color: (courseForm.imageOrientation || 'vertical') === 'vertical' ? '#000' : '#9CA3AF',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        📱 Vertical (Por defecto)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCourseForm(prev => ({ ...prev, imageOrientation: 'horizontal' }))}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '4px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: courseForm.imageOrientation === 'horizontal' ? 'var(--accent-gold)' : 'transparent',
+                          color: courseForm.imageOrientation === 'horizontal' ? '#000' : '#9CA3AF',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        🖥️ Horizontal
+                      </button>
+                    </div>
+                  </div>
+
                   <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.35rem' }}>Imagen Destacada de la Capacitación</label>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                     <div style={{ width: '60px', height: '60px', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#090909', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}>

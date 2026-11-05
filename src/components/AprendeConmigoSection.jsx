@@ -624,14 +624,32 @@ export const AprendeConmigoSection = () => {
                   >
                     {/* Header Image */}
                     <div style={{ position: 'relative', height: '210px', background: '#090909', overflow: 'hidden' }}>
+                      {course.imageOrientation === 'horizontal' && (
+                        <img
+                          src={course.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80"}
+                          alt=""
+                          aria-hidden="true"
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            filter: 'blur(16px) brightness(0.38)',
+                            transform: 'scale(1.25)',
+                            pointerEvents: 'none'
+                          }}
+                        />
+                      )}
                       <img
                         src={course.image || "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80"}
                         alt={course.title}
                         style={{
+                          position: 'relative',
                           width: '100%',
                           height: '100%',
-                          objectFit: 'cover',
-                          filter: 'brightness(0.9)'
+                          objectFit: course.imageOrientation === 'horizontal' ? 'contain' : 'cover',
+                          filter: 'brightness(0.95)'
                         }}
                       />
                       
