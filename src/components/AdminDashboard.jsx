@@ -58,6 +58,7 @@ export const AdminDashboard = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
     name: '',
+    sku: '',
     subtitle: '',
     category: 'Skincare',
     keywordsText: '',
@@ -504,6 +505,7 @@ export const AdminDashboard = () => {
     setEditingProduct(null);
     setProductForm({
       name: '',
+      sku: '',
       subtitle: '',
       category: 'Capilar',
       keywordsText: 'belleza, cuidado, cabello, rostro, nutrición',
@@ -553,6 +555,7 @@ export const AdminDashboard = () => {
 
     setProductForm({
       name: product.name,
+      sku: product.sku || '',
       subtitle: product.subtitle || '',
       category: product.category,
       keywordsText: product.keywords ? product.keywords.join(', ') : '',
@@ -663,6 +666,7 @@ export const AdminDashboard = () => {
 
     const productPayload = {
       name: productForm.name,
+      sku: (productForm.sku || '').trim(),
       subtitle: productForm.subtitle,
       category: productForm.category,
       keywords: keywordsList,
@@ -1001,6 +1005,7 @@ export const AdminDashboard = () => {
               (p.subtitle || '').toLowerCase().includes(q) ||
               (p.description || '').toLowerCase().includes(q) ||
               (p.id || '').toLowerCase().includes(q) ||
+              (p.sku || '').toLowerCase().includes(q) ||
               (Array.isArray(p.keywords) && p.keywords.some(k => (k || '').toLowerCase().includes(q)))
             );
           });
@@ -1125,7 +1130,9 @@ export const AdminDashboard = () => {
                           />
                           <div>
                             <div style={{ fontWeight: 600, color: '#FFFFFF' }}>{p.name}</div>
-                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{p.volume || 'Cosmético'}</div>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                              {p.volume || 'Cosmético'}{p.sku ? ` • SKU: ${p.sku}` : ''}
+                            </div>
                             {((p.shades && p.shades.length > 0) || (p.sizes && p.sizes.length > 0)) && (
                               <div style={{ display: 'flex', gap: '0.35rem', marginTop: '0.3rem', flexWrap: 'wrap' }}>
                                 {p.shades && p.shades.length > 0 && (
@@ -3644,15 +3651,27 @@ export const AdminDashboard = () => {
               </h2>
 
               <form onSubmit={handleSaveProduct} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Nombre del Producto *</label>
-                  <input
-                    type="text"
-                    required
-                    value={productForm.name}
-                    onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Nombre del Producto *</label>
+                    <input
+                      type="text"
+                      required
+                      value={productForm.name}
+                      onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Código / SKU (opcional)</label>
+                    <input
+                      type="text"
+                      placeholder="Ej. SKU-CAP-001"
+                      value={productForm.sku || ''}
+                      onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
+                      style={{ width: '100%', padding: '0.6rem', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

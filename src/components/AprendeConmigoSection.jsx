@@ -256,7 +256,7 @@ export const AprendeConmigoSection = () => {
               ¿Por qué formarte en Salón & Estilo?
             </h2>
             <p style={{ fontSize: '0.9rem', color: '#B3B3B3', lineHeight: 1.6, marginTop: '0.5rem' }}>
-              Sabemos que buscas aprender un oficio rentable con seriedad. Por eso combinamos la enseñanza artesanal de alta gama con alianzas institucionales comprobadas.
+              Sabemos que buscas aprender un oficio rentable con seriedad. Por eso combinamos la enseñanza artesanal profesional con alianzas institucionales comprobadas.
             </p>
           </div>
 

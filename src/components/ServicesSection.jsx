@@ -38,7 +38,7 @@ export const ServicesSection = () => {
             Carta de Servicios Exclusivos
           </span>
           <h2 style={{ fontSize: '2.6rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)', marginBottom: '0.85rem' }}>
-            Estilismo & Belleza de Alta Gama
+            Estilismo & Belleza Profesional
           </h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', lineHeight: 1.65 }}>
             Desde balayage con matices personalizados hasta alisados orgánicos de máxima duración. Reserva tu turno de atención con asesoría personalizada.

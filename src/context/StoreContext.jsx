@@ -14,11 +14,18 @@ import { supabase } from '../lib/supabase';
 const StoreContext = createContext(null);
 
 export const StoreProvider = ({ children }) => {
-  // Products (with version check for fallback)
+  // Products (with version check for fallback and SKU backfill)
   const [products, setProducts] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_products');
-      return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+      const loaded = saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+      return Array.isArray(loaded) ? loaded.map(p => {
+        const initMatch = INITIAL_PRODUCTS.find(ip => ip.id === p.id);
+        return {
+          ...p,
+          sku: p.sku || initMatch?.sku || ''
+        };
+      }) : INITIAL_PRODUCTS;
     } catch {
       return INITIAL_PRODUCTS;
     }
@@ -28,7 +35,13 @@ export const StoreProvider = ({ children }) => {
   const [services, setServices] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_services');
-      return saved ? JSON.parse(saved) : INITIAL_SERVICES;
+      const loaded = saved ? JSON.parse(saved) : INITIAL_SERVICES;
+      return Array.isArray(loaded) ? loaded.map(s => ({
+        ...s,
+        includes: Array.isArray(s.includes)
+          ? s.includes.map(inc => typeof inc === 'string' ? inc.replace(/alta gama/gi, 'profesional') : inc)
+          : s.includes
+      })) : INITIAL_SERVICES;
     } catch {
       return INITIAL_SERVICES;
     }
@@ -74,7 +87,11 @@ export const StoreProvider = ({ children }) => {
   const [comparisonCases, setComparisonCases] = useState(() => {
     try {
       const saved = localStorage.getItem('salonestilo_comparison_cases');
-      return saved ? JSON.parse(saved) : INITIAL_COMPARISON_CASES;
+      const loaded = saved ? JSON.parse(saved) : INITIAL_COMPARISON_CASES;
+      return Array.isArray(loaded) ? loaded.map(c => ({
+        ...c,
+        serviceCategory: c.serviceCategory ? c.serviceCategory.replace(/alta gama/gi, 'Profesional') : c.serviceCategory
+      })) : INITIAL_COMPARISON_CASES;
     } catch {
       return INITIAL_COMPARISON_CASES;
     }
@@ -91,7 +108,7 @@ export const StoreProvider = ({ children }) => {
       if (loaded.storeName && (/boutique/i.test(loaded.storeName) || loaded.storeName === 'Salon&Estilo' || loaded.storeName === 'Salon & Estilo')) {
         loaded.storeName = INITIAL_SETTINGS.storeName;
       }
-      if (loaded.tagline && /autor|atelier/i.test(loaded.tagline)) {
+      if (loaded.tagline && (/autor|atelier|alta gama/i.test(loaded.tagline))) {
         loaded.tagline = INITIAL_SETTINGS.tagline;
       }
       if (!loaded.academyHeroSubtitle || /4\s*(a|o|-)\s*6|máximo\s*4|alumnas/i.test(loaded.academyHeroSubtitle)) {
@@ -649,16 +666,34 @@ export const StoreProvider = ({ children }) => {
       }
     }
 
+    const currentProd = products.find(p => p.id === product.id) || product;
+
+    // Calcular stock efectivo real
+    let effectiveStock = Number(currentProd.stock || 0);
+    if (size && size.name && Array.isArray(currentProd.sizes)) {
+      const matchedSize = currentProd.sizes.find(s => s.name === size.name);
+      if (matchedSize && matchedSize.stock !== undefined && matchedSize.stock !== null && matchedSize.stock !== '') {
+        effectiveStock = Number(matchedSize.stock);
+      } else if (size.stock !== undefined && size.stock !== null && size.stock !== '') {
+        effectiveStock = Number(size.stock);
+      }
+    } else if (size && size.stock !== undefined && size.stock !== null && size.stock !== '') {
+      effectiveStock = Number(size.stock);
+    }
+
+    if (effectiveStock <= 0) {
+      showToast(`"${product.name}" está agotado temporalmente.`, "error");
+      return;
+    }
+
     const itemPrice = (size && size.price !== undefined && size.price !== null && !isNaN(Number(size.price)))
       ? Number(size.price)
       : Number(product.price);
 
-    const itemStock = (size && size.stock !== undefined && size.stock !== null && size.stock !== '' && !isNaN(Number(size.stock)))
-      ? Number(size.stock)
-      : Number(product.stock || 0);
-
     const shadeKey = shade?.name || '';
     const sizeKey = size?.name || '';
+
+    let addedCount = 0;
 
     setCart(prev => {
       const existingIndex = prev.findIndex(item =>
@@ -668,36 +703,59 @@ export const StoreProvider = ({ children }) => {
       );
 
       if (existingIndex > -1) {
+        const currentQty = prev[existingIndex].quantity;
+        if (currentQty >= effectiveStock) {
+          showToast(`Ya tienes el stock máximo (${effectiveStock} u.) en tu bolsa.`, "warning");
+          return prev;
+        }
+
         const updated = [...prev];
-        updated[existingIndex].quantity += quantity;
+        const qtyToAdd = Math.min(quantity, effectiveStock - currentQty);
+        addedCount = qtyToAdd;
+        updated[existingIndex].quantity = currentQty + qtyToAdd;
+        updated[existingIndex].stock = effectiveStock;
+
+        if (qtyToAdd < quantity) {
+          showToast(`Se agregaron solo ${qtyToAdd} u. por límite de stock disponible (${effectiveStock} máx.)`, "warning");
+        }
         return updated;
+      }
+
+      const qtyToAdd = Math.min(quantity, effectiveStock);
+      addedCount = qtyToAdd;
+
+      if (qtyToAdd < quantity) {
+        showToast(`Se agregaron solo ${qtyToAdd} u. por límite de stock disponible (${effectiveStock} máx.)`, "warning");
       }
 
       return [...prev, {
         id: product.id,
+        sku: product.sku || currentProd.sku || '',
         name: product.name,
         price: itemPrice,
         basePrice: Number(product.price),
         memberDiscountPercent: Number(product.memberDiscountPercent || 0),
         image: product.images && product.images.length > 0 ? product.images[0] : (product.image || ''),
-        quantity,
+        quantity: qtyToAdd,
         selectedShade: shade ? shade.name : null,
         selectedShadeHex: shade ? shade.hex : null,
         selectedSize: size ? size.name : null,
-        stock: itemStock
+        stock: effectiveStock
       }];
     });
 
-    const variantLabel = [
-      shade ? `Tono: ${shade.name}` : null,
-      size ? `Tam: ${size.name}` : null
-    ].filter(Boolean).join(' • ');
+    if (addedCount > 0) {
+      const variantLabel = [
+        shade ? `Tono: ${shade.name}` : null,
+        size ? `Tam: ${size.name}` : null
+      ].filter(Boolean).join(' • ');
 
-    const toastMsg = variantLabel
-      ? `"${product.name}" (${variantLabel}) añadido a tu bolsa`
-      : `"${product.name}" añadido a tu bolsa`;
+      const toastMsg = variantLabel
+        ? `"${product.name}" (${variantLabel}) añadido a tu bolsa`
+        : `"${product.name}" añadido a tu bolsa`;
 
-    showToast(toastMsg);
+      showToast(toastMsg);
+    }
   };
 
   const removeFromCart = (index) => {
@@ -706,12 +764,32 @@ export const StoreProvider = ({ children }) => {
 
   const updateCartQuantity = (index, delta) => {
     setCart(prev => {
-      const updated = [...prev];
-      const newQty = updated[index].quantity + delta;
+      if (!prev[index]) return prev;
+      const targetItem = prev[index];
+      const newQty = targetItem.quantity + delta;
+
       if (newQty <= 0) {
-        return updated.filter((_, i) => i !== index);
+        return prev.filter((_, i) => i !== index);
       }
-      updated[index].quantity = newQty;
+
+      if (delta > 0) {
+        // Consultar stock real disponible
+        const currentProd = products.find(p => p.id === targetItem.id);
+        let maxStock = Number(targetItem.stock || currentProd?.stock || 0);
+        if (targetItem.selectedSize && currentProd?.sizes) {
+          const szObj = currentProd.sizes.find(s => s.name === targetItem.selectedSize);
+          if (szObj && szObj.stock !== undefined && szObj.stock !== null && szObj.stock !== '') {
+            maxStock = Number(szObj.stock);
+          }
+        }
+        if (newQty > maxStock) {
+          showToast(`No puedes añadir más unidades. Stock disponible: ${maxStock} u.`, "warning");
+          return prev;
+        }
+      }
+
+      const updated = [...prev];
+      updated[index] = { ...targetItem, quantity: newQty };
       return updated;
     });
   };
@@ -979,6 +1057,67 @@ export const StoreProvider = ({ children }) => {
       createdAt: new Date().toISOString()
     };
     setOrders(prev => [fullOrder, ...prev]);
+
+    // Descontar inmediatamente del stock la cantidad comprada de cada producto
+    if (Array.isArray(fullOrder.items) && fullOrder.items.length > 0) {
+      setProducts(prevProducts => {
+        const updatedProducts = prevProducts.map(prod => {
+          const matchedItems = fullOrder.items.filter(item => item.id === prod.id);
+          if (matchedItems.length === 0) return prod;
+
+          let updatedProd = { ...prod };
+          let totalDeduction = 0;
+
+          matchedItems.forEach(item => {
+            const qty = Math.max(1, Number(item.quantity) || 1);
+            totalDeduction += qty;
+
+            // Si se compró una presentación / tamaño específico
+            if (item.selectedSize && Array.isArray(updatedProd.sizes)) {
+              updatedProd.sizes = updatedProd.sizes.map(sz => {
+                if (sz.name === item.selectedSize) {
+                  const currentSzStock = (sz.stock !== undefined && sz.stock !== null && sz.stock !== '')
+                    ? Number(sz.stock)
+                    : Number(updatedProd.stock || 0);
+                  return {
+                    ...sz,
+                    stock: Math.max(0, currentSzStock - qty)
+                  };
+                }
+                return sz;
+              });
+            }
+          });
+
+          const currentStock = Number(updatedProd.stock || 0);
+          updatedProd.stock = Math.max(0, currentStock - totalDeduction);
+
+          // Sincronizar en Supabase para persistencia multi-dispositivo
+          try {
+            supabase.from('products').upsert({
+              id: updatedProd.id,
+              name: updatedProd.name,
+              category: updatedProd.category,
+              price: updatedProd.price,
+              stock: updatedProd.stock,
+              data: updatedProd,
+              updated_at: new Date().toISOString()
+            }).then(() => {}).catch(e => console.warn("Error updating product stock in DB:", e));
+          } catch (dbErr) {
+            console.warn("Error syncing stock deduction to cloud:", dbErr);
+          }
+
+          return updatedProd;
+        });
+
+        try {
+          localStorage.setItem('salonestilo_products', JSON.stringify(updatedProducts));
+        } catch {}
+
+        return updatedProducts;
+      });
+    }
+
     // Solo vaciar el carrito si la orden ya está confirmada como pagada
     if (fullOrder.paymentStatus === 'pagado' || fullOrder.paymentStatus === 'approved') {
       clearCart();
@@ -1002,13 +1141,64 @@ export const StoreProvider = ({ children }) => {
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
+    const existingOrder = orders.find(o => o.id === orderId);
+    const oldStatus = existingOrder?.paymentStatus;
+
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, paymentStatus: newStatus } : o));
     showToast(`Estado de orden #${orderId} actualizado`);
+
+    // Si la orden se cancela, restaurar el stock a los productos
+    if (newStatus === 'cancelado' && oldStatus !== 'cancelado' && existingOrder?.items) {
+      setProducts(prevProducts => {
+        const restored = prevProducts.map(prod => {
+          const matched = existingOrder.items.filter(i => i.id === prod.id);
+          if (matched.length === 0) return prod;
+          let pCopy = { ...prod };
+          let totalRestored = 0;
+          matched.forEach(i => {
+            const qty = Math.max(1, Number(i.quantity) || 1);
+            totalRestored += qty;
+            if (i.selectedSize && Array.isArray(pCopy.sizes)) {
+              pCopy.sizes = pCopy.sizes.map(sz => {
+                if (sz.name === i.selectedSize) {
+                  const currentSzStock = (sz.stock !== undefined && sz.stock !== null && sz.stock !== '')
+                    ? Number(sz.stock)
+                    : Number(pCopy.stock || 0);
+                  return {
+                    ...sz,
+                    stock: currentSzStock + qty
+                  };
+                }
+                return sz;
+              });
+            }
+          });
+          pCopy.stock = Number(pCopy.stock || 0) + totalRestored;
+          try {
+            supabase.from('products').upsert({
+              id: pCopy.id,
+              name: pCopy.name,
+              category: pCopy.category,
+              price: pCopy.price,
+              stock: pCopy.stock,
+              data: pCopy,
+              updated_at: new Date().toISOString()
+            }).then(() => {}).catch(() => {});
+          } catch {}
+          return pCopy;
+        });
+        try {
+          localStorage.setItem('salonestilo_products', JSON.stringify(restored));
+        } catch {}
+        return restored;
+      });
+    }
+
     try {
       await supabase.from('orders').update({
         payment_status: newStatus,
         data: {
-          ...orders.find(o => o.id === orderId),
+          ...existingOrder,
           paymentStatus: newStatus
         }
       }).eq('id', orderId);
@@ -1313,6 +1503,7 @@ export const StoreProvider = ({ children }) => {
       normStr(product.subtitle).includes(query) ||
       normStr(product.description).includes(query) ||
       normStr(product.category).includes(query) ||
+      normStr(product.sku).includes(query) ||
       matchesKeywords;
 
     return matchesCategory && matchesSearch;

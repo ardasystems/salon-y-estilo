@@ -47,7 +47,7 @@ export const SalonSection = () => {
       title: "Balayage Miel & Morena Iluminada",
       client: "Camila V., Chiclayo",
       category: "Colorimetría",
-      tag: "Colorimetría de Alta Gama",
+      tag: "Colorimetría Profesional",
       image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
       desc: "Degradé suave sin marcas, aportando luz cálida sobre base castaña natural sin maltratar la fibra capilar."
     },
@@ -71,7 +71,7 @@ export const SalonSection = () => {
       title: "Rubio Beige Champán & Corrección",
       client: "Daniela G., La Victoria",
       category: "Colorimetría",
-      tag: "Colorimetría de Alta Gama",
+      tag: "Colorimetría Profesional",
       image: "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80",
       desc: "Eliminación de reflejos cobrizos previos y matiz perlado con brillo gloss extremo."
     },

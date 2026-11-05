@@ -41,7 +41,9 @@ export const ProductQuickView = () => {
   const isOutOfStock = currentStock <= 0;
 
   const handleAdd = () => {
-    addToCart(quickViewProduct, quantity, { shade: selectedShade, size: selectedSize });
+    if (isOutOfStock || quantity <= 0) return;
+    const qtyToAdd = Math.min(quantity, Math.max(1, currentStock));
+    addToCart(quickViewProduct, qtyToAdd, { shade: selectedShade, size: selectedSize });
     setQuickViewProduct(null);
     setIsCartOpen(true);
   };
@@ -157,7 +159,7 @@ export const ProductQuickView = () => {
 
         {/* Info */}
         <div className="quickview-info" style={{ padding: '2.5rem 2rem', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
             <span style={{
               fontSize: '0.75rem',
               fontWeight: 800,
@@ -178,6 +180,20 @@ export const ProductQuickView = () => {
                 textTransform: 'uppercase'
               }}>
                 Bestseller
+              </span>
+            )}
+            {quickViewProduct.sku && (
+              <span style={{
+                fontSize: '0.68rem',
+                color: '#D4AF37',
+                background: 'rgba(212, 175, 55, 0.1)',
+                padding: '0.15rem 0.55rem',
+                borderRadius: '4px',
+                border: '1px solid rgba(212, 175, 55, 0.25)',
+                fontFamily: 'monospace',
+                marginLeft: 'auto'
+              }}>
+                SKU: {quickViewProduct.sku}
               </span>
             )}
           </div>
@@ -337,13 +353,32 @@ export const ProductQuickView = () => {
             </div>
           )}
 
+          {/* Stock Indicator */}
+          <div style={{ marginBottom: '0.85rem' }}>
+            {isOutOfStock ? (
+              <span style={{ fontSize: '0.78rem', color: '#F87171', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444' }} />
+                Agotado temporalmente (Stock: 0)
+              </span>
+            ) : currentStock <= 15 ? (
+              <span style={{ fontSize: '0.78rem', color: '#FCD34D', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F59E0B' }} />
+                ⚡ Solo quedan {currentStock} unidades disponibles
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.76rem', color: '#34D399', fontWeight: 600 }}>
+                ✓ En stock ({currentStock} disponibles)
+              </span>
+            )}
+          </div>
+
           {/* Quantity & CTA */}
           <div style={{
             marginTop: 'auto',
             display: 'flex',
             alignItems: 'center',
             gap: '1rem',
-            paddingTop: '1.5rem',
+            paddingTop: '1rem',
             borderTop: '1px solid rgba(255, 255, 255, 0.12)'
           }}>
             <div style={{
@@ -356,16 +391,41 @@ export const ProductQuickView = () => {
             }}>
               <button
                 type="button"
+                disabled={isOutOfStock || quantity <= 1}
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                style={{ width: '28px', height: '28px', fontSize: '1.05rem', fontWeight: 700, color: '#FFFFFF' }}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  fontSize: '1.05rem',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  opacity: (isOutOfStock || quantity <= 1) ? 0.4 : 1,
+                  cursor: (isOutOfStock || quantity <= 1) ? 'not-allowed' : 'pointer'
+                }}
               >
                 -
               </button>
-              <span style={{ padding: '0 0.85rem', fontSize: '0.92rem', fontWeight: 800, color: '#FFFFFF' }}>{quantity}</span>
+              <span style={{ padding: '0 0.85rem', fontSize: '0.92rem', fontWeight: 800, color: '#FFFFFF' }}>
+                {isOutOfStock ? 0 : quantity}
+              </span>
               <button
                 type="button"
-                onClick={() => setQuantity(quantity + 1)}
-                style={{ width: '28px', height: '28px', fontSize: '1.05rem', fontWeight: 700, color: '#FFFFFF' }}
+                disabled={isOutOfStock || quantity >= currentStock}
+                onClick={() => {
+                  if (quantity < currentStock) {
+                    setQuantity(q => q + 1);
+                  }
+                }}
+                title={quantity >= currentStock ? "Límite de stock disponible alcanzado" : "Añadir otra unidad"}
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  fontSize: '1.05rem',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  opacity: (isOutOfStock || quantity >= currentStock) ? 0.4 : 1,
+                  cursor: (isOutOfStock || quantity >= currentStock) ? 'not-allowed' : 'pointer'
+                }}
               >
                 +
               </button>
@@ -389,7 +449,7 @@ export const ProductQuickView = () => {
               <span>
                 {isOutOfStock
                   ? 'Agotado temporalmente'
-                  : `Añadir al Carrito • S/ ${(discountedPrice * quantity).toFixed(2)}`}
+                  : `Añadir al Carrito • S/ ${(discountedPrice * Math.min(quantity, Math.max(1, currentStock))).toFixed(2)}`}
               </span>
             </button>
           </div>

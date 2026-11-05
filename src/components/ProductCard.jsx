@@ -56,6 +56,21 @@ export const ProductCard = ({ product }) => {
         flexDirection: 'column',
         gap: '0.35rem'
       }}>
+        {isOutOfStock && (
+          <span style={{
+            background: 'rgba(220, 38, 38, 0.9)',
+            color: '#FFFFFF',
+            fontSize: '0.66rem',
+            fontWeight: 800,
+            letterSpacing: '0.06em',
+            padding: '0.25rem 0.65rem',
+            borderRadius: 'var(--radius-full)',
+            textTransform: 'uppercase',
+            boxShadow: '0 4px 12px rgba(220, 38, 38, 0.4)'
+          }}>
+            Agotado
+          </span>
+        )}
         {product.isBestseller && (
           <span style={{
             background: 'linear-gradient(135deg, #F7E7C4 0%, #E5C07B 100%)',
@@ -209,18 +224,32 @@ export const ProductCard = ({ product }) => {
         className="product-card-body" 
         style={{ padding: '1.35rem', display: 'flex', flexDirection: 'column', flex: 1, background: '#141414' }}
       >
-        {/* Category & Rating */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
-          <span style={{
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            color: 'var(--accent-gold)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em'
-          }}>
-            {product.category}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.76rem', color: '#D4D4D4' }}>
+        {/* Category, SKU & Rating */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem', gap: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              color: 'var(--accent-gold)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em'
+            }}>
+              {product.category}
+            </span>
+            {product.sku && (
+              <span style={{
+                fontSize: '0.62rem',
+                color: '#A3A3A3',
+                background: 'rgba(255, 255, 255, 0.06)',
+                padding: '0.1rem 0.35rem',
+                borderRadius: '3px',
+                fontFamily: 'monospace'
+              }}>
+                {product.sku}
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.76rem', color: '#D4D4D4', flexShrink: 0 }}>
             <Star size={12} fill="var(--accent-gold)" color="var(--accent-gold)" />
             <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{product.rating}</span>
             <span style={{ color: '#A3A3A3' }}>({product.reviewsCount})</span>
@@ -324,11 +353,15 @@ export const ProductCard = ({ product }) => {
         )}
 
         {/* Stock warning */}
-        {isLowStock && (
+        {isOutOfStock ? (
+          <div style={{ fontSize: '0.72rem', color: '#F87171', marginBottom: '0.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <span>🚫 Agotado temporalmente</span>
+          </div>
+        ) : isLowStock ? (
           <div style={{ fontSize: '0.72rem', color: '#FCD34D', marginBottom: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
             <span>⚡ Últimas {currentStock} u.</span>
           </div>
-        )}
+        ) : null}
 
         {/* Bottom row: Price & Carrito button */}
         <div style={{
@@ -387,6 +420,7 @@ export const ProductCard = ({ product }) => {
           {/* Add to Carrito button */}
           <button
             onClick={() => {
+              if (isOutOfStock) return;
               addToCart(product, 1, { shade: selectedShade, size: selectedSize });
               setIsCartOpen(true);
             }}

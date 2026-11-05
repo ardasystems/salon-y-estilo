@@ -22,6 +22,7 @@ const getSavedCheckout = () => {
 
 export const CheckoutModal = () => {
   const {
+    products,
     isCheckoutOpen,
     setIsCheckoutOpen,
     cart,
@@ -341,6 +342,32 @@ export const CheckoutModal = () => {
     if (cart.length === 0) {
       showToast("Tu carrito de compras está vacío", "error");
       return;
+    }
+
+    // Validación estricta de stock disponible antes de iniciar la transacción
+    for (const item of cart) {
+      const catalogProd = products.find(p => p.id === item.id);
+      let availableStock = Number(catalogProd?.stock ?? item.stock ?? 0);
+      if (item.selectedSize && catalogProd?.sizes) {
+        const szObj = catalogProd.sizes.find(s => s.name === item.selectedSize);
+        if (szObj && szObj.stock !== undefined && szObj.stock !== null && szObj.stock !== '') {
+          availableStock = Number(szObj.stock);
+        }
+      }
+      if (availableStock <= 0) {
+        const err = `El producto "${item.name}" se encuentra agotado temporalmente. Por favor retíralo de tu bolsa para proceder.`;
+        setPaymentError(err);
+        showToast(err, "error");
+        setIsProcessingPayment(false);
+        return;
+      }
+      if (item.quantity > availableStock) {
+        const err = `Solo disponemos de ${availableStock} unidad(es) de "${item.name}". Por favor ajusta la cantidad en tu carrito.`;
+        setPaymentError(err);
+        showToast(err, "error");
+        setIsProcessingPayment(false);
+        return;
+      }
     }
 
     // Regla Oficial Mercado Pago Perú (Trampa 8): Monto mínimo S/ 3.00 PEN

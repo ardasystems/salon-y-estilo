@@ -6,7 +6,7 @@ const COMPARISON_CASES = [
   {
     id: 'balayage',
     title: 'Balayage Miel & Morena Iluminada',
-    serviceCategory: 'Colorimetría de Alta Gama',
+    serviceCategory: 'Colorimetría Profesional',
     duration: '3.5 a 4.5 horas',
     beforeLabel: 'Antes: Tono plano y frizz',
     beforeDesc: 'Base castaña apagada, desgaste solar disparejo y porosidad media en puntas.',

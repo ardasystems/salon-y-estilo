@@ -2,6 +2,7 @@
 export const INITIAL_PRODUCTS = [
   {
     id: "prod-001",
+    sku: "SKU-SKN-001",
     name: "Sérum Iluminador Niacinamida 10% + Zinc",
     subtitle: "Piel radiante y poros minimizados",
     category: "Skincare",
@@ -34,6 +35,7 @@ export const INITIAL_PRODUCTS = [
   },
   {
     id: "prod-002",
+    sku: "SKU-LIP-002",
     name: "Lip Peptide Glaze - Aceite Labial Nutritivo",
     subtitle: "Efecto espejo con péptidos voluminizadores",
     category: "Labios",
@@ -67,6 +69,7 @@ export const INITIAL_PRODUCTS = [
   },
   {
     id: "prod-003",
+    sku: "SKU-SKN-003",
     name: "Bálsamo Limpiador Calmante con Flor de Camelia",
     subtitle: "Doble limpieza sin irritación",
     category: "Skincare",
@@ -93,6 +96,7 @@ export const INITIAL_PRODUCTS = [
   },
   {
     id: "prod-004",
+    sku: "SKU-ROS-004",
     name: "Tinte Velvet Multiuso Mejillas & Labios",
     subtitle: "Rubor natural efecto segunda piel",
     category: "Rostro",
@@ -124,6 +128,7 @@ export const INITIAL_PRODUCTS = [
   },
   {
     id: "prod-005",
+    sku: "SKU-SOL-005",
     name: "Protector Solar Invisible Aqua Gel SPF 50+ PA++++",
     subtitle: "Toque seco y cero rastro blanco",
     category: "Protección Solar",
@@ -156,6 +161,7 @@ export const INITIAL_PRODUCTS = [
   },
   {
     id: "prod-006",
+    sku: "SKU-ACC-006",
     name: "Mini Rodillo & Guasha Cuarzo Rosa Natural",
     subtitle: "Drenaje linfático y masaje facial relajante",
     category: "Accesorios",
@@ -183,6 +189,7 @@ export const INITIAL_PRODUCTS = [
   },
   {
     id: "prod-007",
+    sku: "SKU-OJO-007",
     name: "Máscara de Pestañas Longitud Tubing Resistente",
     subtitle: "Alargamiento extremo que se retira solo con agua tibia",
     category: "Ojos",
@@ -209,6 +216,7 @@ export const INITIAL_PRODUCTS = [
   },
   {
     id: "prod-008",
+    sku: "SKU-SKN-008",
     name: "Bruma Hidratante de Rosas Silvestres & Ácido Hialurónico",
     subtitle: "Fijador de maquillaje y frescura instantánea",
     category: "Skincare",
@@ -264,7 +272,7 @@ export const INITIAL_SERVICES = [
     priceFrom: 95.00,
     image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80",
     description: "Técnica de piel blindada a prueba de calor y sudor. Realce de mirada con pestañas punto a punto y labios terciopelo de larga duración.",
-    includes: ["Preparación facial con skincare de alta gama", "Pestañas postizas premium", "Sellado fijador 18 horas"]
+    includes: ["Preparación facial con skincare profesional", "Pestañas postizas premium", "Sellado fijador 18 horas"]
   },
   {
     id: "srv-004",
@@ -302,7 +310,7 @@ export const INITIAL_COMPARISON_CASES = [
   {
     id: 'balayage',
     title: 'Balayage Miel & Morena Iluminada',
-    serviceCategory: 'Colorimetría de Alta Gama',
+    serviceCategory: 'Colorimetría Profesional',
     duration: '3.5 a 4.5 horas',
     beforeLabel: 'Antes: Tono plano y sin luz',
     beforeDesc: 'Base castaña apagada, desgaste solar disparejo y falta de luminosidad.',
@@ -673,7 +681,7 @@ export const INITIAL_ACADEMY_PARTNERSHIPS = [
     description: "Nuestro propio espacio técnico profesional acondicionado para que cada alumna aprenda junto al equipo de formadores de Salón & Estilo con clientas reales y casos de salón.",
     benefits: [
       "Entorno formativo personalizado en grupos reducidos (no masivos)",
-      "Uso de equipamiento, aparatología y productos de alta gama",
+      "Uso de equipamiento, aparatología y productos profesionales",
       "Casos reales de corrección de color y transformaciones capilares"
     ],
     contactInfo: "WhatsApp: 920 731 163"

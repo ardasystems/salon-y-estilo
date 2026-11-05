@@ -4,6 +4,7 @@ import { X, Trash2, ArrowRight, ShoppingCart, Truck, Zap, Sparkles } from 'lucid
 
 export const CartDrawer = () => {
   const {
+    products,
     cart,
     isCartOpen,
     setIsCartOpen,
@@ -14,7 +15,8 @@ export const CartDrawer = () => {
     memberDiscountAmount,
     currentUser,
     setIsUserAuthOpen,
-    setIsCheckoutOpen
+    setIsCheckoutOpen,
+    showToast
   } = useStore();
 
   if (!isCartOpen) return null;
@@ -23,7 +25,23 @@ export const CartDrawer = () => {
   const progressToFree = Math.min(100, (cartSubtotal / freeShippingThreshold) * 100);
   const remainingForFree = Math.max(0, freeShippingThreshold - cartSubtotal);
 
+  const hasStockIssues = cart.some(item => {
+    const catalogProd = products.find(p => p.id === item.id);
+    let availableStock = Number(catalogProd?.stock ?? item.stock ?? 0);
+    if (item.selectedSize && catalogProd?.sizes) {
+      const sz = catalogProd.sizes.find(s => s.name === item.selectedSize);
+      if (sz && sz.stock !== undefined && sz.stock !== null && sz.stock !== '') {
+        availableStock = Number(sz.stock);
+      }
+    }
+    return availableStock <= 0 || item.quantity > availableStock;
+  });
+
   const handleProceedToCheckout = () => {
+    if (hasStockIssues) {
+      showToast("Por favor ajusta o elimina los productos sin stock disponible para continuar.", "error");
+      return;
+    }
     setIsCartOpen(false);
     setIsCheckoutOpen(true);
   };
@@ -137,7 +155,21 @@ export const CartDrawer = () => {
               </button>
             </div>
           ) : (
-            cart.map((item, index) => (
+            cart.map((item, index) => {
+              const catalogProd = products.find(p => p.id === item.id);
+              let availableStock = Number(catalogProd?.stock ?? item.stock ?? 0);
+              if (item.selectedSize && catalogProd?.sizes) {
+                const sz = catalogProd.sizes.find(s => s.name === item.selectedSize);
+                if (sz && sz.stock !== undefined && sz.stock !== null && sz.stock !== '') {
+                  availableStock = Number(sz.stock);
+                }
+              }
+              const isItemOutOfStock = availableStock <= 0;
+              const isExceedingStock = item.quantity > availableStock;
+              const isAtMaxStock = item.quantity >= availableStock;
+              const itemSku = item.sku || catalogProd?.sku || '';
+
+              return (
               <div
                 key={`${item.id}-${item.selectedShade || ''}-${item.selectedSize || ''}-${index}`}
                 style={{
@@ -145,7 +177,9 @@ export const CartDrawer = () => {
                   gap: '1rem',
                   paddingBottom: '1.25rem',
                   borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  background: isItemOutOfStock ? 'rgba(239, 68, 68, 0.05)' : 'transparent',
+                  borderRadius: 'var(--radius-sm)'
                 }}
               >
                 <div style={{
@@ -154,28 +188,52 @@ export const CartDrawer = () => {
                   borderRadius: 'var(--radius-sm)',
                   overflow: 'hidden',
                   background: '#1C1C1C',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  flexShrink: 0
+                  border: isItemOutOfStock ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255, 255, 255, 0.2)',
+                  flexShrink: 0,
+                  position: 'relative'
                 }}>
-                  <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isItemOutOfStock ? 0.6 : 1 }} />
+                  {isItemOutOfStock && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(0,0,0,0.65)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#F87171',
+                      fontSize: '0.65rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase'
+                    }}>
+                      Agotado
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ flex: 1 }}>
-                  <a
-                    href={`/?producto=${encodeURIComponent(item.id || item.name)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: 'none' }}
-                    title="Ver detalle del producto en una nueva pestaña"
-                  >
-                    <h4
-                      style={{ fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.2rem', lineHeight: 1.3, cursor: 'pointer', transition: 'color 0.2s' }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-gold)'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#FFFFFF'}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <a
+                      href={`/?producto=${encodeURIComponent(item.id || item.name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ textDecoration: 'none' }}
+                      title="Ver detalle del producto en una nueva pestaña"
                     >
-                      {item.name}
-                    </h4>
-                  </a>
+                      <h4
+                        style={{ fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.2rem', lineHeight: 1.3, cursor: 'pointer', transition: 'color 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-gold)'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#FFFFFF'}
+                      >
+                        {item.name}
+                      </h4>
+                    </a>
+                    {itemSku && (
+                      <span style={{ fontSize: '0.62rem', color: '#9CA3AF', fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', padding: '0.1rem 0.35rem', borderRadius: '3px' }}>
+                        {itemSku}
+                      </span>
+                    )}
+                  </div>
                   
                   {/* Badges de Variante (Tono y/o Presentación) */}
                   {(item.selectedShade || item.selectedSize) && (
@@ -208,6 +266,18 @@ export const CartDrawer = () => {
                       )}
                     </div>
                   )}
+
+                  {/* Stock Alert */}
+                  {isItemOutOfStock ? (
+                    <div style={{ fontSize: '0.72rem', color: '#F87171', fontWeight: 700, marginBottom: '0.3rem' }}>
+                      ⚠️ Agotado temporalmente. Retíralo para continuar.
+                    </div>
+                  ) : isExceedingStock ? (
+                    <div style={{ fontSize: '0.72rem', color: '#FBBF24', fontWeight: 700, marginBottom: '0.3rem' }}>
+                      ⚠️ Stock máximo disponible: {availableStock} u.
+                    </div>
+                  ) : null}
+
                   <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--accent-gold)' }}>
                     S/ {(item.price * item.quantity).toFixed(2)}
                   </div>
@@ -229,8 +299,24 @@ export const CartDrawer = () => {
                       </button>
                       <span style={{ padding: '0 0.5rem', fontSize: '0.82rem', fontWeight: 700, color: '#FFFFFF' }}>{item.quantity}</span>
                       <button
-                        onClick={() => updateCartQuantity(index, 1)}
-                        style={{ width: '22px', height: '22px', fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}
+                        onClick={() => {
+                          if (!isAtMaxStock) {
+                            updateCartQuantity(index, 1);
+                          } else {
+                            showToast(`Stock máximo alcanzado (${availableStock} u.)`, "warning");
+                          }
+                        }}
+                        disabled={isAtMaxStock}
+                        title={isAtMaxStock ? "No hay más unidades en stock" : "Añadir otra unidad"}
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          fontSize: '0.9rem',
+                          fontWeight: 700,
+                          color: '#FFFFFF',
+                          opacity: isAtMaxStock ? 0.35 : 1,
+                          cursor: isAtMaxStock ? 'not-allowed' : 'pointer'
+                        }}
                       >
                         +
                       </button>
@@ -246,7 +332,8 @@ export const CartDrawer = () => {
                   </div>
                 </div>
               </div>
-            ))
+            );
+          })
           )}
         </div>
 
@@ -308,10 +395,20 @@ export const CartDrawer = () => {
 
             <button
               onClick={handleProceedToCheckout}
+              disabled={hasStockIssues}
               className="btn-luxury-gold"
-              style={{ width: '100%', padding: '1rem', fontSize: '0.9rem', gap: '0.6rem' }}
+              style={{
+                width: '100%',
+                padding: '1rem',
+                fontSize: '0.9rem',
+                gap: '0.6rem',
+                opacity: hasStockIssues ? 0.5 : 1,
+                cursor: hasStockIssues ? 'not-allowed' : 'pointer',
+                background: hasStockIssues ? '#333' : undefined,
+                color: hasStockIssues ? '#AAA' : undefined
+              }}
             >
-              <span>Continuar al Pago</span>
+              <span>{hasStockIssues ? 'Ajusta productos sin stock para continuar' : 'Continuar al Pago'}</span>
               <ArrowRight size={16} />
             </button>
 
