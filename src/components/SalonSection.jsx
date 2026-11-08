@@ -27,7 +27,6 @@ const HAUTE_SALON_LOOKS = [
 
 export const SalonSection = () => {
   const { setActiveMainTab, settings, setBookingService, services } = useStore();
-  const [selectedPortfolioCategory, setSelectedPortfolioCategory] = useState("Todos");
   const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -39,63 +38,6 @@ export const SalonSection = () => {
     }, 6000);
     return () => clearInterval(timer);
   }, [hasInteracted]);
-
-
-
-  const transformations = [
-    {
-      title: "Balayage Miel & Morena Iluminada",
-      client: "Camila V., Chiclayo",
-      category: "Colorimetría",
-      tag: "Colorimetría Profesional",
-      image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
-      desc: "Degradé suave sin marcas, aportando luz cálida sobre base castaña natural sin maltratar la fibra capilar."
-    },
-    {
-      title: "Alisado Orgánico & Bótox Espejo",
-      client: "Luciana R., Chiclayo",
-      category: "Alisados",
-      tag: "Tratamiento Anti-Humedad",
-      image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
-      desc: "Cero frizz frente a la humedad ambiental. Cabello disciplinado, sedoso y con movimiento natural."
-    },
-    {
-      title: "Maquillaje de Novia & Piel Blindada",
-      client: "Fiorella M., Chiclayo",
-      category: "Maquillaje",
-      tag: "Make Up Social Glam",
-      image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80",
-      desc: "Acabado radiante de larga duración resistente a la humedad y lágrimas de felicidad."
-    },
-    {
-      title: "Rubio Beige Champán & Corrección",
-      client: "Daniela G., La Victoria",
-      category: "Colorimetría",
-      tag: "Colorimetría Profesional",
-      image: "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=800&q=80",
-      desc: "Eliminación de reflejos cobrizos previos y matiz perlado con brillo gloss extremo."
-    },
-    {
-      title: "Tratamiento Reestructurante Spa Capilar",
-      client: "Mariana S., Chiclayo",
-      category: "Alisados",
-      tag: "Cuidado Intensivo",
-      image: "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=800&q=80",
-      desc: "Recuperación profunda de cutículas y cuero cabelludo en lavacabezas con ozono y nutrición intensiva."
-    },
-    {
-      title: "Peinado de Gala & Ondas al Agua",
-      client: "Andrea P., Santa Victoria",
-      category: "Maquillaje",
-      tag: "Estilismo de Gala",
-      image: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=800&q=80",
-      desc: "Textura natural con fijación flexible que mantiene el volumen perfecto toda la noche."
-    }
-  ];
-
-  const filteredTransformations = selectedPortfolioCategory === "Todos"
-    ? transformations
-    : transformations.filter(t => t.category === selectedPortfolioCategory);
 
   return (
     <div style={{ animation: 'fadeIn 0.35s ease-out', position: 'relative' }}>
@@ -894,123 +836,6 @@ export const SalonSection = () => {
               </div>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Dynamic Transformations Gallery with Interactive Category Tabs */}
-      <section style={{ padding: '5rem 0', background: 'var(--bg-canvas)' }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2.5rem' }}>
-            <div>
-              <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--accent-gold)', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '0.4rem' }}>
-                Portafolio Exclusivo
-              </span>
-              <h2 style={{ fontSize: '2.5rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)' }}>
-                Transformaciones Recientes
-              </h2>
-            </div>
-            
-            {/* Interactive Category Filter Pills */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {["Todos", "Colorimetría", "Alisados", "Maquillaje"].map(cat => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setSelectedPortfolioCategory(cat)}
-                  style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontSize: '0.78rem',
-                    fontWeight: selectedPortfolioCategory === cat ? 800 : 600,
-                    background: selectedPortfolioCategory === cat ? 'linear-gradient(135deg, #F7E7C4 0%, #E5C07B 100%)' : '#1C1C1C',
-                    color: selectedPortfolioCategory === cat ? '#0A0A0A' : '#D4D4D4',
-                    border: selectedPortfolioCategory === cat ? '1px solid rgba(229, 192, 123, 0.9)' : '1px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: selectedPortfolioCategory === cat ? '0 0 12px rgba(229, 192, 123, 0.35)' : 'none',
-                    touchAction: 'manipulation'
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setActiveMainTab('servicios')}
-                className="btn-luxury-outline"
-                style={{ fontSize: '0.78rem', padding: '0.45rem 1.1rem', marginLeft: '0.5rem' }}
-              >
-                <span>Ver Servicios</span>
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2.2rem'
-          }}>
-            {filteredTransformations.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                style={{
-                  background: '#161210',
-                  borderRadius: 'var(--radius-md)',
-                  overflow: 'hidden',
-                  border: '1px solid rgba(229, 192, 123, 0.25)',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
-                  transition: 'transform 0.3s ease, border-color 0.3s ease'
-                }}
-              >
-                <div style={{ position: 'relative', width: '100%', paddingTop: '100%', overflow: 'hidden' }}>
-                  <img
-                    src={t.image}
-                    alt={t.title}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    left: '1rem',
-                    background: 'rgba(13, 10, 9, 0.85)',
-                    backdropFilter: 'blur(8px)',
-                    color: 'var(--accent-gold-light)',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    padding: '0.3rem 0.75rem',
-                    borderRadius: 'var(--radius-full)',
-                    border: '1px solid var(--accent-gold-border)'
-                  }}>
-                    {t.tag}
-                  </span>
-                </div>
-
-                <div style={{ padding: '1.5rem' }}>
-                  <h4 style={{ fontSize: '1.2rem', color: '#FFFFFF', fontFamily: 'var(--font-serif)', marginBottom: '0.4rem' }}>
-                    {t.title}
-                  </h4>
-                  <p style={{ fontSize: '0.84rem', color: '#CCCCCC', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-                    {t.desc}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(229, 192, 123, 0.15)', paddingTop: '0.85rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)' }}>Cliente: {t.client}</span>
-                    <a
-                      href={`https://wa.me/${settings.whatsappContact}?text=Hola,%20me%20encantó%20el%20trabajo%20de%20${encodeURIComponent(t.title)}%20y%20deseo%20cotizar.`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ fontSize: '0.78rem', color: '#FFFFFF', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem', textDecoration: 'none' }}
-                    >
-                      <span>Cotizar similar</span>
-                      <ArrowRight size={13} style={{ color: 'var(--accent-gold)' }} />
-                    </a>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 
